@@ -145,6 +145,66 @@ button.on{background:var(--river); border-color:var(--river); color:var(--surfac
 .summary b{font-weight:600; font-family:"IBM Plex Mono",monospace; font-size:16px}
 /* The cells are supporting detail. They keep their colour but stop out-shouting
    the sentence above them, which is the part that actually answers the question. */
+/* ---- NWS alerts: outrank every number below them ---- */
+.alerts{display:flex; flex-direction:column; gap:8px}
+.alert{
+  border-radius:10px; padding:13px 15px 14px; border:1px solid;
+  display:flex; flex-direction:column; gap:3px; box-shadow:var(--shadow);
+}
+.alert .hd{
+  font-family:"Barlow Semi Condensed",sans-serif; font-weight:700; font-size:17px;
+  letter-spacing:.01em; display:flex; align-items:center; gap:8px;
+}
+.alert .hd::before{content:"\26A0\FE0E"; font-size:15px}
+.alert .meta{font-family:"IBM Plex Mono",monospace; font-size:11.5px; opacity:.85}
+.alert p{margin:4px 0 0; font-size:13.5px; line-height:1.5}
+.alert.severe{background:var(--closed-soft); border-color:var(--closed); color:var(--closed)}
+.alert.moderate{background:var(--ebb-soft); border-color:var(--ebb); color:var(--ebb)}
+.alert.severe p, .alert.moderate p{color:var(--ink-2)}
+
+/* ---- placeholder banner: this data is not real yet ---- */
+.demo-flag{
+  display:flex; align-items:center; gap:8px; margin:0 0 2px;
+  font-family:"Barlow Semi Condensed",sans-serif; font-weight:600; font-size:11px;
+  text-transform:uppercase; letter-spacing:.09em; color:var(--ebb);
+}
+.demo-flag::before{content:""; width:7px; height:7px; border-radius:50%; background:var(--ebb); flex:0 0 auto}
+.card.demo{border-style:dashed; border-color:var(--ebb)}
+
+/* ---- stat tiles ---- */
+.tiles{display:grid; gap:10px}
+.tiles.w{grid-template-columns:1.3fr 1.1fr 1fr 1fr}
+.tiles.s{grid-template-columns:1fr 1fr 1.3fr}
+@media (max-width:620px){ .tiles.w,.tiles.s{grid-template-columns:1fr 1fr} }
+@media (max-width:400px){ .tiles.w,.tiles.s{grid-template-columns:1fr} }
+.tile{
+  border:1px solid var(--line); border-radius:9px; padding:11px 12px 12px;
+  background:var(--surface-2); display:flex; flex-direction:column; gap:1px; min-width:0;
+}
+.tile .lab{
+  font-family:"Barlow Semi Condensed",sans-serif; font-weight:600; font-size:10px;
+  text-transform:uppercase; letter-spacing:.09em; color:var(--muted);
+}
+.tile .big{
+  font-family:"IBM Plex Mono",monospace; font-size:26px; line-height:1.12; margin-top:3px;
+  display:flex; align-items:baseline; gap:5px; font-variant-numeric:tabular-nums;
+}
+.tile .big .u{font-size:13px; color:var(--muted)}
+.tile .sub{font-size:12.5px; color:var(--ink-2); margin-top:3px; line-height:1.4}
+.tile .sub em{font-style:normal; color:var(--muted)}
+.windarrow{width:19px; height:19px; flex:0 0 auto; align-self:center}
+
+/* ---- interpretation bands ---- */
+.band{
+  border-radius:0 8px 8px 0; padding:10px 13px; font-size:13.5px; line-height:1.5;
+  border-left:3px solid var(--line); background:var(--surface-2); color:var(--ink-2);
+}
+.band + .band{margin-top:7px}
+.band b{color:var(--ink); font-weight:600}
+.band.warn{border-left-color:var(--ebb); background:var(--ebb-soft)}
+.band.good{border-left-color:var(--safe); background:var(--safe-soft)}
+.band.cold{border-left-color:var(--flood); background:var(--flood-soft)}
+.band.mute{border-left-color:var(--line); background:var(--surface-2); color:var(--muted)}
 .card-note{
   margin:0; padding-top:12px; border-top:1px solid var(--line-2);
   font-size:12.5px; line-height:1.6; color:var(--muted);
@@ -243,6 +303,40 @@ footer .label{margin-bottom:-2px}
 
   <div class="warn" id="outofrange"></div>
 
+  <div class="alerts" id="alerts"></div>
+
+  <section class="card demo" id="wxCard">
+    <p class="demo-flag">Example data &mdash; not yet connected to a weather service</p>
+    <div class="card-head">
+      <h2>Weather &amp; Water</h2>
+      <span class="station">placeholder</span>
+      <p class="card-lede">What is the sky doing, and how cold is the water if you end up in it?</p>
+    </div>
+    <div class="tiles w">
+      <div class="tile">
+        <div class="lab">Wind</div>
+        <div class="big"><svg class="windarrow" id="windArrow" viewBox="0 0 24 24" aria-hidden="true"></svg><span id="wxWind">&mdash;</span><span class="u">mph</span></div>
+        <div class="sub" id="wxWindSub"></div>
+      </div>
+      <div class="tile">
+        <div class="lab">Sky</div>
+        <div class="big" style="font-size:19px"><span id="wxSky">&mdash;</span></div>
+        <div class="sub" id="wxSkySub"></div>
+      </div>
+      <div class="tile">
+        <div class="lab">Water</div>
+        <div class="big"><span id="wxWater">&mdash;</span><span class="u">&deg;F</span></div>
+        <div class="sub" id="wxWaterSub"></div>
+      </div>
+      <div class="tile">
+        <div class="lab">Air</div>
+        <div class="big"><span id="wxAir">&mdash;</span><span class="u">&deg;F</span></div>
+        <div class="sub" id="wxAirSub"></div>
+      </div>
+    </div>
+    <div id="wxBands"></div>
+  </section>
+
   <section class="card">
     <div class="card-head">
       <h2>River Current</h2>
@@ -279,6 +373,33 @@ footer .label{margin-bottom:-2px}
     <div class="next" id="tideNext"></div>
     <svg class="chart" id="tideChart" viewBox="0 0 720 190" preserveAspectRatio="none" role="img" aria-label="Tide curve through the day, marked with high and low tide"></svg>
     <p class="card-note">Unless you plan on paddling into Constitution Marsh or landing on a beach, tide is likely not very important to you.</p>
+  </section>
+
+  <section class="card demo" id="skyCard">
+    <p class="demo-flag">Example data &mdash; sun and moon maths not yet written</p>
+    <div class="card-head">
+      <h2>Sun &amp; Moon</h2>
+      <span class="station">placeholder</span>
+      <p class="card-lede">How much daylight is left, and how much light will you have after it goes?</p>
+    </div>
+    <div class="tiles s">
+      <div class="tile">
+        <div class="lab">Daylight left</div>
+        <div class="big"><span id="skyLeft">&mdash;</span></div>
+        <div class="sub" id="skyLeftSub"></div>
+      </div>
+      <div class="tile">
+        <div class="lab">Sun</div>
+        <div class="big" style="font-size:19px"><span id="skySun">&mdash;</span></div>
+        <div class="sub" id="skySunSub"></div>
+      </div>
+      <div class="tile">
+        <div class="lab">Moon</div>
+        <div class="big" style="font-size:19px"><span id="skyMoon">&mdash;</span></div>
+        <div class="sub" id="skyMoonSub"></div>
+      </div>
+    </div>
+    <div id="skyBands"></div>
   </section>
 
   <section class="card" id="gate">
@@ -370,6 +491,62 @@ function curAt(t){
   const [a, c] = b, f = (t - a.t) / (c.t - a.t);
   return (a.type === "slack") ? c.v * Math.sin(Math.PI / 2 * f) : a.v * Math.cos(Math.PI / 2 * f);
 }
+/* ================= PLACEHOLDER WEATHER / SKY =================
+   Hard-coded sample values so the layout can be designed before any API is
+   wired up. NOTHING in DEMO is real. Do not deploy with this in place.
+
+   The readings are fake; the interpretation around them is not. Wind-against-
+   current, the cold-water bands and the daylight maths all run on real logic,
+   so swapping DEMO for live data is the only work left.
+   ============================================================= */
+const DEMO = {
+  windMph: 14, windGustMph: 22, windFromDeg: 315,   // 315 = from the NW
+  skyText: "Partly cloudy", precipPct: 20, stormPct: 35,
+  waterF: 58, airF: 71, feelsF: 69,
+  sunriseHM: [6, 47], sunsetHM: [18, 52],
+  moonPhase: 0.62,                                   // 0 new, .5 full, 1 new again
+  moonriseHM: [15, 14], moonsetHM: [1, 2],
+  alerts: [
+    {severity:"moderate", event:"Small Craft Advisory",
+     until:"9:00 PM EDT", text:"Winds 15 to 20 kt with gusts to 25 kt and waves to 2 ft. " +
+     "Conditions hazardous to small craft, which on this river means any kayak."}
+  ]
+};
+
+const COMPASS = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+const compass = deg => COMPASS[Math.round(((deg % 360) + 360) % 360 / 22.5) % 16];
+
+// Mean flood and ebb headings at the current station, in degrees the water
+// travels toward. Used to work out whether the wind is fighting the current.
+const FLOOD_TOWARD = 10, EBB_TOWARD = 190;
+function windVsCurrent(windFromDeg, cv){
+  if (Math.abs(cv) < 0.15) return null;              // slack: nothing to fight
+  const windToward = (windFromDeg + 180) % 360;
+  const curToward = cv > 0 ? FLOOD_TOWARD : EBB_TOWARD;
+  let d = Math.abs(windToward - curToward) % 360;
+  if (d > 180) d = 360 - d;
+  return d > 90 ? "opposed" : "aligned";
+}
+
+// Thresholds follow cold-water safety guidance: the danger is cold shock and
+// swim failure in the first minutes, which is why air temperature is the wrong
+// thing to dress for.
+function waterBand(f){
+  if (f < 50) return {cls:"warn", lead:"Dangerously cold.",
+    text:"Cold shock is immediate and incapacitating. A capsize here is life-threatening without a drysuit, whatever the air temperature says."};
+  if (f < 60) return {cls:"cold", lead:"Cold.",
+    text:"Cold shock is a real risk and your hands stop working fast. Dress for immersion, not for the air."};
+  if (f < 70) return {cls:"cold", lead:"Cool.",
+    text:"Survivable, but a long swim will still pull heat out of you faster than you expect."};
+  return {cls:"good", lead:"Mild.", text:"Immersion is unpleasant rather than dangerous."};
+}
+
+const MOONS = [[0.03,"New moon"],[0.22,"Waxing crescent"],[0.28,"First quarter"],
+               [0.47,"Waxing gibbous"],[0.53,"Full moon"],[0.72,"Waning gibbous"],
+               [0.78,"Last quarter"],[0.97,"Waning crescent"],[1.01,"New moon"]];
+const moonName = ph => (MOONS.find(m => ph < m[0]) || MOONS[MOONS.length-1])[1];
+const moonLit = ph => Math.round((1 - Math.cos(2 * Math.PI * ph)) / 2 * 100);
+
 /* ---------- Constitution Marsh access ----------
    Two independent gates. Near high tide the river is up against the trestle and
    you cannot pass under it; near low tide the marsh has drained and there is
@@ -589,6 +766,84 @@ function drawDial(v){
   svg.appendChild(g);
 }
 
+/* ---------- weather, alerts, sky (placeholder readings) ---------- */
+function drawWeather(t, cv){
+  // alerts first: they outrank everything below them
+  $("alerts").innerHTML = DEMO.alerts.map(a =>
+    '<div class="alert ' + a.severity + '"><div class="hd">' + a.event + "</div>"
+    + '<div class="meta">In effect until ' + a.until + "</div><p>" + a.text + "</p></div>").join("");
+
+  const w = DEMO;
+  $("wxWind").textContent = w.windMph;
+  $("wxWindSub").innerHTML = "from the " + compass(w.windFromDeg)
+    + "<br><em>gusting " + w.windGustMph + "</em>";
+  // arrow points the way the wind is blowing, not the way it comes from
+  const a = $("windArrow"); a.textContent = "";
+  const g = el("g", {transform:"rotate(" + ((w.windFromDeg + 180) % 360) + " 12 12)"});
+  g.appendChild(el("path", {d:"M12 3 L17 13 L12 10.6 L7 13 Z", fill:"var(--ink-2)"}));
+  g.appendChild(el("line", {x1:12, y1:10.6, x2:12, y2:21, stroke:"var(--ink-2)", "stroke-width":2, "stroke-linecap":"round"}));
+  a.appendChild(g);
+
+  $("wxSky").textContent = w.skyText;
+  $("wxSkySub").innerHTML = w.precipPct + "% chance of rain<br><em>" + w.stormPct + "% thunderstorms</em>";
+  $("wxWater").textContent = w.waterF;
+  $("wxWaterSub").textContent = waterBand(w.waterF).lead.replace(".", "");
+  $("wxAir").textContent = w.airF;
+  $("wxAirSub").innerHTML = "feels like " + w.feelsF + "&deg;<br><em>" + (w.airF - w.waterF) + "&deg; warmer than the water</em>";
+
+  const bands = [];
+  // Lightning is the acute hazard on open water - you cannot outrun it in a kayak.
+  if (w.stormPct >= 30) bands.push({cls:"warn", lead:"Thunderstorms possible.",
+    text:w.stormPct + "% chance today. There is no shelter on open water and a kayak cannot outrun a squall line. "
+      + "If you can hear thunder you are already within range — get off the river."});
+
+  const vs = windVsCurrent(w.windFromDeg, cv);
+  if (vs === "opposed"){
+    const cn = nextAfter(CUR, t, p => p.type !== "slack");
+    bands.push({cls:"warn", lead:"Wind against current.",
+      text:"A " + w.windMph + " mph " + compass(w.windFromDeg) + " wind is pushing against "
+        + (cv > 0 ? "a flood running north" : "an ebb running south")
+        + ", which stacks the water into short steep chop. This gets rough while the wind and the current both still look modest"
+        + (cn ? ", and it peaks around " + fmtT.format(cn.t) + "." : ".")});
+  } else if (vs === "aligned"){
+    bands.push({cls:"good", lead:"Wind with the current.",
+      text:"Wind and current are running the same way, which flattens the surface. The same wind against the current would be a different river."});
+  }
+  const wb = waterBand(w.waterF);
+  bands.push({cls:wb.cls, lead:w.waterF + "°F water.", text:wb.text});
+  $("wxBands").innerHTML = bands.map(b =>
+    '<div class="band ' + b.cls + '"><b>' + b.lead + "</b> " + b.text + "</div>").join("");
+}
+
+function drawSky(t){
+  const w = DEMO, p0 = nyParts(t);
+  const sunrise = fromNY(p0.y, p0.mo, p0.d, w.sunriseHM[0], w.sunriseHM[1]);
+  const sunset  = fromNY(p0.y, p0.mo, p0.d, w.sunsetHM[0], w.sunsetHM[1]);
+  const left = sunset - t;
+
+  $("skyLeft").textContent = left > 0 ? dur(left) : "—";
+  $("skyLeftSub").innerHTML = left > 0
+    ? "until sunset at " + fmtT.format(sunset)
+    : (t < sunrise ? "sun is not up yet" : "<em>after dark</em>");
+  $("skySun").textContent = fmtT.format(sunrise).replace(/\s/g, "").toLowerCase()
+    + " – " + fmtT.format(sunset).replace(/\s/g, "").toLowerCase();
+  $("skySunSub").innerHTML = "rise &ndash; set<br><em>" + dur(sunset - sunrise) + " of daylight</em>";
+
+  $("skyMoon").textContent = moonName(w.moonPhase);
+  $("skyMoonSub").innerHTML = moonLit(w.moonPhase) + "% lit<br><em>rises "
+    + fmtT.format(fromNY(p0.y, p0.mo, p0.d, w.moonriseHM[0], w.moonriseHM[1])).replace(/\s/g, "").toLowerCase()
+    + ", sets " + fmtT.format(fromNY(p0.y, p0.mo, p0.d, w.moonsetHM[0], w.moonsetHM[1])).replace(/\s/g, "").toLowerCase() + "</em>";
+
+  // Being on the water after dark is a different activity with different rules.
+  const bands = [];
+  if (left > 0 && left < 90 * MIN) bands.push({cls:"warn", lead:"Not much daylight left.",
+    text:dur(left) + " until sunset. Allow for getting back, landing and carrying out — all of which take longer in the dark."});
+  else if (left <= 0) bands.push({cls:"warn", lead:"After sunset.",
+    text:"Paddling after dark needs lights, and the trestle and the marsh channels are hard to read without them."});
+  $("skyBands").innerHTML = bands.map(b =>
+    '<div class="band ' + b.cls + '"><b>' + b.lead + "</b> " + b.text + "</div>").join("");
+}
+
 /* ---------- render ---------- */
 function render(){
   setPicker();
@@ -697,6 +952,8 @@ function render(){
   const t0 = dayStartNY(t), t1 = t0 + 24 * 3600e3;
   drawTide(t0, t1);
   drawCur(t0, t1);
+  drawWeather(t, cv);
+  drawSky(t);
 
   /* --- timeline --- */
   const ev = [];
