@@ -219,6 +219,7 @@ button.on{background:var(--river); border-color:var(--river); color:var(--surfac
 }
 .band + .band{margin-top:7px}
 .band b{color:var(--ink); font-weight:600}
+.band .qual{color:var(--muted); font-size:12.5px}
 .band.warn{border-left-color:var(--ebb); background:var(--ebb-soft)}
 .band.good{border-left-color:var(--safe); background:var(--safe-soft)}
 .band.cold{border-left-color:var(--flood); background:var(--flood-soft)}
@@ -551,15 +552,17 @@ const COMPASS = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW",
 const compass = deg => COMPASS[Math.round(((deg % 360) + 360) % 360 / 22.5) % 16];
 
 // Mean flood and ebb headings at the current station, in degrees the water
-// travels toward. Used to work out whether the wind is fighting the current.
+// travels toward. The river runs roughly north-south here, so an east or west
+// wind crosses it rather than fighting or helping it - less common than a
+// northerly or southerly, but it behaves completely differently.
 const FLOOD_TOWARD = 10, EBB_TOWARD = 190;
 function windVsCurrent(windFromDeg, cv){
-  if (Math.abs(cv) < 0.15) return null;              // slack: nothing to fight
+  if (Math.abs(cv) < 0.15) return "slack";
   const windToward = (windFromDeg + 180) % 360;
   const curToward = cv > 0 ? FLOOD_TOWARD : EBB_TOWARD;
   let d = Math.abs(windToward - curToward) % 360;
   if (d > 180) d = 360 - d;
-  return d > 90 ? "opposed" : "aligned";
+  return d < 60 ? "aligned" : d > 120 ? "opposed" : "across";
 }
 
 const waterWord = f => f < 50 ? "Dangerously cold" : f < 60 ? "Cold" : f < 70 ? "Cool" : "Mild";
@@ -810,26 +813,35 @@ const PADDLE_MPH = 3;      // a steady, unhurried recreational pace
 
 function windCurrentBand(w, cv){
   const curMph = Math.abs(cv) * 1.15078;
-  const wind = w.windMph + " mph " + compass(w.windFromDeg) + " wind";
-  if (curMph < 0.2 && w.windMph < 8) return null;
+  const calm = w.windMph < 8;
+  if (curMph < 0.2 && calm) return null;
+  const wind = "The " + w.windMph + " mph " + compass(w.windFromDeg) + " wind";
+  const rel = windVsCurrent(w.windFromDeg, cv);
 
-  if (curMph < 0.2) return {cls:"", text:"Most paddlers go around " + PADDLE_MPH
-    + " mph, and the river is slack right now, so expect about that in either direction. The "
-    + wind + " is the only thing to plan around."};
+  const basis = ' <span class="qual">(based on a typical ' + PADDLE_MPH
+    + ' mph paddling speed in still conditions)</span>';
+
+  // no parenthetical here: at slack the still-water pace IS the answer, so
+  // repeating "3 mph in still conditions" after "about 3 mph" says it twice
+  if (rel === "slack") return {cls:"", text:"The river is slack, so expect to paddle at about your "
+    + "normal pace, around <b>" + PADDLE_MPH + " mph</b>, in either direction. "
+    + wind + " is the only thing pushing you around."};
 
   const pace = v => Math.max(0.3, v).toFixed(1);
   const north = pace(cv > 0 ? PADDLE_MPH + curMph : PADDLE_MPH - curMph);
   const south = pace(cv > 0 ? PADDLE_MPH - curMph : PADDLE_MPH + curMph);
-  const vs = windVsCurrent(w.windFromDeg, cv);
+  const lead = "Expect to paddle at about <b>" + north + " mph heading north</b> and <b>"
+    + south + " mph heading south</b>" + basis + ". ";
 
-  return {
-    cls: vs === "opposed" ? "cold" : vs === "aligned" ? "good" : "",
-    text: "The current is running " + (cv > 0 ? "north" : "south") + " at " + curMph.toFixed(1)
-      + " mph. Most paddlers go around " + PADDLE_MPH + " mph, so expect about <b>" + north
-      + " mph heading north</b> and <b>" + south + " mph heading south</b>."
-      + (vs === "opposed" ? " The " + wind + " is blowing against it, so the surface will be a little lumpier than usual."
-       : vs === "aligned" ? " The " + wind + " is going the same way, so the surface should stay smooth." : "")
-  };
+  const tail = calm
+    ? "The wind is light right now, so the current is doing most of the work."
+    : rel === "aligned"
+      ? wind + " is blowing the same way the current runs, so the surface should stay smooth."
+      : rel === "opposed"
+        ? wind + " is blowing against the current, so expect the surface to be choppier than either one would make it alone."
+        : wind + " is crossing the river rather than running along it, so it will push you sideways more than it slows you down.";
+
+  return {cls: calm ? "" : rel === "opposed" ? "cold" : rel === "aligned" ? "good" : "", text:lead + tail};
 }
 
 /* ---------- weather, alerts, sky (placeholder readings) ---------- */
