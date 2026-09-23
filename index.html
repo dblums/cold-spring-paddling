@@ -145,18 +145,23 @@ button.on{background:var(--river); border-color:var(--river); color:var(--surfac
   margin:9px 0 0; padding-top:9px; border-top:1px solid var(--line-2);
 }
 .gate-when b{font-weight:600}
-.summary{
-  background:var(--surface-2); border-radius:10px; padding:13px 15px 14px;
-  display:flex; flex-direction:column; gap:5px;
-}
-.summary p{margin:0; font-size:15px; line-height:1.55; color:var(--ink); max-width:62ch}
-.summary b{font-weight:600; font-family:"IBM Plex Mono",monospace; font-size:14.5px}
+.summary{background:var(--surface-2); border-radius:10px; padding:13px 15px 14px}
+.summary p{margin:0; font-size:15.5px; line-height:1.55; color:var(--ink); max-width:62ch}
+.summary b{font-weight:600; font-family:"IBM Plex Mono",monospace; font-size:15px}
 .gate-rule{
   font-size:12.5px; color:var(--muted); margin:0; line-height:1.6;
   padding-top:11px; border-top:1px solid var(--line-2);
 }
 .gate-rule b{color:var(--ink-2); font-weight:600}
 .card-head{display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap}
+.card-lede{
+  flex-basis:100%; margin:3px 0 0; font-size:14px; line-height:1.5;
+  color:var(--muted); max-width:64ch;
+}
+.mph{
+  font-family:"IBM Plex Mono",monospace; font-size:14px; color:var(--muted);
+  font-weight:400; letter-spacing:0;
+}
 .card-head h2{
   font-family:"Barlow Semi Condensed",sans-serif; font-weight:600; font-size:19px;
   margin:0; letter-spacing:.01em;
@@ -247,11 +252,12 @@ img{max-width:100%}
     <div class="card-head">
       <h2>River Current</h2>
       <span class="station">NOAA ACT3726_1 West Point</span>
+      <p class="card-lede">How fast is the water moving, before accounting for wind effect?</p>
     </div>
     <div class="readout">
       <svg class="dial" id="dial" viewBox="0 0 100 100" role="img" aria-label="Current direction"></svg>
       <div class="readout-main">
-        <div class="value"><span id="curSpeed" class="num">&mdash;</span><span class="unit">knots</span></div>
+        <div class="value"><span id="curSpeed" class="num">&mdash;</span><span class="unit">knots</span><span class="mph" id="curMph"></span></div>
         <div class="caption" id="curCaption"></div>
       </div>
     </div>
@@ -267,6 +273,7 @@ img{max-width:100%}
     <div class="card-head">
       <h2>Tide</h2>
       <span class="station">NOAA 8518934 Beacon &minus;30 min</span>
+      <p class="card-lede">How high is the river? Unless you plan on paddling into Constitution Marsh or landing on a beach, tide is likely not very important to you.</p>
     </div>
     <div class="readout">
       <div class="readout-main">
@@ -282,6 +289,10 @@ img{max-width:100%}
     <div class="card-head">
       <h2>Constitution Marsh Access</h2>
       <span class="station">Metro-North trestle</span>
+      <p class="card-lede">Constitution Marsh is a 270-acre tidal wetland that you can access by paddling under the Metro-North train trestle just south of Cold Spring &mdash; but only when there is enough vertical clearance to do so safely.</p>
+    </div>
+    <div class="summary">
+      <p id="summaryText"></p>
     </div>
     <div class="gates">
       <div class="gate-cell" id="crossCell">
@@ -296,10 +307,6 @@ img{max-width:100%}
         <p class="gate-sub" id="marshSub"></p>
         <p class="gate-when" id="marshWhen"></p>
       </div>
-    </div>
-    <div class="summary">
-      <span class="label">Summary</span>
-      <p id="summaryText"></p>
     </div>
   </section>
 
@@ -656,6 +663,7 @@ function render(){
   const cls = cv > 0.15 ? "flood" : cv < -0.15 ? "ebb" : "slack";
   $("curSpeed").textContent = Math.abs(cv).toFixed(1);
   $("curSpeed").className = "num state-" + cls;
+  $("curMph").textContent = "\u2248 " + (Math.abs(cv) * 1.15078).toFixed(1) + " mph";
   $("curCaption").innerHTML = cls === "slack"
     ? '<b class="state-slack">Slack water</b>'
     : cls === "flood"
