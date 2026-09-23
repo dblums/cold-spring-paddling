@@ -222,6 +222,7 @@ button.on{background:var(--river); border-color:var(--river); color:var(--surfac
 .band.warn{border-left-color:var(--ebb); background:var(--ebb-soft)}
 .band.good{border-left-color:var(--safe); background:var(--safe-soft)}
 .band.cold{border-left-color:var(--flood); background:var(--flood-soft)}
+.band.plain{border-left-color:var(--line); background:var(--surface-2)}
 .band.mute{border-left-color:var(--line); background:var(--surface-2); color:var(--muted)}
 .card-note a{color:var(--river); text-underline-offset:3px}
 .card-note{
@@ -335,7 +336,6 @@ img{max-width:100%}
     <div class="card-head">
       <h2>Weather &amp; Water</h2>
       <span class="station">placeholder</span>
-      <p class="card-lede">What is the sky doing, and how cold is the water if you end up in it?</p>
     </div>
     <div class="tiles w">
       <div class="tile">
@@ -432,7 +432,6 @@ img{max-width:100%}
     <div class="card-head">
       <h2>Sun &amp; Moon</h2>
       <span class="station">placeholder</span>
-      <p class="card-lede">How much daylight is left, and how much light will you have after it goes?</p>
     </div>
     <div class="tiles s">
       <div class="tile">
@@ -452,7 +451,6 @@ img{max-width:100%}
       </div>
     </div>
     <div id="skyBands"></div>
-    <p class="card-note" id="skyNote"></p>
   </section>
 
   <section class="card">
@@ -799,46 +797,44 @@ function drawDial(v){
   svg.appendChild(g);
 }
 
-/* ---------- wind against current ----------
-   The one reading here that neither source publishes. Wind opposing a tidal
-   current stacks the water into short steep breaking chop; wind running with it
-   flattens the surface. Same wind speed, completely different river - which is
-   why a wind forecast alone does not tell a paddler what they are launching into. */
+/* ---------- what the wind and current mean for your arms ----------
+   Not a hazard calculation. A current adds to or subtracts from your speed over
+   the ground directly, which on this river is the difference between an easy
+   afternoon and a long slog home. Wind mostly decides which way is the easy one,
+   and when it opposes the current it also chops the surface up. */
+const PADDLE_MPH = 3;      // a steady, unhurried recreational pace
+
 function windCurrentBand(w, cv, t){
+  const curMph = Math.abs(cv) * 1.15078;
+  const windy = w.windMph >= 8;
+  if (curMph < 0.2 && !windy) return null;        // nothing worth saying
+
+  const withCur = (PADDLE_MPH + curMph).toFixed(1);
+  const against = Math.max(0.3, PADDLE_MPH - curMph).toFixed(1);
+  const flowTo = cv > 0 ? "north" : "south";
+  const backTo = cv > 0 ? "south" : "north";
   const vs = windVsCurrent(w.windFromDeg, cv);
-  if (!vs) return null;                    // slack water: nothing to fight
-  if (w.windMph < 5) return null;          // too light to matter either way
-  const dir = compass(w.windFromDeg), speed = Math.abs(cv);
-  const flow = cv > 0 ? "the flood running north" : "the ebb running south";
-  const wind = "A " + w.windMph + " mph " + dir + " wind";
 
-  if (vs === "aligned") return {cls:"good", lead:"Wind with the current.",
-    text:wind + " is blowing the same way as " + flow + ", which flattens the surface. "
-      + "The same wind against the current would be a very different river."};
+  if (curMph < 0.2){
+    return {cls:"", lead:"Slack water.",
+      text:"The river is not pushing you either way right now, so the "
+        + w.windMph + " mph " + compass(w.windFromDeg) + " wind is the only thing to plan around."};
+  }
 
-  // Only this phase of the current is opposed - once it turns, the same wind is
-  // with it. So the peak to warn about is this phase's, and only if it is still
-  // ahead of us; past it, the condition is easing rather than building.
-  const nextSlack = nextAfter(CUR, t, p => p.type === "slack");
-  const nextMax = nextAfter(CUR, t, p => p.type !== "slack");
-  const building = nextMax && nextSlack && nextMax.t < nextSlack.t;
-  const rough = w.windGustMph >= 18 && speed >= 0.8;
-  const mild = w.windMph < 10 || speed < 0.5;
-  return {
-    cls: mild ? "cold" : "warn",
-    lead: "Wind against current.",
-    text: wind + " is pushing against " + flow + " at " + speed.toFixed(1) + " kt. "
-      + "Opposing wind and current stack the water into short, steep, breaking chop"
-      + (rough ? " — this is the combination that swamps boats, and it builds faster than you expect."
-         : mild ? ", though at this wind speed it should stay manageable."
-         : ", which turns rough while the wind and the current both still look modest.")
-      + (building
-          ? " Worst around " + fmtT.format(nextMax.t) + ", when the current peaks at "
-            + Math.abs(nextMax.v).toFixed(1) + " kt."
-          : nextSlack
-            ? " Easing now, as the current drops toward slack at " + fmtT.format(nextSlack.t) + "."
-            : "")
-  };
+  const speeds = "At a steady pace you would make about <b>" + withCur + " mph</b> heading "
+    + flowTo + ", and about <b>" + against + " mph</b> coming back " + backTo + ".";
+
+  if (vs === "opposed") return {cls:"cold", lead:"Wind against the current.",
+    text:"The current is running " + flowTo + " at " + curMph.toFixed(1)
+      + " mph and the wind is blowing the other way, which roughens the surface a bit — expect a lumpier ride than either number suggests. "
+      + speeds + " The headwind will take a little off whichever way you are heading into it."};
+
+  if (vs === "aligned") return {cls:"good", lead:"Wind and current together.",
+    text:"Both are running " + flowTo + " right now, so the water stays smooth and you get a proper push. "
+      + speeds + " With the wind helping too, the way back will be the real work — worth turning around earlier than feels necessary."};
+
+  return {cls:"", lead:"Current running " + flowTo + ".",
+    text:speeds + " Worth picking which direction you want the easy half of the trip."};
 }
 
 /* ---------- weather, alerts, sky (placeholder readings) ---------- */
@@ -871,8 +867,7 @@ function drawWeather(t, cv){
   const bands = [];
   // Lightning is the acute hazard on open water - you cannot outrun it in a kayak.
   if (w.stormPct >= 30) bands.push({cls:"warn", lead:"Thunderstorms possible.",
-    text:w.stormPct + "% chance today. There is no shelter on open water and a kayak cannot outrun a squall line. "
-      + "If you can hear thunder you are already within range — get off the river."});
+    text:w.stormPct + "% chance today. Worth keeping an eye on the sky and having somewhere in mind to get off the water."});
 
   const imm = immersionBand(w.airF, w.waterF);
   if (imm) bands.push(imm);
@@ -887,8 +882,12 @@ function drawSky(t){
   const left = sunset - t;
 
   $("skyLeft").textContent = left > 0 ? dur(left) : "—";
+  // Official sunset is not the end of usable light - civil twilight runs on for
+  // about another half hour, and it is worth knowing about.
+  const dusk = fromNY(p0.y, p0.mo, p0.d, w.duskHM[0], w.duskHM[1]);
   $("skyLeftSub").innerHTML = left > 0
     ? "until sunset at " + fmtT.format(sunset)
+      + "<br><em>usable light to " + fmtT.format(dusk).replace(/\s/g, "").toLowerCase() + "</em>"
     : (t < sunrise ? "sun is not up yet" : "<em>after dark</em>");
   $("skySun").textContent = fmtT.format(sunrise).replace(/\s/g, "").toLowerCase()
     + " – " + fmtT.format(sunset).replace(/\s/g, "").toLowerCase();
@@ -908,13 +907,6 @@ function drawSky(t){
   $("skyBands").innerHTML = bands.map(b =>
     '<div class="band ' + b.cls + '"><b>' + b.lead + "</b> " + b.text + "</div>").join("");
 
-  // Official sunrise and sunset are not the edges of usable light. Civil twilight
-  // is, and it is worth roughly half an hour at each end of the day.
-  const dawn = fromNY(p0.y, p0.mo, p0.d, w.dawnHM[0], w.dawnHM[1]);
-  const dusk = fromNY(p0.y, p0.mo, p0.d, w.duskHM[0], w.duskHM[1]);
-  $("skyNote").innerHTML = "There is usable light beyond those times. First light is around <b>"
-    + fmtT.format(dawn) + "</b>, " + dur(sunrise - dawn) + " before sunrise, and it stays paddleable until roughly <b>"
-    + fmtT.format(dusk) + "</b>, " + dur(dusk - sunset) + " after sunset.";
 }
 
 /* ---------- render ---------- */
@@ -1005,7 +997,7 @@ function render(){
   const cn = nextAfter(CUR, t);
   const wcb = windCurrentBand(DEMO, cv, t);
   $("curWindBand").innerHTML = wcb
-    ? '<div class="band ' + wcb.cls + '"><b>' + wcb.lead + "</b> " + wcb.text + "</div>"
+    ? '<div class="band ' + (wcb.cls || "plain") + '"><b>' + wcb.lead + "</b> " + wcb.text + "</div>"
     : "";
   $("curNext").innerHTML = cn
     ? "Next: <b>" + (cn.type === "slack" ? "slack water" : "max " + cn.type + " " + Math.abs(cn.v).toFixed(1) + " kt")
