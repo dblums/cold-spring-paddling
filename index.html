@@ -377,6 +377,7 @@ img{max-width:100%}
       </div>
     </div>
     <div class="next" id="curNext"></div>
+    <div id="curWindBand"></div>
     <svg class="chart" id="curChart" viewBox="0 0 720 150" preserveAspectRatio="none" role="img" aria-label="Current speed through the day"></svg>
     <div class="chart-note">
       <span class="key"><i style="background:var(--flood)"></i>Flood &mdash; north, upriver</span>
@@ -798,6 +799,48 @@ function drawDial(v){
   svg.appendChild(g);
 }
 
+/* ---------- wind against current ----------
+   The one reading here that neither source publishes. Wind opposing a tidal
+   current stacks the water into short steep breaking chop; wind running with it
+   flattens the surface. Same wind speed, completely different river - which is
+   why a wind forecast alone does not tell a paddler what they are launching into. */
+function windCurrentBand(w, cv, t){
+  const vs = windVsCurrent(w.windFromDeg, cv);
+  if (!vs) return null;                    // slack water: nothing to fight
+  if (w.windMph < 5) return null;          // too light to matter either way
+  const dir = compass(w.windFromDeg), speed = Math.abs(cv);
+  const flow = cv > 0 ? "the flood running north" : "the ebb running south";
+  const wind = "A " + w.windMph + " mph " + dir + " wind";
+
+  if (vs === "aligned") return {cls:"good", lead:"Wind with the current.",
+    text:wind + " is blowing the same way as " + flow + ", which flattens the surface. "
+      + "The same wind against the current would be a very different river."};
+
+  // Only this phase of the current is opposed - once it turns, the same wind is
+  // with it. So the peak to warn about is this phase's, and only if it is still
+  // ahead of us; past it, the condition is easing rather than building.
+  const nextSlack = nextAfter(CUR, t, p => p.type === "slack");
+  const nextMax = nextAfter(CUR, t, p => p.type !== "slack");
+  const building = nextMax && nextSlack && nextMax.t < nextSlack.t;
+  const rough = w.windGustMph >= 18 && speed >= 0.8;
+  const mild = w.windMph < 10 || speed < 0.5;
+  return {
+    cls: mild ? "cold" : "warn",
+    lead: "Wind against current.",
+    text: wind + " is pushing against " + flow + " at " + speed.toFixed(1) + " kt. "
+      + "Opposing wind and current stack the water into short, steep, breaking chop"
+      + (rough ? " — this is the combination that swamps boats, and it builds faster than you expect."
+         : mild ? ", though at this wind speed it should stay manageable."
+         : ", which turns rough while the wind and the current both still look modest.")
+      + (building
+          ? " Worst around " + fmtT.format(nextMax.t) + ", when the current peaks at "
+            + Math.abs(nextMax.v).toFixed(1) + " kt."
+          : nextSlack
+            ? " Easing now, as the current drops toward slack at " + fmtT.format(nextSlack.t) + "."
+            : "")
+  };
+}
+
 /* ---------- weather, alerts, sky (placeholder readings) ---------- */
 function drawWeather(t, cv){
   // alerts first: they outrank everything below them
@@ -831,18 +874,6 @@ function drawWeather(t, cv){
     text:w.stormPct + "% chance today. There is no shelter on open water and a kayak cannot outrun a squall line. "
       + "If you can hear thunder you are already within range — get off the river."});
 
-  const vs = windVsCurrent(w.windFromDeg, cv);
-  if (vs === "opposed"){
-    const cn = nextAfter(CUR, t, p => p.type !== "slack");
-    bands.push({cls:"warn", lead:"Wind against current.",
-      text:"A " + w.windMph + " mph " + compass(w.windFromDeg) + " wind is pushing against "
-        + (cv > 0 ? "a flood running north" : "an ebb running south")
-        + ", which stacks the water into short steep chop. This gets rough while the wind and the current both still look modest"
-        + (cn ? ", and it peaks around " + fmtT.format(cn.t) + "." : ".")});
-  } else if (vs === "aligned"){
-    bands.push({cls:"good", lead:"Wind with the current.",
-      text:"Wind and current are running the same way, which flattens the surface. The same wind against the current would be a different river."});
-  }
   const imm = immersionBand(w.airF, w.waterF);
   if (imm) bands.push(imm);
   $("wxBands").innerHTML = bands.map(b =>
@@ -972,6 +1003,10 @@ function render(){
       : '<b class="state-ebb">Ebbing</b> &mdash; running south, downriver toward Bear Mountain.';
   drawDial(cv);
   const cn = nextAfter(CUR, t);
+  const wcb = windCurrentBand(DEMO, cv, t);
+  $("curWindBand").innerHTML = wcb
+    ? '<div class="band ' + wcb.cls + '"><b>' + wcb.lead + "</b> " + wcb.text + "</div>"
+    : "";
   $("curNext").innerHTML = cn
     ? "Next: <b>" + (cn.type === "slack" ? "slack water" : "max " + cn.type + " " + Math.abs(cn.v).toFixed(1) + " kt")
       + "</b> at <span class='num'>" + fmtT.format(cn.t) + "</span> &middot; in " + dur(cn.t - t)
