@@ -156,7 +156,7 @@ button.on{background:var(--river); border-color:var(--river); color:var(--surfac
 .summary b{font-weight:600; font-family:"IBM Plex Mono",monospace; font-size:16px}
 /* The cells are supporting detail. They keep their colour but stop out-shouting
    the sentence above them, which is the part that actually answers the question. */
-.marsh-about{
+.card-note{
   margin:0; padding-top:12px; border-top:1px solid var(--line-2);
   font-size:12.5px; line-height:1.6; color:var(--muted);
 }
@@ -285,7 +285,7 @@ img{max-width:100%}
     <div class="card-head">
       <h2>Tide</h2>
       <span class="station">NOAA 8518934 Beacon &minus;30 min</span>
-      <p class="card-lede">How high is the river? Unless you plan on paddling into Constitution Marsh or landing on a beach, tide is likely not very important to you.</p>
+      <p class="card-lede">How high is the river?</p>
     </div>
     <div class="readout">
       <div class="readout-main">
@@ -295,6 +295,7 @@ img{max-width:100%}
     </div>
     <div class="next" id="tideNext"></div>
     <svg class="chart" id="tideChart" viewBox="0 0 720 190" preserveAspectRatio="none" role="img" aria-label="Tide curve through the day, marked with high and low tide"></svg>
+    <p class="card-note">Unless you plan on paddling into Constitution Marsh or landing on a beach, tide is likely not very important to you.</p>
   </section>
 
   <section class="card" id="gate">
@@ -319,7 +320,7 @@ img{max-width:100%}
         <p class="gate-when" id="marshWhen"></p>
       </div>
     </div>
-    <p class="marsh-about">Constitution Marsh is a 270-acre tidal wetland that you can access by paddling under the Metro-North train trestle just south of Cold Spring &mdash; but only when there is enough vertical clearance to do so safely.</p>
+    <p class="card-note">Constitution Marsh is a 270-acre tidal wetland that you can access by paddling under the Metro-North train trestle just south of Cold Spring &mdash; but only when there is enough vertical clearance to do so safely.</p>
   </section>
 
   <section class="card">
