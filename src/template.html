@@ -137,15 +137,26 @@ button.on{background:var(--river); border-color:var(--river); color:var(--surfac
   margin:9px 0 0; padding-top:9px; border-top:1px solid var(--line-2);
 }
 .gate-when b{font-weight:600}
-.summary{
-  background:var(--surface-2); border-radius:10px; padding:15px 17px 16px;
-  border-left:4px solid var(--muted);
+/* One block style for anything that says something about RIGHT NOW. A card can
+   stack more than one. Paired with .card-lede, which only ever describes what a
+   card is for, this gives the page two devices instead of four: a grey line
+   describes, a tinted block decides. */
+.answer{
+  background:var(--surface-2); border-left:4px solid var(--line);
+  border-radius:0 9px 9px 0; padding:12px 15px 13px;
 }
-.summary.ok{border-left-color:var(--safe)}
-.summary.no-cross{border-left-color:var(--closed)}
-.summary.no-mud{border-left-color:var(--mud)}
-.summary p{margin:0; font-size:17px; line-height:1.5; color:var(--ink)}
-.summary b{font-weight:600; font-family:"IBM Plex Mono",monospace; font-size:16px}
+.answer + .answer{margin-top:7px}
+#curWindBand .answer, #skyBands .answer, #wxBands .answer{margin-top:2px}
+.answer p{margin:0; font-size:15.5px; line-height:1.5; color:var(--ink)}
+.answer p + p{margin-top:5px}
+.answer b{font-weight:600; color:var(--ink)}
+.answer .qual{color:var(--muted); font-size:12.5px; font-weight:400}
+.answer.good{border-left-color:var(--safe); background:var(--safe-soft)}
+.answer.warn{border-left-color:var(--ebb); background:var(--ebb-soft)}
+.answer.cold{border-left-color:var(--flood); background:var(--flood-soft)}
+.answer.mud{border-left-color:var(--mud); background:var(--mud-soft)}
+.answer.closed{border-left-color:var(--closed); background:var(--closed-soft)}
+.answer.mute p{color:var(--muted); font-size:14.5px}
 /* The cells are supporting detail. They keep their color but stop out-shouting
    the sentence above them, which is the part that actually answers the question. */
 /* ---- NWS alerts: outrank every number below them ---- */
@@ -201,19 +212,6 @@ button.on{background:var(--river); border-color:var(--river); color:var(--surfac
 .tile .sub em{font-style:normal; color:var(--muted)}
 .windarrow{width:19px; height:19px; flex:0 0 auto; align-self:center}
 
-/* ---- interpretation bands ---- */
-.band{
-  border-radius:0 8px 8px 0; padding:10px 13px; font-size:13.5px; line-height:1.5;
-  border-left:3px solid var(--line); background:var(--surface-2); color:var(--ink-2);
-}
-.band + .band{margin-top:7px}
-.band b{color:var(--ink); font-weight:600}
-.band .qual{color:var(--muted); font-size:12.5px}
-.band.warn{border-left-color:var(--ebb); background:var(--ebb-soft)}
-.band.good{border-left-color:var(--safe); background:var(--safe-soft)}
-.band.cold{border-left-color:var(--flood); background:var(--flood-soft)}
-.band.plain{border-left-color:var(--line); background:var(--surface-2)}
-.band.mute{border-left-color:var(--line); background:var(--surface-2); color:var(--muted)}
 .card-note a{color:var(--river); text-underline-offset:3px}
 .card-note{
   margin:0; padding-top:12px; border-top:1px solid var(--line-2);
@@ -225,8 +223,6 @@ button.on{background:var(--river); border-color:var(--river); color:var(--surfac
 }
 .gate-rule b{color:var(--ink-2); font-weight:600}
 .card-head{display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap}
-.card-lede b{color:var(--ink-2); font-weight:600}
-.card-lede.urgent b{color:var(--ebb)}
 .card-lede{
   flex-basis:100%; margin:3px 0 0; font-size:14px; line-height:1.5;
   color:var(--muted);
@@ -321,8 +317,9 @@ footer .label{margin-bottom:-2px}
     <div class="card-head">
       <h2>Weather &amp; Water</h2>
       <span class="station">NWS OKX &middot; NOAA water temp</span>
-      <p class="card-lede" id="wxImmersion"></p>
+      <p class="card-lede">What the air and the water are doing.</p>
     </div>
+    <div class="answer" id="wxAnswer"><p id="wxAnswerText"></p></div>
     <div class="tiles w">
       <div class="tile">
         <div class="lab">Wind</div>
@@ -353,7 +350,7 @@ footer .label{margin-bottom:-2px}
     <div class="card-head">
       <h2>River Current</h2>
       <span class="station">NOAA ACT3726_1 West Point</span>
-      <p class="card-lede">How fast is the water moving, before accounting for wind effect?</p>
+      <p class="card-lede">How fast the water is moving, and which way.</p>
     </div>
     <div class="readout">
       <svg class="dial" id="dial" viewBox="0 0 100 100" role="img" aria-label="Current direction"></svg>
@@ -375,7 +372,7 @@ footer .label{margin-bottom:-2px}
     <div class="card-head">
       <h2>Tide</h2>
       <span class="station">NOAA 8518934 Beacon &minus;30 min</span>
-      <p class="card-lede">How high is the river?</p>
+      <p class="card-lede">How high the river is.</p>
     </div>
     <div class="readout">
       <div class="readout-main">
@@ -392,8 +389,9 @@ footer .label{margin-bottom:-2px}
     <div class="card-head">
       <h2>Constitution Marsh Access</h2>
       <span class="station">Metro-North trestle</span>
+      <p class="card-lede">Whether you can get in, and whether there is water once you do.</p>
     </div>
-    <div class="summary" id="summaryBox">
+    <div class="answer" id="summaryBox">
       <p id="summaryText"></p>
     </div>
     <div class="gates">
@@ -418,6 +416,7 @@ footer .label{margin-bottom:-2px}
     <div class="card-head">
       <h2>Sun &amp; Moon</h2>
       <span class="station">placeholder</span>
+      <p class="card-lede">How much light you have left.</p>
     </div>
     <div class="tiles s">
       <div class="tile">
@@ -930,12 +929,12 @@ function drawWeather(t, cv){
     const why = WX.status === "loading" ? "Loading conditions…"
       : WX.status === "failed" ? "Could not reach the weather service. Everything below works without it."
       : "No forecast reaches this far ahead. The tide, current and marsh windows below are still exact.";
-    $("wxBands").innerHTML = '<div class="band mute">' + why + "</div>";
+    $("wxAnswer").className = "answer mute";
+    $("wxAnswerText").innerHTML = why;
+    $("wxBands").innerHTML = "";
     for (const id of ["wxWind", "wxSky", "wxAir", "wxWater"]) set(id, "—");
     for (const id of ["wxWindSub", "wxSkySub", "wxAirSub", "wxWaterSub"]) sub(id, "");
     $("windArrow").textContent = "";
-    $("wxImmersion").className = "card-lede";
-    $("wxImmersion").innerHTML = "<b>Always dress for immersion!</b>";
     return;
   }
   card.classList.remove("nodata");
@@ -961,14 +960,14 @@ function drawWeather(t, cv){
     : waterWord(w.waterF) + (WX.water.from === "both" ? "<br><em>estimated</em>" : "<br><em>" + WX.water.from + "</em>"));
 
   const imm = immersionLede(w.airF, w.waterF);
-  $("wxImmersion").className = "card-lede" + (imm.urgent ? " urgent" : "");
-  $("wxImmersion").innerHTML = imm.html;
+  $("wxAnswer").className = "answer" + (imm.urgent ? " warn" : "");
+  $("wxAnswerText").innerHTML = imm.html;
 
   const bands = [];
   if (w.stormPct >= 30) bands.push({cls:"warn", lead:"Thunderstorms possible.",
     text:w.stormPct + "% chance right now. Worth keeping an eye on the sky and having somewhere in mind to get off the water."});
   $("wxBands").innerHTML = bands.map(b =>
-    '<div class="band ' + b.cls + '"><b>' + b.lead + "</b> " + b.text + "</div>").join("");
+    '<div class="answer ' + b.cls + '"><p><b>' + b.lead + "</b> " + b.text + "</p></div>").join("");
 }
 
 function drawSky(t){
@@ -1001,7 +1000,7 @@ function drawSky(t){
   else if (left <= 0) bands.push({cls:"warn", lead:"After sunset.",
     text:"Paddling after dark needs lights, and the trestle and the marsh channels are hard to read without them."});
   $("skyBands").innerHTML = bands.map(b =>
-    '<div class="band ' + b.cls + '"><b>' + b.lead + "</b> " + b.text + "</div>").join("");
+    '<div class="answer ' + b.cls + '"><p><b>' + b.lead + "</b> " + b.text + "</p></div>").join("");
 
 }
 
@@ -1051,7 +1050,7 @@ function render(){
      this page cannot see wind, waves or traffic. Warnings stay blunt, though:
      overstating a hazard costs a paddler nothing, understating one costs plenty. */
   const nextExt = nextAfter(TIDE, t), risingNow = nextExt && nextExt.type === "H";
-  $("summaryBox").className = "summary " + (!crossOK ? "no-cross" : !marshOK ? "no-mud" : "ok");
+  $("summaryBox").className = "answer " + (!crossOK ? "closed" : !marshOK ? "mud" : "good");
   let summary;
   if (!crossOK){
     // inside the high-tide window: the marsh is at its deepest, the way out is shut
@@ -1093,7 +1092,7 @@ function render(){
   const cn = nextAfter(CUR, t);
   const wcb = windCurrentBand(conditionsAt(t), cv);
   $("curWindBand").innerHTML = wcb
-    ? '<div class="band ' + (wcb.cls || "plain") + '">' + wcb.text + "</div>"
+    ? '<div class="answer ' + wcb.cls + '"><p>' + wcb.text + "</p></div>"
     : "";
   $("curNext").innerHTML = cn
     ? "Next: <b>" + (cn.type === "slack" ? "slack water" : "max " + cn.type + " " + Math.abs(cn.v).toFixed(1) + " kt")
