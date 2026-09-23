@@ -141,13 +141,13 @@ button.on{background:var(--river); border-color:var(--river); color:var(--surfac
 .summary.ok{border-left-color:var(--safe)}
 .summary.no-cross{border-left-color:var(--closed)}
 .summary.no-mud{border-left-color:var(--mud)}
-.summary p{margin:0; font-size:17px; line-height:1.5; color:var(--ink); max-width:58ch}
+.summary p{margin:0; font-size:17px; line-height:1.5; color:var(--ink)}
 .summary b{font-weight:600; font-family:"IBM Plex Mono",monospace; font-size:16px}
 /* The cells are supporting detail. They keep their colour but stop out-shouting
    the sentence above them, which is the part that actually answers the question. */
 .marsh-about{
   margin:0; padding-top:12px; border-top:1px solid var(--line-2);
-  font-size:12.5px; line-height:1.6; color:var(--muted); max-width:66ch;
+  font-size:12.5px; line-height:1.6; color:var(--muted);
 }
 .gate-rule{
   font-size:12.5px; color:var(--muted); margin:0; line-height:1.6;
@@ -157,7 +157,7 @@ button.on{background:var(--river); border-color:var(--river); color:var(--surfac
 .card-head{display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap}
 .card-lede{
   flex-basis:100%; margin:3px 0 0; font-size:14px; line-height:1.5;
-  color:var(--muted); max-width:64ch;
+  color:var(--muted);
 }
 .mph{
   font-family:"IBM Plex Mono",monospace; font-size:14px; color:var(--muted);
@@ -207,7 +207,7 @@ ol.timeline .amt{font-family:"IBM Plex Mono",monospace; font-size:13.5px; color:
 
 /* ---- footer ---- */
 footer{border-top:1px solid var(--line); padding-top:14px; display:flex; flex-direction:column; gap:9px}
-footer p{margin:0; font-size:13px; color:var(--muted); line-height:1.55; max-width:64ch}
+footer p{margin:0; font-size:13px; color:var(--muted); line-height:1.55}
 footer a{color:var(--river)}
 footer .label{margin-bottom:-2px}
 .important{
@@ -215,7 +215,7 @@ footer .label{margin-bottom:-2px}
   border-radius:0 9px 9px 0; padding:12px 15px 13px;
   display:flex; flex-direction:column; gap:4px;
 }
-.important p{font-size:14px; color:var(--ink); line-height:1.55; margin:0; max-width:64ch}
+.important p{font-size:14px; color:var(--ink); line-height:1.55; margin:0}
 .warn{
   background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--ebb);
   border-radius:0 8px 8px 0; padding:11px 13px; font-size:13.5px; color:var(--ink-2); line-height:1.55;
@@ -660,13 +660,13 @@ function render(){
   /* --- current --- */
   const cv = curAt(t);
   const cls = cv > 0.15 ? "flood" : cv < -0.15 ? "ebb" : "slack";
-  const knots = Math.abs(cv).toFixed(1);
+  // Two decimals on both figures. At one decimal the conversion collides with the
+  // knots reading below 0.4 kt (0.3 kt -> 0.3 mph) and reads as broken; the extra
+  // digit keeps the two numbers visibly different everywhere a paddler will see them.
+  const knots = Math.abs(cv).toFixed(2);
   $("curSpeed").textContent = knots;
   $("curSpeed").className = "num state-" + cls;
-  // Convert the DISPLAYED knots, not the raw value. Converting the raw value is
-  // more precise but can round to the same figure as the knots shown beside it
-  // (0.37 kt -> "0.4 knots = 0.4 mph"), which reads as a broken conversion.
-  $("curMph").textContent = "\u2248 " + (knots * 1.15078).toFixed(1) + " mph";
+  $("curMph").textContent = "\u2248 " + (knots * 1.15078).toFixed(2) + " mph";
   $("curCaption").innerHTML = cls === "slack"
     ? '<b class="state-slack">Slack water</b>'
     : cls === "flood"
