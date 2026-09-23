@@ -5,7 +5,7 @@ for kayakers launching at Cold Spring, New York. It answers three questions a
 paddler needs answered before pushing off, for right now or for any date through
 2028.
 
-**Live site:** _(add your deployed URL here)_
+**Live site:** https://dblums.github.io/cold-spring-paddling/
 
 ![The Hudson River from a kayak at Cold Spring](src/banner.jpg)
 
@@ -94,9 +94,13 @@ are generated; changes made directly to them get overwritten on the next build.
 
 ## Deploy
 
-`index.html` is entirely self-contained, so any static host works. Drag the
-project folder onto [Netlify Drop](https://app.netlify.com/drop), or point
-Cloudflare Pages or GitHub Pages at this repository.
+Hosted on GitHub Pages, served from `main` at the repository root. Pushing a
+commit redeploys the site automatically — there is no build server involved,
+because `index.html` is committed and already self-contained.
+
+To deploy it somewhere else instead, `index.html` is the only file that needs to
+go: drag the project folder onto [Netlify Drop](https://app.netlify.com/drop),
+or point Cloudflare Pages at this repository.
 
 ## Limits
 
