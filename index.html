@@ -800,40 +800,36 @@ function drawDial(v){
   svg.appendChild(g);
 }
 
-/* ---------- what the wind and current mean for your arms ----------
-   Not a hazard calculation. A current adds to or subtracts from your speed over
-   the ground directly, which on this river is the difference between an easy
-   afternoon and a long slog home. Wind mostly decides which way is the easy one,
-   and when it opposes the current it also roughens the surface. */
+/* ---------- what the current and wind do to your speed ----------
+   A current adds to or subtracts from speed over the ground directly, so a knot
+   of it is the difference between covering ground and grinding. North is given
+   first: from Cold Spring the ordinary trips are into the marsh or upriver, and
+   the southern stretch through World's End is not a default anyone should be
+   nudged toward. */
 const PADDLE_MPH = 3;      // a steady, unhurried recreational pace
 
-function windCurrentBand(w, cv, t){
+function windCurrentBand(w, cv){
   const curMph = Math.abs(cv) * 1.15078;
-  const windy = w.windMph >= 8;
-  if (curMph < 0.2 && !windy) return null;        // nothing worth saying
-
   const wind = w.windMph + " mph " + compass(w.windFromDeg) + " wind";
+  if (curMph < 0.2 && w.windMph < 8) return null;
 
-  if (curMph < 0.2) return {cls:"", lead:"Slack water.",
-    text:"Most paddlers go around " + PADDLE_MPH + " mph, and with the river slack that is about "
-      + "what you will do in either direction. The " + wind + " is the only thing to plan around."};
+  if (curMph < 0.2) return {cls:"", text:"Most paddlers go around " + PADDLE_MPH
+    + " mph, and the river is slack right now, so expect about that in either direction. The "
+    + wind + " is the only thing to plan around."};
 
   const pace = v => Math.max(0.3, v).toFixed(1);
   const north = pace(cv > 0 ? PADDLE_MPH + curMph : PADDLE_MPH - curMph);
   const south = pace(cv > 0 ? PADDLE_MPH - curMph : PADDLE_MPH + curMph);
-  const speeds = "Most paddlers go around " + PADDLE_MPH + " mph. Factor in the current and right now you could "
-    + "expect to go about <b>" + south + " mph heading south</b> and <b>" + north + " mph heading north</b>.";
-
   const vs = windVsCurrent(w.windFromDeg, cv);
-  if (vs === "opposed") return {cls:"cold", lead:"Wind against the current.",
-    text:speeds + " The " + wind + " is blowing against the current, so the surface will be a bit lumpier "
-      + "than usual and you will lose a little more heading into it."};
 
-  if (vs === "aligned") return {cls:"good", lead:"Wind and current together.",
-    text:speeds + " The " + wind + " is going the same way as the current, so the water stays smooth and the "
-      + "push is better than those numbers suggest — and so is the work coming back."};
-
-  return {cls:"", lead:"Current running " + (cv > 0 ? "north" : "south") + ".", text:speeds};
+  return {
+    cls: vs === "opposed" ? "cold" : vs === "aligned" ? "good" : "",
+    text: "The current is running " + (cv > 0 ? "north" : "south") + " at " + curMph.toFixed(1)
+      + " mph. Most paddlers go around " + PADDLE_MPH + " mph, so expect about <b>" + north
+      + " mph heading north</b> and <b>" + south + " mph heading south</b>."
+      + (vs === "opposed" ? " The " + wind + " is blowing against it, so the surface will be a little lumpier than usual."
+       : vs === "aligned" ? " The " + wind + " is going the same way, so the surface should stay smooth." : "")
+  };
 }
 
 /* ---------- weather, alerts, sky (placeholder readings) ---------- */
@@ -995,9 +991,9 @@ function render(){
       : '<b class="state-ebb">Ebbing</b> &mdash; running south, downriver toward Bear Mountain.';
   drawDial(cv);
   const cn = nextAfter(CUR, t);
-  const wcb = windCurrentBand(DEMO, cv, t);
+  const wcb = windCurrentBand(DEMO, cv);
   $("curWindBand").innerHTML = wcb
-    ? '<div class="band ' + (wcb.cls || "plain") + '"><b>' + wcb.lead + "</b> " + wcb.text + "</div>"
+    ? '<div class="band ' + (wcb.cls || "plain") + '">' + wcb.text + "</div>"
     : "";
   $("curNext").innerHTML = cn
     ? "Next: <b>" + (cn.type === "slack" ? "slack water" : "max " + cn.type + " " + Math.abs(cn.v).toFixed(1) + " kt")
