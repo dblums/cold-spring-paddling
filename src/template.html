@@ -644,9 +644,13 @@ function render(){
   /* --- current --- */
   const cv = curAt(t);
   const cls = cv > 0.15 ? "flood" : cv < -0.15 ? "ebb" : "slack";
-  $("curSpeed").textContent = Math.abs(cv).toFixed(1);
+  const knots = Math.abs(cv).toFixed(1);
+  $("curSpeed").textContent = knots;
   $("curSpeed").className = "num state-" + cls;
-  $("curMph").textContent = "\u2248 " + (Math.abs(cv) * 1.15078).toFixed(1) + " mph";
+  // Convert the DISPLAYED knots, not the raw value. Converting the raw value is
+  // more precise but can round to the same figure as the knots shown beside it
+  // (0.37 kt -> "0.4 knots = 0.4 mph"), which reads as a broken conversion.
+  $("curMph").textContent = "\u2248 " + (knots * 1.15078).toFixed(1) + " mph";
   $("curCaption").innerHTML = cls === "slack"
     ? '<b class="state-slack">Slack water</b>'
     : cls === "flood"
