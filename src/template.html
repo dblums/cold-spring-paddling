@@ -1,0 +1,715 @@
+<title>Hudson River Paddling Conditions Near Cold Spring, NY</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#eaeeee; --surface:#fbfcfc; --surface-2:#f1f4f4;
+  --ink:#16242c; --ink-2:#3d5058; --muted:#67797f; --line:#d2dbdc; --line-2:#e2e8e8;
+  --ebb:#bd5f33; --ebb-soft:#bd5f3322; --flood:#2f6f96; --flood-soft:#2f6f9622;
+  --safe:#2f7d52; --safe-soft:#2f7d5218; --closed:#a93c3c; --closed-soft:#a93c3c14;
+  --mud:#8a6a2f; --mud-soft:#8a6a2f14;
+  --river:#2b6b7f;
+  --shadow:0 1px 2px rgba(22,36,44,.06), 0 6px 20px -12px rgba(22,36,44,.28);
+}
+:root:not([data-theme="light"]){ color-scheme:light dark; }
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0c1518; --surface:#131f23; --surface-2:#18272b;
+    --ink:#e7eeef; --ink-2:#b6c6ca; --muted:#8ba1a7; --line:#26383d; --line-2:#1e2f34;
+    --ebb:#e08a5c; --ebb-soft:#e08a5c26; --flood:#6aa9cf; --flood-soft:#6aa9cf26;
+    --safe:#5cb884; --safe-soft:#5cb8841f; --closed:#e07070; --closed-soft:#e0707018;
+    --mud:#d6ad52; --mud-soft:#d6ad521c;
+    --river:#78b6c4;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px -14px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#0c1518; --surface:#131f23; --surface-2:#18272b;
+  --ink:#e7eeef; --ink-2:#b6c6ca; --muted:#8ba1a7; --line:#26383d; --line-2:#1e2f34;
+  --ebb:#e08a5c; --ebb-soft:#e08a5c26; --flood:#6aa9cf; --flood-soft:#6aa9cf26;
+  --safe:#5cb884; --safe-soft:#5cb8841f; --closed:#e07070; --closed-soft:#e0707018;
+  --mud:#d6ad52; --mud-soft:#d6ad521c;
+  --river:#78b6c4;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px -14px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"Barlow","Helvetica Neue",Helvetica,Arial,sans-serif;
+  font-size:16px; line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:760px; margin:0 auto; padding:22px 16px 64px; display:flex; flex-direction:column; gap:16px}
+
+.label{
+  font-family:"Barlow Semi Condensed",sans-serif; font-weight:600;
+  text-transform:uppercase; letter-spacing:.09em; font-size:12px; color:var(--muted);
+}
+.num{font-family:"IBM Plex Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums}
+
+/* ---- masthead ---- */
+/* The banner commits to one look on purpose: light type on a dark scrim over the
+   photo, identical in both themes. Every colour here is painted, not inherited. */
+.hero{
+  position:relative; border-radius:14px; overflow:hidden;
+  aspect-ratio:16/7; background:#0e1f27; box-shadow:var(--shadow);
+}
+@media (max-width:560px){ .hero{aspect-ratio:4/3} }
+.hero img{
+  width:100%; height:100%; object-fit:cover; object-position:50% 56%;
+  display:block; border-radius:inherit;
+}
+.hero::after{
+  content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+  background:linear-gradient(to top, rgba(8,20,26,.92) 0%, rgba(8,20,26,.55) 30%,
+                                     rgba(8,20,26,.10) 58%, rgba(8,20,26,0) 80%);
+}
+.hero h1{
+  position:absolute; z-index:1; left:clamp(16px,3.4vw,26px); right:clamp(16px,3.4vw,26px);
+  bottom:clamp(13px,2.4vw,20px); margin:0; color:#f4f9fa;
+  font-family:"Barlow Semi Condensed",sans-serif; font-weight:700;
+  font-size:clamp(27px,5.6vw,40px); line-height:1.04; letter-spacing:-.01em;
+  text-wrap:balance; text-shadow:0 1px 14px rgba(8,20,26,.6);
+}
+.coords{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:baseline}
+.coords .num{font-size:12px; color:var(--muted); letter-spacing:.02em}
+
+/* ---- time control ---- */
+.timebar{
+  display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+  background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px 12px;
+  box-shadow:var(--shadow);
+}
+.timebar .label{flex:0 0 auto}
+input[type="datetime-local"]{
+  font-family:"IBM Plex Mono",monospace; font-size:14px; color:var(--ink);
+  background:var(--surface-2); border:1px solid var(--line); border-radius:7px;
+  padding:7px 9px; flex:1 1 200px; min-width:0;
+}
+button{
+  font-family:"Barlow Semi Condensed",sans-serif; font-weight:600; font-size:13px;
+  text-transform:uppercase; letter-spacing:.07em;
+  background:var(--surface-2); color:var(--ink-2);
+  border:1px solid var(--line); border-radius:7px; padding:8px 13px; cursor:pointer;
+}
+button:hover{border-color:var(--river); color:var(--ink)}
+button.on{background:var(--river); border-color:var(--river); color:var(--surface)}
+:root[data-theme="dark"] button.on, :root:not([data-theme="light"]) button.on{color:#0c1518}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]) button.on{color:#fbfcfc}}
+:focus-visible{outline:2px solid var(--river); outline-offset:2px}
+
+.stamp{font-size:13px; color:var(--muted); display:flex; gap:8px; align-items:baseline; flex-wrap:wrap}
+.stamp .now-dot{width:7px;height:7px;border-radius:50%;background:var(--safe);display:inline-block}
+
+/* ---- gate (hero) ---- */
+
+
+/* ---- cards ---- */
+.card{
+  background:var(--surface); border:1px solid var(--line); border-radius:12px;
+  padding:16px 16px 14px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:12px;
+}
+.gates{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+@media (max-width:560px){ .gates{grid-template-columns:1fr} }
+.gate-cell{
+  border-radius:10px; border:1px solid; padding:13px 14px 12px;
+  display:flex; flex-direction:column; gap:1px; min-width:0;
+}
+.gate-cell.ok{background:var(--safe-soft); border-color:var(--safe)}
+.gate-cell.no-cross{background:var(--closed-soft); border-color:var(--closed)}
+.gate-cell.no-mud{background:var(--mud-soft); border-color:var(--mud)}
+.gate-verdict{
+  font-family:"Barlow Semi Condensed",sans-serif; font-weight:700; line-height:1.05;
+  font-size:clamp(25px,5.4vw,31px); letter-spacing:-.01em; margin:2px 0 0;
+}
+.gate-cell.ok .gate-verdict{color:var(--safe)}
+.gate-cell.no-cross .gate-verdict{color:var(--closed)}
+.gate-cell.no-mud .gate-verdict{color:var(--mud)}
+.gate-sub{font-size:13.5px; color:var(--ink-2); margin:5px 0 0; line-height:1.45}
+.gate-when{
+  font-family:"IBM Plex Mono",monospace; font-size:13px; color:var(--ink);
+  margin:9px 0 0; padding-top:9px; border-top:1px solid var(--line-2);
+}
+.gate-when b{font-weight:600}
+.summary{
+  background:var(--surface-2); border-radius:10px; padding:13px 15px 14px;
+  display:flex; flex-direction:column; gap:5px;
+}
+.summary p{margin:0; font-size:15px; line-height:1.55; color:var(--ink); max-width:62ch}
+.summary b{font-weight:600; font-family:"IBM Plex Mono",monospace; font-size:14.5px}
+.gate-rule{
+  font-size:12.5px; color:var(--muted); margin:0; line-height:1.6;
+  padding-top:11px; border-top:1px solid var(--line-2);
+}
+.gate-rule b{color:var(--ink-2); font-weight:600}
+.card-head{display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap}
+.card-head h2{
+  font-family:"Barlow Semi Condensed",sans-serif; font-weight:600; font-size:19px;
+  margin:0; letter-spacing:.01em;
+}
+.station{font-size:11.5px; color:var(--muted); font-family:"IBM Plex Mono",monospace}
+
+.readout{display:flex; gap:16px; align-items:center; flex-wrap:wrap}
+.dial{flex:0 0 auto; width:58px; height:58px}
+.readout-main{flex:1 1 190px; min-width:0}
+.readout-main .value{
+  font-family:"IBM Plex Mono",monospace; font-weight:500; font-size:34px; line-height:1;
+  letter-spacing:-.02em; display:flex; align-items:baseline; gap:6px;
+}
+.readout-main .value .unit{font-size:15px; color:var(--muted); font-weight:400; letter-spacing:0}
+.readout-main .caption{font-size:14.5px; color:var(--ink-2); margin-top:4px}
+.state-ebb{color:var(--ebb)} .state-flood{color:var(--flood)} .state-slack{color:var(--muted)}
+
+.next{
+  display:flex; gap:10px; align-items:baseline; padding-top:11px; border-top:1px solid var(--line-2);
+  font-size:14.5px; color:var(--ink-2); flex-wrap:wrap;
+}
+.next b{font-weight:600; color:var(--ink)}
+.next .num{font-size:14px}
+
+.chart{width:100%; height:auto; display:block}
+.chart-note{font-size:12px; color:var(--muted); display:flex; gap:14px; flex-wrap:wrap; align-items:center}
+.key{display:inline-flex; align-items:center; gap:5px}
+.key i{width:11px; height:11px; border-radius:2px; display:inline-block}
+
+/* ---- timeline ---- */
+ol.timeline{list-style:none; margin:0; padding:0; display:flex; flex-direction:column}
+ol.timeline li{
+  display:grid; grid-template-columns:64px 12px 1fr auto; gap:10px; align-items:baseline;
+  padding:9px 0; border-top:1px solid var(--line-2);
+}
+ol.timeline li:first-child{border-top:none}
+ol.timeline .t{font-family:"IBM Plex Mono",monospace; font-size:14px; color:var(--ink); font-variant-numeric:tabular-nums}
+ol.timeline .pip{width:9px; height:9px; border-radius:50%; align-self:center; margin-top:1px}
+ol.timeline .what{font-size:15px; color:var(--ink)}
+ol.timeline .amt{font-family:"IBM Plex Mono",monospace; font-size:13.5px; color:var(--muted); text-align:right}
+.empty{font-size:14.5px; color:var(--muted); padding:6px 0}
+
+/* ---- footer ---- */
+footer{border-top:1px solid var(--line); padding-top:14px; display:flex; flex-direction:column; gap:9px}
+footer p{margin:0; font-size:13px; color:var(--muted); line-height:1.55; max-width:64ch}
+footer a{color:var(--river)}
+footer .label{margin-bottom:-2px}
+.important{
+  background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--ebb);
+  border-radius:0 9px 9px 0; padding:12px 15px 13px;
+  display:flex; flex-direction:column; gap:4px;
+}
+.important p{font-size:14px; color:var(--ink); line-height:1.55; margin:0; max-width:64ch}
+.warn{
+  background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--ebb);
+  border-radius:0 8px 8px 0; padding:11px 13px; font-size:13.5px; color:var(--ink-2); line-height:1.55;
+}
+.warn b{color:var(--ink)}
+#outofrange{display:none}
+@media (max-width:430px){
+  ol.timeline li{grid-template-columns:58px 10px 1fr; row-gap:0}
+  ol.timeline .amt{grid-column:3; text-align:left}
+}
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <img src="{{BANNER}}" alt="The Hudson River seen from a kayak at Cold Spring, looking downriver between Storm King and Breakneck Ridge on a calm morning">
+    <h1>Hudson River Paddling Conditions Near Cold Spring, NY</h1>
+  </header>
+
+  <div class="timebar">
+    <span class="label">Conditions at</span>
+    <input type="datetime-local" id="when" step="300" aria-label="Date and time, Eastern">
+    <button id="nowbtn" class="on">Now</button>
+  </div>
+  <div class="stamp" id="stamp"></div>
+
+  <div class="warn" id="outofrange"></div>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>River Current</h2>
+      <span class="station">NOAA ACT3726_1 West Point</span>
+    </div>
+    <div class="readout">
+      <svg class="dial" id="dial" viewBox="0 0 100 100" role="img" aria-label="Current direction"></svg>
+      <div class="readout-main">
+        <div class="value"><span id="curSpeed" class="num">&mdash;</span><span class="unit">knots</span></div>
+        <div class="caption" id="curCaption"></div>
+      </div>
+    </div>
+    <div class="next" id="curNext"></div>
+    <svg class="chart" id="curChart" viewBox="0 0 720 150" preserveAspectRatio="none" role="img" aria-label="Current speed through the day"></svg>
+    <div class="chart-note">
+      <span class="key"><i style="background:var(--flood)"></i>Flood &mdash; north, upriver</span>
+      <span class="key"><i style="background:var(--ebb)"></i>Ebb &mdash; south, downriver</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>Tide</h2>
+      <span class="station">NOAA 8518934 Beacon &minus;30 min</span>
+    </div>
+    <div class="readout">
+      <div class="readout-main">
+        <div class="value"><span id="tideHt" class="num">&mdash;</span><span class="unit">ft above MLLW</span></div>
+        <div class="caption" id="tideCaption"></div>
+      </div>
+    </div>
+    <div class="next" id="tideNext"></div>
+    <svg class="chart" id="tideChart" viewBox="0 0 720 190" preserveAspectRatio="none" role="img" aria-label="Tide curve through the day, marked with high and low tide"></svg>
+  </section>
+
+  <section class="card" id="gate">
+    <div class="card-head">
+      <h2>Constitution Marsh Access</h2>
+      <span class="station">Metro-North trestle</span>
+    </div>
+    <div class="gates">
+      <div class="gate-cell" id="crossCell">
+        <span class="label">Crossing under the trestle</span>
+        <p class="gate-verdict" id="crossVerdict">&mdash;</p>
+        <p class="gate-sub" id="crossSub"></p>
+        <p class="gate-when" id="crossWhen"></p>
+      </div>
+      <div class="gate-cell" id="marshCell">
+        <span class="label">Paddling inside the marsh</span>
+        <p class="gate-verdict" id="marshVerdict">&mdash;</p>
+        <p class="gate-sub" id="marshSub"></p>
+        <p class="gate-when" id="marshWhen"></p>
+      </div>
+    </div>
+    <div class="summary">
+      <span class="label">Summary</span>
+      <p id="summaryText"></p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2 id="restHead">Rest of the Day</h2>
+      <span class="station" id="restDate"></span>
+    </div>
+    <ol class="timeline" id="timeline"></ol>
+  </section>
+
+  <footer>
+    <div class="important">
+      <span class="label">Important note</span>
+      <p>These are predictions, not observations. They do not include wind, waves, barge traffic, upstream rain runoff, or storm surge &mdash; any of which can change conditions. Use your own judgment!</p>
+    </div>
+    <p>Current from NOAA station ACT3726_1 (West Point, off Duck Island) &mdash; about a mile and a half downriver, so it is used unshifted. Tide from NOAA station 8518934 (Beacon), shifted 30 minutes earlier to approximate Cold Spring. Values between NOAA's published slack/max and high/low points are interpolated; predictions run through 31&nbsp;Dec&nbsp;2028. The &plusmn;2h trestle and mud rules are local rules of thumb &mdash; look at the clearance yourself before you commit, and remember the tide inside the marsh lags the river.</p>
+    <p><a href="https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=ACT3726_1">NOAA currents &#8599;</a> &nbsp; <a href="https://tidesandcurrents.noaa.gov/stationhome.html?id=8518934">NOAA tides &#8599;</a></p>
+  </footer>
+</div>
+
+<script>
+"use strict";
+const RAW = {{PREDICTIONS}};
+const TZ = "America/New_York";
+const TIDE_SHIFT_MIN = -30;     // Beacon -> Cold Spring approximation
+const CUR_SHIFT_MIN = 0;        // West Point/Duck Island is already at Cold Spring
+const TRESTLE_MIN = 120;        // within 2h of high tide the trestle has no clearance
+const MUD_MIN = 120;            // within 2h of low tide the marsh is mud
+const MIN = 60000;
+
+/* ---------- decode ---------- */
+function unpack(start, deltas, vals, scale, shift){
+  const out = new Array(vals.length);
+  let t = start;
+  for (let i = 0; i < vals.length; i++){
+    if (i > 0) t += deltas[i-1];
+    out[i] = { t: (t + shift) * MIN, v: vals[i] / scale };
+  }
+  return out;
+}
+const TIDE = unpack(RAW.tideStart, RAW.tideDt, RAW.tideV, 100, TIDE_SHIFT_MIN);
+TIDE.forEach((p, i) => { p.type = ((i % 2 === 0) === (RAW.tideFirstType === "H")) ? "H" : "L"; });
+const CUR = unpack(RAW.curStart, RAW.curDt, RAW.curV, 100, CUR_SHIFT_MIN);
+CUR.forEach(p => { p.type = Math.abs(p.v) < 0.05 ? "slack" : (p.v > 0 ? "flood" : "ebb"); });
+const RANGE = [Math.max(TIDE[0].t, CUR[0].t), Math.min(TIDE[TIDE.length-1].t, CUR[CUR.length-1].t)];
+
+/* ---------- interpolation ---------- */
+function bracket(arr, t){
+  let lo = 0, hi = arr.length - 1;
+  if (t < arr[0].t || t > arr[hi].t) return null;
+  while (hi - lo > 1){ const mid = (lo + hi) >> 1; if (arr[mid].t <= t) lo = mid; else hi = mid; }
+  return [arr[lo], arr[hi]];
+}
+// Tide: cosine between successive high/low (matches NOAA 6-min data within ~0.25 ft).
+function tideAt(t){
+  const b = bracket(TIDE, t); if (!b) return null;
+  const [a, c] = b, f = (t - a.t) / (c.t - a.t);
+  return a.v + (c.v - a.v) * (1 - Math.cos(Math.PI * f)) / 2;
+}
+// Current: quarter-sine between slack and max, the tidal-current-table method
+// (matches NOAA 6-min data within ~0.1 kt).
+function curAt(t){
+  const b = bracket(CUR, t); if (!b) return null;
+  const [a, c] = b, f = (t - a.t) / (c.t - a.t);
+  return (a.type === "slack") ? c.v * Math.sin(Math.PI / 2 * f) : a.v * Math.cos(Math.PI / 2 * f);
+}
+/* ---------- Constitution Marsh access ----------
+   Two independent gates. Near high tide the river is up against the trestle and
+   you cannot pass under it; near low tide the marsh has drained and there is
+   nothing to paddle on. They never overlap: high and low tide are at least
+   4h 44m apart here, so the state is always exactly one of open/blocked/mud. */
+const HIGHS = TIDE.filter(p => p.type === "H");
+const LOWS  = TIDE.filter(p => p.type === "L");
+function nearestIn(arr, t){
+  let lo = 0, hi = arr.length - 1;
+  if (t <= arr[0].t) return arr[0];
+  if (t >= arr[hi].t) return arr[hi];
+  while (hi - lo > 1){ const m = (lo + hi) >> 1; if (arr[m].t <= t) lo = m; else hi = m; }
+  return (t - arr[lo].t <= arr[hi].t - t) ? arr[lo] : arr[hi];
+}
+const blockedAt = t => Math.abs(t - nearestIn(HIGHS, t).t) <= TRESTLE_MIN * MIN;
+const muddyAt   = t => Math.abs(t - nearestIn(LOWS, t).t)  <= MUD_MIN * MIN;
+
+
+const nextAfter = (arr, t, pred) => arr.find(p => p.t > t && (!pred || pred(p))) || null;
+const lastBefore = (arr, t, pred) => { let r = null; for (const p of arr){ if (p.t > t) break; if (!pred || pred(p)) r = p; } return r; };
+
+/* ---------- time helpers (always Eastern) ---------- */
+const fmtT = new Intl.DateTimeFormat("en-US", {hour:"numeric", minute:"2-digit", timeZone:TZ});
+const fmtTD = new Intl.DateTimeFormat("en-US", {weekday:"short", hour:"numeric", minute:"2-digit", timeZone:TZ});
+const fmtDate = new Intl.DateTimeFormat("en-US", {weekday:"long", month:"long", day:"numeric", timeZone:TZ});
+const fmtParts = new Intl.DateTimeFormat("en-CA", {year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit", hour12:false, timeZone:TZ});
+const fmtOff = new Intl.DateTimeFormat("en-US", {timeZone:TZ, timeZoneName:"longOffset"});
+
+function offsetMin(ms){
+  const s = fmtOff.formatToParts(new Date(ms)).find(p => p.type === "timeZoneName").value; // GMT-04:00
+  const m = /GMT([+-])(\d\d):(\d\d)/.exec(s);
+  return m ? (m[1] === "-" ? -1 : 1) * (+m[2] * 60 + +m[3]) : 0;
+}
+function nyParts(ms){
+  const p = {}; for (const x of fmtParts.formatToParts(new Date(ms))) p[x.type] = x.value;
+  return {y:+p.year, mo:+p.month, d:+p.day, h:+p.hour % 24, mi:+p.minute};
+}
+// Eastern wall clock -> epoch ms
+function fromNY(y, mo, d, h, mi){
+  const guess = Date.UTC(y, mo-1, d, h, mi);
+  let ms = guess - offsetMin(guess) * MIN;
+  ms = guess - offsetMin(ms) * MIN;
+  return ms;
+}
+function dayStartNY(ms){ const p = nyParts(ms); return fromNY(p.y, p.mo, p.d, 0, 0); }
+function dur(ms){
+  const m = Math.max(0, Math.round(ms / MIN)), h = Math.floor(m / 60);
+  return h ? h + "h " + String(m % 60).padStart(2, "0") + "m" : m + "m";
+}
+const pad = n => String(n).padStart(2, "0");
+
+/* ---------- state ---------- */
+let selected = Date.now();
+let live = true;
+const $ = id => document.getElementById(id);
+
+const whenEl = $("when");
+whenEl.addEventListener("input", () => {
+  const v = whenEl.value; if (!v) return;
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(v); if (!m) return;
+  selected = fromNY(+m[1], +m[2], +m[3], +m[4], +m[5]);
+  live = false; $("nowbtn").classList.remove("on"); render();
+});
+$("nowbtn").addEventListener("click", () => { live = true; selected = Date.now(); $("nowbtn").classList.add("on"); render(); });
+setInterval(() => { if (live){ selected = Date.now(); render(); } }, 30000);
+
+function setPicker(){
+  const p = nyParts(selected);
+  whenEl.value = p.y + "-" + pad(p.mo) + "-" + pad(p.d) + "T" + pad(p.h) + ":" + pad(p.mi);
+}
+
+/* ---------- charts ---------- */
+const PAD = {l:42, r:16, t:24, b:24};
+const svgNS = "http://www.w3.org/2000/svg";
+function el(name, attrs, text){
+  const n = document.createElementNS(svgNS, name);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  if (text != null) n.textContent = text;
+  return n;
+}
+function axis(g, W, H, t0, t1, x){
+  for (let h = 0; h <= 24; h += 3){
+    const t = t0 + h * 60 * MIN; if (t > t1) break;
+    const xx = x(t);
+    g.appendChild(el("line", {x1:xx, y1:PAD.t, x2:xx, y2:H - PAD.b, stroke:"var(--line-2)", "stroke-width":1}));
+    const lbl = h === 0 ? "12a" : h === 12 ? "12p" : h < 12 ? h + "a" : (h - 12) + "p";
+    if (h < 24) g.appendChild(el("text", {x:xx + 3, y:H - PAD.b + 15, fill:"var(--muted)", "font-size":11, "font-family":"IBM Plex Mono, monospace"}, lbl));
+  }
+}
+// Draw the OTHER curve's turning points on this chart, so the two are never
+// read as happening at the same moment.
+function ghosts(svg, marks, W, H, x){
+  for (const m of marks){
+    const xx = x(m.t);
+    if (xx < PAD.l + 6 || xx > W - PAD.r - 6) continue;
+    svg.appendChild(el("line", {x1:xx, y1:PAD.t, x2:xx, y2:H - PAD.b, stroke:m.col,
+      "stroke-width":1, "stroke-dasharray":"2 4", opacity:.85}));
+    svg.appendChild(el("text", {x:xx, y:PAD.t - 6, fill:m.col, "font-size":10,
+      "text-anchor":"middle", "font-family":"Barlow Semi Condensed, sans-serif",
+      "letter-spacing":".05em", "font-weight":600}, m.label));
+  }
+}
+const tideMarks = (t0, t1) => TIDE.filter(p => p.t >= t0 && p.t <= t1)
+  .map(p => ({t:p.t, label:p.type === "H" ? "HIGH TIDE" : "LOW TIDE", col:"var(--river)"}));
+
+function marker(g, xx, H, label){
+  g.appendChild(el("line", {x1:xx, y1:PAD.t - 6, x2:xx, y2:H - PAD.b, stroke:"var(--ink)", "stroke-width":2}));
+  g.appendChild(el("circle", {cx:xx, cy:PAD.t - 8, r:3.5, fill:"var(--ink)"}));
+}
+
+function drawTide(t0, t1){
+  const svg = $("tideChart"), W = 720, H = 190;
+  svg.textContent = "";
+  const x = t => PAD.l + (t - t0) / (t1 - t0) * (W - PAD.l - PAD.r);
+  const lo = Math.min(...TIDE.filter(p => p.t > t0 - 9e7 && p.t < t1 + 9e7).map(p => p.v), 0) - 0.4;
+  const hi = Math.max(...TIDE.filter(p => p.t > t0 - 9e7 && p.t < t1 + 9e7).map(p => p.v), 1) + 0.4;
+  const y = v => PAD.t + (hi - v) / (hi - lo) * (H - PAD.t - PAD.b);
+
+  // gridlines + labels
+  for (const v of [0, 1, 2, 3, 4]){
+    if (v < lo || v > hi) continue;
+    svg.appendChild(el("line", {x1:PAD.l, y1:y(v), x2:W - PAD.r, y2:y(v), stroke:"var(--line-2)", "stroke-width":1}));
+    svg.appendChild(el("text", {x:PAD.l - 7, y:y(v) + 4, fill:"var(--muted)", "font-size":11, "text-anchor":"end", "font-family":"IBM Plex Mono, monospace"}, v + "'"));
+  }
+  axis(svg, W, H, t0, t1, x);
+
+  let d = "", area = "";
+  for (let t = t0; t <= t1; t += 6 * MIN){
+    const v = tideAt(t); if (v == null) continue;
+    d += (d ? "L" : "M") + x(t).toFixed(1) + " " + y(v).toFixed(1);
+  }
+  if (d){
+    area = d + "L" + x(t1).toFixed(1) + " " + y(lo).toFixed(1) + "L" + x(t0).toFixed(1) + " " + y(lo).toFixed(1) + "Z";
+    svg.appendChild(el("path", {d:area, fill:"var(--river)", opacity:.10}));
+    svg.appendChild(el("path", {d:d, fill:"none", stroke:"var(--river)", "stroke-width":2.2, "stroke-linejoin":"round"}));
+  }
+  // high/low labels
+  for (const p of TIDE){
+    if (p.t < t0 || p.t > t1) continue;
+    svg.appendChild(el("circle", {cx:x(p.t), cy:y(p.v), r:3, fill:"var(--river)"}));
+    const up = p.type === "H";
+    svg.appendChild(el("text", {
+      x:Math.min(Math.max(x(p.t), PAD.l + 16), W - PAD.r - 16), y:y(p.v) + (up ? -9 : 16),
+      fill:"var(--ink-2)", "font-size":11.5, "text-anchor":"middle", "font-family":"IBM Plex Mono, monospace"
+    }, (up ? "H " : "L ") + fmtT.format(p.t).replace(/\s/g, "").toLowerCase()));
+  }
+  const sv = tideAt(selected);
+  marker(svg, x(selected), H);
+  if (sv != null) svg.appendChild(el("circle", {cx:x(selected), cy:y(sv), r:5, fill:"var(--ink)", stroke:"var(--surface)", "stroke-width":2}));
+}
+
+function drawCur(t0, t1){
+  const svg = $("curChart"), W = 720, H = 150;
+  svg.textContent = "";
+  const x = t => PAD.l + (t - t0) / (t1 - t0) * (W - PAD.l - PAD.r);
+  const mx = Math.max(1, ...CUR.filter(p => p.t > t0 - 9e7 && p.t < t1 + 9e7).map(p => Math.abs(p.v))) + .25;
+  const y = v => PAD.t + (mx - v) / (2 * mx) * (H - PAD.t - PAD.b);
+
+  for (const v of [-1, 0, 1]){
+    const lv = v * Math.max(1, Math.round(mx - .25));
+    svg.appendChild(el("line", {x1:PAD.l, y1:y(lv), x2:W - PAD.r, y2:y(lv), stroke:v === 0 ? "var(--line)" : "var(--line-2)", "stroke-width":v === 0 ? 1.5 : 1}));
+    svg.appendChild(el("text", {x:PAD.l - 7, y:y(lv) + 4, fill:"var(--muted)", "font-size":11, "text-anchor":"end", "font-family":"IBM Plex Mono, monospace"}, v === 0 ? "slack" : Math.abs(lv) + "kt"));
+  }
+  axis(svg, W, H, t0, t1, x);
+  ghosts(svg, tideMarks(t0, t1), W, H, x);
+
+  // split fill at the zero line so flood and ebb read as opposites
+  let run = [], runSign = 0;
+  const flush = () => {
+    if (run.length > 1){
+      const pts = run.map(p => p[0].toFixed(1) + " " + p[1].toFixed(1)).join("L");
+      svg.appendChild(el("path", {
+        d:"M" + run[0][0].toFixed(1) + " " + y(0).toFixed(1) + "L" + pts + "L" + run[run.length-1][0].toFixed(1) + " " + y(0).toFixed(1) + "Z",
+        fill:runSign > 0 ? "var(--flood)" : "var(--ebb)", opacity:.22
+      }));
+    }
+    run = [];
+  };
+  let line = "";
+  for (let t = t0; t <= t1; t += 6 * MIN){
+    const v = curAt(t); if (v == null) continue;
+    const sg = v >= 0 ? 1 : -1;
+    if (sg !== runSign){ flush(); runSign = sg; }
+    run.push([x(t), y(v)]);
+    line += (line ? "L" : "M") + x(t).toFixed(1) + " " + y(v).toFixed(1);
+  }
+  flush();
+  if (line) svg.appendChild(el("path", {d:line, fill:"none", stroke:"var(--ink-2)", "stroke-width":1.6}));
+
+  for (const p of CUR){
+    if (p.t < t0 || p.t > t1 || p.type === "slack") continue;
+    svg.appendChild(el("text", {
+      x:Math.min(Math.max(x(p.t), PAD.l + 20), W - PAD.r - 20), y:y(p.v) + (p.v > 0 ? -7 : 15),
+      fill:p.v > 0 ? "var(--flood)" : "var(--ebb)", "font-size":11.5, "text-anchor":"middle",
+      "font-family":"IBM Plex Mono, monospace", "font-weight":500
+    }, Math.abs(p.v).toFixed(1)));
+  }
+  const cv = curAt(selected);
+  marker(svg, x(selected), H);
+  if (cv != null) svg.appendChild(el("circle", {cx:x(selected), cy:y(cv), r:5, fill:"var(--ink)", stroke:"var(--surface)", "stroke-width":2}));
+}
+
+/* ---------- dial ---------- */
+function drawDial(v){
+  const svg = $("dial"); svg.textContent = "";
+  const dir = v > 0.05 ? 10 : v < -0.05 ? 190 : null;
+  const col = v > 0.05 ? "var(--flood)" : v < -0.05 ? "var(--ebb)" : "var(--muted)";
+  svg.appendChild(el("circle", {cx:50, cy:50, r:44, fill:"none", stroke:"var(--line)", "stroke-width":2}));
+  svg.appendChild(el("text", {x:50, y:15, "text-anchor":"middle", fill:"var(--muted)", "font-size":13, "font-family":"Barlow Semi Condensed, sans-serif"}, "N"));
+  if (dir == null){
+    svg.appendChild(el("line", {x1:24, y1:50, x2:76, y2:50, stroke:col, "stroke-width":5, "stroke-linecap":"round"}));
+    return;
+  }
+  const g = el("g", {transform:"rotate(" + dir + " 50 50)"});
+  g.appendChild(el("path", {d:"M50 14 L63 42 L50 35 L37 42 Z", fill:col}));
+  g.appendChild(el("line", {x1:50, y1:35, x2:50, y2:82, stroke:col, "stroke-width":5, "stroke-linecap":"round"}));
+  svg.appendChild(g);
+}
+
+/* ---------- render ---------- */
+function render(){
+  setPicker();
+  const t = selected;
+  const inRange = t >= RANGE[0] && t <= RANGE[1];
+  $("outofrange").style.display = inRange ? "none" : "block";
+  if (!inRange){
+    $("outofrange").innerHTML = "<b>No prediction data for that time.</b> This page carries NOAA predictions from 1 Jan 2026 through 31 Dec 2028. Pick a date in that range.";
+    return;
+  }
+
+  const nowMs = Date.now();
+  $("stamp").innerHTML = live
+    ? '<span class="now-dot"></span> Live &mdash; ' + fmtDate.format(t) + ", " + fmtT.format(t) + " ET"
+    : "Planning for " + fmtDate.format(t) + ", " + fmtT.format(t) + " ET &nbsp;&middot;&nbsp; now is " + fmtT.format(nowMs);
+
+  /* --- marsh: two independent gates --- */
+  const crossOK = !blockedAt(t), marshOK = !muddyAt(t);
+  const hiT = nearestIn(HIGHS, t), loT = nearestIn(LOWS, t);
+  // when clear, the next gate is the NEXT tide's window opening; when shut, it is
+  // this tide's window closing. nearestIn() would grab the wrong tide here.
+  const nextHi = nextAfter(HIGHS, t), nextLo = nextAfter(LOWS, t);
+  const crossFlip = crossOK ? (nextHi ? nextHi.t - TRESTLE_MIN * MIN : null) : hiT.t + TRESTLE_MIN * MIN;
+  const marshFlip = marshOK ? (nextLo ? nextLo.t - MUD_MIN * MIN : null) : loT.t + MUD_MIN * MIN;
+
+  $("crossCell").className = "gate-cell " + (crossOK ? "ok" : "no-cross");
+  $("crossVerdict").textContent = crossOK ? "Likely Safe*" : "Unsafe";
+  $("crossSub").innerHTML = "As a general rule, it&rsquo;s safe to paddle under the trestle when it&rsquo;s at least 2h before or after high tide. Storms and winds can change this calculus. Use your own judgment!";
+  $("crossWhen").innerHTML = crossFlip
+    ? (crossOK ? "Unsafe at <b>" : "Likely safe at <b>") + fmtT.format(crossFlip) + "</b> &middot; " + dur(Math.max(0, crossFlip - t))
+    : "";
+
+  $("marshCell").className = "gate-cell " + (marshOK ? "ok" : "no-mud");
+  $("marshVerdict").textContent = marshOK ? "Paddleable" : "Mud";
+  $("marshSub").innerHTML = marshOK
+    ? "The marsh water is deep enough for paddling right now. Within 2h of low tide most areas will turn to mud and you don&rsquo;t want to get stuck!"
+    : "Within 2h of low tide (" + fmtT.format(loT.t) + ") &mdash; most of the marsh is mud flat.";
+  $("marshWhen").innerHTML = marshFlip
+    ? (marshOK ? "Mud at <b>" : "Refloats at <b>") + fmtT.format(marshFlip) + "</b> &middot; " + dur(Math.max(0, marshFlip - t))
+    : "";
+
+  /* --- plain-language summary: what bites first, and by when --- */
+  const nextExt = nextAfter(TIDE, t), risingNow = nextExt && nextExt.type === "H";
+  let summary;
+  if (!crossOK){
+    // inside the high-tide window: the marsh is at its deepest, the way out is shut
+    const mudLo = nextAfter(LOWS, crossFlip);
+    summary = "It&rsquo;s not safe to paddle under the trestle right now. If you&rsquo;re already in the marsh, "
+      + "keep paddling &mdash; the water in there is at its deepest &mdash; and plan to come back out after <b>"
+      + fmtT.format(crossFlip) + "</b>"
+      + (mudLo ? ", but before <b>" + fmtT.format(mudLo.t - MUD_MIN * MIN) + "</b> when the marsh starts turning to mud." : ".");
+  } else if (!marshOK){
+    summary = "You can get under the trestle right now, but most of the marsh is mud. There will be enough water "
+      + "to paddle in again at <b>" + fmtT.format(marshFlip) + "</b>.";
+  } else if (!risingNow){
+    summary = "It&rsquo;s likely safe to paddle under the trestle right now. The tide is going down, so be sure to exit before <b>"
+      + fmtT.format(marshFlip) + "</b> or you&rsquo;ll get stuck in the mud.";
+  } else {
+    const reopen = nextHi ? nextHi.t + TRESTLE_MIN * MIN : null;
+    summary = "It&rsquo;s likely safe to paddle under the trestle right now. The tide is rising, so be sure to exit before <b>"
+      + fmtT.format(crossFlip) + "</b>"
+      + (reopen ? " or you&rsquo;ll have to stay in the marsh until the next possible exit at <b>" + fmtT.format(reopen) + "</b>." : ".");
+  }
+  $("summaryText").innerHTML = summary;
+
+  /* --- current --- */
+  const cv = curAt(t);
+  const cls = cv > 0.15 ? "flood" : cv < -0.15 ? "ebb" : "slack";
+  $("curSpeed").textContent = Math.abs(cv).toFixed(1);
+  $("curSpeed").className = "num state-" + cls;
+  $("curCaption").innerHTML = cls === "slack"
+    ? '<b class="state-slack">Slack water</b>'
+    : cls === "flood"
+      ? '<b class="state-flood">Flooding</b> &mdash; running north, upriver toward Beacon.'
+      : '<b class="state-ebb">Ebbing</b> &mdash; running south, downriver toward Bear Mountain.';
+  drawDial(cv);
+  const cn = nextAfter(CUR, t);
+  $("curNext").innerHTML = cn
+    ? "Next: <b>" + (cn.type === "slack" ? "slack water" : "max " + cn.type + " " + Math.abs(cn.v).toFixed(1) + " kt")
+      + "</b> at <span class='num'>" + fmtT.format(cn.t) + "</span> &middot; in " + dur(cn.t - t)
+    : "";
+
+  /* --- tide --- */
+  const tv = tideAt(t);
+  const tn = nextAfter(TIDE, t), tp = lastBefore(TIDE, t);
+  const rising = tn && tn.type === "H";
+  $("tideHt").textContent = tv.toFixed(1);
+  let phase = "";
+  if (tp && tn) phase = Math.round((t - tp.t) / (tn.t - tp.t) * 100) + "% of the way from " + (tp.type === "H" ? "high" : "low") + " to " + (tn.type === "H" ? "high" : "low");
+  $("tideCaption").innerHTML = "<b>" + (rising ? "Rising" : "Falling") + "</b> &mdash; " + phase + ".";
+  $("tideNext").innerHTML = tn
+    ? "Next: <b>" + (tn.type === "H" ? "high" : "low") + " tide " + tn.v.toFixed(1) + " ft</b> at <span class='num'>"
+      + fmtT.format(tn.t) + "</span> &middot; in " + dur(tn.t - t)
+    : "";
+
+  /* --- charts --- */
+  const t0 = dayStartNY(t), t1 = t0 + 24 * 3600e3;
+  drawTide(t0, t1);
+  drawCur(t0, t1);
+
+  /* --- timeline --- */
+  const ev = [];
+  for (const p of TIDE){
+    if (p.t < t || p.t > t1) continue;
+    ev.push({t:p.t, kind:"tide", what:(p.type === "H" ? "High tide" : "Low tide"), amt:p.v.toFixed(1) + " ft", col:"var(--river)"});
+    const w = (p.type === "H" ? TRESTLE_MIN : MUD_MIN) * MIN;
+    if (p.type === "H"){
+      ev.push({t:p.t - w, kind:"gate", what:"Trestle crossing closes", amt:"crossing", col:"var(--closed)"});
+      ev.push({t:p.t + w, kind:"gate", what:"Trestle crossing reopens", amt:"crossing", col:"var(--safe)"});
+    } else {
+      ev.push({t:p.t - w, kind:"gate", what:"Marsh drains to mud", amt:"marsh", col:"var(--mud)"});
+      ev.push({t:p.t + w, kind:"gate", what:"Marsh refloats", amt:"marsh", col:"var(--safe)"});
+    }
+  }
+  for (const p of CUR){
+    if (p.t < t || p.t > t1) continue;
+    ev.push({
+      t:p.t, kind:"cur",
+      what:p.type === "slack" ? "Slack water" : (p.type === "flood" ? "Max flood, upriver" : "Max ebb, downriver"),
+      amt:p.type === "slack" ? "0.0 kt" : Math.abs(p.v).toFixed(1) + " kt",
+      col:p.type === "slack" ? "var(--muted)" : (p.type === "flood" ? "var(--flood)" : "var(--ebb)")
+    });
+  }
+  ev.sort((a, b) => a.t - b.t);
+  const ol = $("timeline");
+  ol.textContent = "";
+  if (!ev.length) ol.innerHTML = '<li class="empty">Nothing left today &mdash; step forward to tomorrow to plan.</li>';
+  for (const e of ev.filter(e => e.t >= t)){
+    const li = document.createElement("li");
+    const nextDay = dayStartNY(e.t) !== t0
+      ? ' <span style="color:var(--muted);font-size:13px">' + new Intl.DateTimeFormat("en-US", {weekday:"short", timeZone:TZ}).format(e.t) + "</span>"
+      : "";
+    li.innerHTML = '<span class="t">' + fmtT.format(e.t).replace(" ", "") + '</span>'
+      + '<span class="pip" style="background:' + e.col + '"></span>'
+      + '<span class="what">' + e.what + nextDay + "</span>"
+      + '<span class="amt">' + e.amt + " &middot; " + dur(e.t - t) + "</span>";
+    ol.appendChild(li);
+  }
+  const sameDay = dayStartNY(nowMs) === t0;
+  $("restHead").textContent = sameDay ? "Rest of the Day" : "Rest of That Day";
+  $("restDate").textContent = fmtDate.format(t);
+}
+render();
+</script>
