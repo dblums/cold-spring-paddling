@@ -9,6 +9,7 @@
   --ebb:#bd5f33; --ebb-soft:#bd5f3322; --flood:#2f6f96; --flood-soft:#2f6f9622;
   --safe:#2f7d52; --safe-soft:#2f7d5218; --closed:#a93c3c; --closed-soft:#a93c3c14;
   --mud:#8a6a2f; --mud-soft:#8a6a2f14;
+  --sun:#b8801f; --moon:#5d7490;
   --river:#2b6b7f;
   --shadow:0 1px 2px rgba(22,36,44,.06), 0 6px 20px -12px rgba(22,36,44,.28);
 }
@@ -20,6 +21,7 @@
     --ebb:#e08a5c; --ebb-soft:#e08a5c26; --flood:#6aa9cf; --flood-soft:#6aa9cf26;
     --safe:#5cb884; --safe-soft:#5cb8841f; --closed:#e07070; --closed-soft:#e0707018;
     --mud:#d6ad52; --mud-soft:#d6ad521c;
+    --sun:#e0b25c; --moon:#93a8bf;
     --river:#78b6c4;
     --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px -14px rgba(0,0,0,.7);
   }
@@ -31,6 +33,7 @@
   --ebb:#e08a5c; --ebb-soft:#e08a5c26; --flood:#6aa9cf; --flood-soft:#6aa9cf26;
   --safe:#5cb884; --safe-soft:#5cb8841f; --closed:#e07070; --closed-soft:#e0707018;
   --mud:#d6ad52; --mud-soft:#d6ad521c;
+  --sun:#e0b25c; --moon:#93a8bf;
   --river:#78b6c4;
   --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px -14px rgba(0,0,0,.7);
 }
@@ -158,6 +161,10 @@ button.on{background:var(--river); border-color:var(--river); color:var(--surfac
 .alert .hd::before{content:"\26A0\FE0E"; font-size:15px}
 .alert .meta{font-family:"IBM Plex Mono",monospace; font-size:11.5px; opacity:.85}
 .alert p{margin:4px 0 0; font-size:13.5px; line-height:1.5}
+.alert a{
+  align-self:flex-start; margin-top:7px; font-size:12.5px; font-weight:600;
+  color:inherit; text-underline-offset:3px;
+}
 .alert.severe{background:var(--closed-soft); border-color:var(--closed); color:var(--closed)}
 .alert.moderate{background:var(--ebb-soft); border-color:var(--ebb); color:var(--ebb)}
 .alert.severe p, .alert.moderate p{color:var(--ink-2)}
@@ -205,6 +212,7 @@ button.on{background:var(--river); border-color:var(--river); color:var(--surfac
 .band.good{border-left-color:var(--safe); background:var(--safe-soft)}
 .band.cold{border-left-color:var(--flood); background:var(--flood-soft)}
 .band.mute{border-left-color:var(--line); background:var(--surface-2); color:var(--muted)}
+.card-note a{color:var(--river); text-underline-offset:3px}
 .card-note{
   margin:0; padding-top:12px; border-top:1px solid var(--line-2);
   font-size:12.5px; line-height:1.6; color:var(--muted);
@@ -324,17 +332,18 @@ footer .label{margin-bottom:-2px}
         <div class="sub" id="wxSkySub"></div>
       </div>
       <div class="tile">
-        <div class="lab">Water</div>
-        <div class="big"><span id="wxWater">&mdash;</span><span class="u">&deg;F</span></div>
-        <div class="sub" id="wxWaterSub"></div>
-      </div>
-      <div class="tile">
         <div class="lab">Air</div>
         <div class="big"><span id="wxAir">&mdash;</span><span class="u">&deg;F</span></div>
         <div class="sub" id="wxAirSub"></div>
       </div>
+      <div class="tile">
+        <div class="lab">Water</div>
+        <div class="big"><span id="wxWater">&mdash;</span><span class="u">&deg;F</span></div>
+        <div class="sub" id="wxWaterSub"></div>
+      </div>
     </div>
     <div id="wxBands"></div>
+    <p class="card-note">This is a paddler&rsquo;s summary, not a forecast service. For the hourly detail, radar and the full discussion, see the <a href="https://forecast.weather.gov/MapClick.php?lat=41.4204&amp;lon=-73.9568" target="_blank" rel="noopener">National Weather Service forecast for Cold Spring &#8599;</a></p>
   </section>
 
   <section class="card">
@@ -375,6 +384,31 @@ footer .label{margin-bottom:-2px}
     <p class="card-note">Unless you plan on paddling into Constitution Marsh or landing on a beach, tide is likely not very important to you.</p>
   </section>
 
+  <section class="card" id="gate">
+    <div class="card-head">
+      <h2>Constitution Marsh Access</h2>
+      <span class="station">Metro-North trestle</span>
+    </div>
+    <div class="summary" id="summaryBox">
+      <p id="summaryText"></p>
+    </div>
+    <div class="gates">
+      <div class="gate-cell" id="crossCell">
+        <span class="label">Crossing under the trestle</span>
+        <p class="gate-verdict" id="crossVerdict">&mdash;</p>
+        <p class="gate-sub" id="crossSub"></p>
+        <p class="gate-when" id="crossWhen"></p>
+      </div>
+      <div class="gate-cell" id="marshCell">
+        <span class="label">Paddling inside the marsh</span>
+        <p class="gate-verdict" id="marshVerdict">&mdash;</p>
+        <p class="gate-sub" id="marshSub"></p>
+        <p class="gate-when" id="marshWhen"></p>
+      </div>
+    </div>
+    <p class="card-note">Constitution Marsh is a 270-acre tidal wetland that you can access by paddling under the Metro-North train trestle just south of Cold Spring &mdash; but only when there is enough vertical clearance to do so safely.</p>
+  </section>
+
   <section class="card demo" id="skyCard">
     <p class="demo-flag">Example data &mdash; sun and moon maths not yet written</p>
     <div class="card-head">
@@ -400,31 +434,7 @@ footer .label{margin-bottom:-2px}
       </div>
     </div>
     <div id="skyBands"></div>
-  </section>
-
-  <section class="card" id="gate">
-    <div class="card-head">
-      <h2>Constitution Marsh Access</h2>
-      <span class="station">Metro-North trestle</span>
-    </div>
-    <div class="summary" id="summaryBox">
-      <p id="summaryText"></p>
-    </div>
-    <div class="gates">
-      <div class="gate-cell" id="crossCell">
-        <span class="label">Crossing under the trestle</span>
-        <p class="gate-verdict" id="crossVerdict">&mdash;</p>
-        <p class="gate-sub" id="crossSub"></p>
-        <p class="gate-when" id="crossWhen"></p>
-      </div>
-      <div class="gate-cell" id="marshCell">
-        <span class="label">Paddling inside the marsh</span>
-        <p class="gate-verdict" id="marshVerdict">&mdash;</p>
-        <p class="gate-sub" id="marshSub"></p>
-        <p class="gate-when" id="marshWhen"></p>
-      </div>
-    </div>
-    <p class="card-note">Constitution Marsh is a 270-acre tidal wetland that you can access by paddling under the Metro-North train trestle just south of Cold Spring &mdash; but only when there is enough vertical clearance to do so safely.</p>
+    <p class="card-note" id="skyNote"></p>
   </section>
 
   <section class="card">
@@ -502,14 +512,19 @@ function curAt(t){
 const DEMO = {
   windMph: 14, windGustMph: 22, windFromDeg: 315,   // 315 = from the NW
   skyText: "Partly cloudy", precipPct: 20, stormPct: 35,
-  waterF: 58, airF: 71, feelsF: 69,
+  waterF: 52, airF: 61, feelsF: 57,
   sunriseHM: [6, 47], sunsetHM: [18, 52],
+  dawnHM: [6, 19], duskHM: [19, 20],          // civil twilight: usable light
   moonPhase: 0.62,                                   // 0 new, .5 full, 1 new again
   moonriseHM: [15, 14], moonsetHM: [1, 2],
   alerts: [
-    {severity:"moderate", event:"Small Craft Advisory",
-     until:"9:00 PM EDT", text:"Winds 15 to 20 kt with gusts to 25 kt and waves to 2 ft. " +
-     "Conditions hazardous to small craft, which on this river means any kayak."}
+    {severity:"moderate", event:"Small Craft Advisory", until:"9:00 PM EDT",
+     text:"Winds 15 to 20 kt with gusts to 25 kt and waves to 2 ft. " +
+          "Conditions hazardous to small craft, which on this river means any kayak.",
+     url:"https://alerts.weather.gov/"},
+    {severity:"severe", event:"Severe Thunderstorm Watch", until:"8:00 PM EDT",
+     text:"Conditions are favourable for severe thunderstorms with damaging winds and frequent lightning.",
+     url:"https://alerts.weather.gov/"}
   ]
 };
 
@@ -528,17 +543,17 @@ function windVsCurrent(windFromDeg, cv){
   return d > 90 ? "opposed" : "aligned";
 }
 
-// Thresholds follow cold-water safety guidance: the danger is cold shock and
-// swim failure in the first minutes, which is why air temperature is the wrong
-// thing to dress for.
-function waterBand(f){
-  if (f < 50) return {cls:"warn", lead:"Dangerously cold.",
-    text:"Cold shock is immediate and incapacitating. A capsize here is life-threatening without a drysuit, whatever the air temperature says."};
-  if (f < 60) return {cls:"cold", lead:"Cold.",
-    text:"Cold shock is a real risk and your hands stop working fast. Dress for immersion, not for the air."};
-  if (f < 70) return {cls:"cold", lead:"Cool.",
-    text:"Survivable, but a long swim will still pull heat out of you faster than you expect."};
-  return {cls:"good", lead:"Mild.", text:"Immersion is unpleasant rather than dangerous."};
+const waterWord = f => f < 50 ? "Dangerously cold" : f < 60 ? "Cold" : f < 70 ? "Cool" : "Mild";
+
+// The "120 rule": if air plus water is 120F or less, paddlers are advised to
+// wear a wetsuit or drysuit. Either figure under 50F is its own reason.
+function immersionBand(airF, waterF){
+  const combined = airF + waterF;
+  if (combined > 120 && airF >= 50 && waterF >= 50) return null;
+  return {cls:combined <= 100 || waterF < 50 ? "warn" : "cold",
+    lead:"Always dress for immersion!",
+    text:"Consider wearing a wet or drysuit today, since the combined water + air temp is only "
+      + combined + "\u00B0F."};
 }
 
 const MOONS = [[0.03,"New moon"],[0.22,"Waxing crescent"],[0.28,"First quarter"],
@@ -771,7 +786,9 @@ function drawWeather(t, cv){
   // alerts first: they outrank everything below them
   $("alerts").innerHTML = DEMO.alerts.map(a =>
     '<div class="alert ' + a.severity + '"><div class="hd">' + a.event + "</div>"
-    + '<div class="meta">In effect until ' + a.until + "</div><p>" + a.text + "</p></div>").join("");
+    + '<div class="meta">In effect until ' + a.until + "</div><p>" + a.text + "</p>"
+    + (a.url ? '<a href="' + a.url + '" target="_blank" rel="noopener">Read the full alert &#8599;</a>' : "")
+    + "</div>").join("");
 
   const w = DEMO;
   $("wxWind").textContent = w.windMph;
@@ -786,10 +803,10 @@ function drawWeather(t, cv){
 
   $("wxSky").textContent = w.skyText;
   $("wxSkySub").innerHTML = w.precipPct + "% chance of rain<br><em>" + w.stormPct + "% thunderstorms</em>";
-  $("wxWater").textContent = w.waterF;
-  $("wxWaterSub").textContent = waterBand(w.waterF).lead.replace(".", "");
   $("wxAir").textContent = w.airF;
-  $("wxAirSub").innerHTML = "feels like " + w.feelsF + "&deg;<br><em>" + (w.airF - w.waterF) + "&deg; warmer than the water</em>";
+  $("wxAirSub").innerHTML = "feels like " + w.feelsF + "&deg;";
+  $("wxWater").textContent = w.waterF;
+  $("wxWaterSub").textContent = waterWord(w.waterF);
 
   const bands = [];
   // Lightning is the acute hazard on open water - you cannot outrun it in a kayak.
@@ -809,8 +826,8 @@ function drawWeather(t, cv){
     bands.push({cls:"good", lead:"Wind with the current.",
       text:"Wind and current are running the same way, which flattens the surface. The same wind against the current would be a different river."});
   }
-  const wb = waterBand(w.waterF);
-  bands.push({cls:wb.cls, lead:w.waterF + "°F water.", text:wb.text});
+  const imm = immersionBand(w.airF, w.waterF);
+  if (imm) bands.push(imm);
   $("wxBands").innerHTML = bands.map(b =>
     '<div class="band ' + b.cls + '"><b>' + b.lead + "</b> " + b.text + "</div>").join("");
 }
@@ -842,6 +859,14 @@ function drawSky(t){
     text:"Paddling after dark needs lights, and the trestle and the marsh channels are hard to read without them."});
   $("skyBands").innerHTML = bands.map(b =>
     '<div class="band ' + b.cls + '"><b>' + b.lead + "</b> " + b.text + "</div>").join("");
+
+  // Official sunrise and sunset are not the edges of usable light. Civil twilight
+  // is, and it is worth roughly half an hour at each end of the day.
+  const dawn = fromNY(p0.y, p0.mo, p0.d, w.dawnHM[0], w.dawnHM[1]);
+  const dusk = fromNY(p0.y, p0.mo, p0.d, w.duskHM[0], w.duskHM[1]);
+  $("skyNote").innerHTML = "There is usable light beyond those times. First light is around <b>"
+    + fmtT.format(dawn) + "</b>, " + dur(sunrise - dawn) + " before sunrise, and it stays paddleable until roughly <b>"
+    + fmtT.format(dusk) + "</b>, " + dur(dusk - sunset) + " after sunset.";
 }
 
 /* ---------- render ---------- */
@@ -978,6 +1003,19 @@ function render(){
       col:p.type === "slack" ? "var(--muted)" : (p.type === "flood" ? "var(--flood)" : "var(--ebb)")
     });
   }
+  // sun and moon belong in the day plan too - light is a planning constraint
+  const dp = nyParts(t0), hm = (k) => fromNY(dp.y, dp.mo, dp.d, DEMO[k][0], DEMO[k][1]);
+  for (const [key, what] of [["dawnHM","First light"], ["sunriseHM","Sunrise"],
+                             ["sunsetHM","Sunset"], ["duskHM","Last usable light"]]){
+    const at = hm(key);
+    if (at >= t && at <= t1) ev.push({t:at, kind:"sun", what:what, amt:"sun", col:"var(--sun)"});
+  }
+  for (const [key, what] of [["moonriseHM","Moonrise"], ["moonsetHM","Moonset"]]){
+    const at = hm(key);
+    if (at >= t && at <= t1) ev.push({t:at, kind:"moon", what:what,
+      amt:moonLit(DEMO.moonPhase) + "% lit", col:"var(--moon)"});
+  }
+
   ev.sort((a, b) => a.t - b.t);
   const ol = $("timeline");
   ol.textContent = "";
