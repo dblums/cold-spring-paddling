@@ -69,6 +69,10 @@ validated against NOAA's own 6-minute data before shipping:
 | Tide height | Cosine between successive high/low | 0.07 ft |
 | Current speed | Quarter-sine anchored at slack | 0.02 kt |
 
+Sun and moon are computed rather than fetched, and agree with the US Naval
+Observatory to within 2 minutes on sunrise, sunset and civil twilight, 7 minutes
+on moonrise and moonset, and 1 percentage point on illumination.
+
 The current one matters: reusing the cosine there — the obvious simplification —
 is about eight times worse (0.17 kt). Don't "tidy" them into one function.
 
@@ -78,6 +82,26 @@ Slack water is **not** high tide. At Cold Spring the current is running hardest
 within about half an hour of high and low tide, and does not go slack until
 roughly 2h 24m later. Launching at high tide expecting still water means
 launching into the strongest flood of the cycle.
+
+## Test it
+
+```bash
+node tests/offline.js     # pure logic, no network
+node tests/live.js        # checks the data against the sources it claims to come from
+```
+
+Both load the built `index.html` into a sandbox and exercise the code that
+actually ships, rather than a copy of it.
+
+`offline.js` covers time-zone and DST handling, the integrity of the baked-in
+predictions, interpolation shape, the marsh access windows and their boundaries,
+wind/current classification including crosswinds, the 120 rule, and formatting.
+
+`live.js` is the one that matters for trust. It confirms every tide time is
+exactly 30 minutes before Beacon and every current time matches West Point
+unshifted, that interpolated values track NOAA's own 6-minute series, that the
+computed sun and moon agree with the US Naval Observatory, and that the four live
+endpoints still return the fields the page reads.
 
 ## Build it
 
