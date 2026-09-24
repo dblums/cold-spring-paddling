@@ -1,11 +1,16 @@
-# Hudson River Paddling Conditions — Cold Spring, NY
+# Hudson River Paddling Conditions
 
-A single-page app showing tide, current, and Constitution Marsh access conditions
-for kayakers launching at Cold Spring, New York. It answers three questions a
-paddler needs answered before pushing off, for right now or for any date through
+Conditions for kayakers launching on the Hudson — weather, wind, water
+temperature, tide, current and daylight — for right now or for any date through
 2028.
 
-**Live site:** https://dblums.github.io/cold-spring-paddling/
+| Launch | |
+|---|---|
+| **Cold Spring** | https://dblums.github.io/cold-spring-paddling/ |
+| **Beacon** | https://dblums.github.io/cold-spring-paddling/beacon/ |
+
+Each launch is a JSON file in `locations/`. Adding a stretch of river means
+adding one file and re-running the fetch and build scripts; no code changes.
 
 ![The Hudson River from a kayak at Cold Spring](src/banner.jpg)
 
@@ -40,20 +45,31 @@ runtime, and no network dependency once loaded** — which matters, because cell
 service at the Cold Spring dock is unreliable.
 
 ```
-scripts/fetch_predictions.py   NOAA API  ->  data/predictions.json   (run rarely)
-scripts/build.py               template + data + photo  ->  index.html
+locations/*.json               one file per launch: stations, coordinates, features
+scripts/fetch_predictions.py   NOAA API  ->  data/<slug>.json        (run rarely)
+scripts/build.py               template + data + photo  ->  <slug>/index.html
 ```
+
+Sections can be gated to launches that have them. The Constitution Marsh card is
+wrapped in `<!--@if marsh-->` and only Cold Spring lists `marsh` in its features,
+so Beacon's page never carries that card or the code behind it.
 
 ### Data
 
-Three years of predictions (2026–2028) for two NOAA stations, stored as **turning
-points only** — high/low tides, and slack/max currents. About 12,700 events in
-under 90 KB, delta-encoded so the numbers stay small.
+Three years of predictions (2026–2028) per launch, stored as **turning points
+only** — high/low tides, and slack/max currents. About 12,700 events in under
+90 KB each, delta-encoded so the numbers stay small.
 
-- **Tides:** station 8518934 (Beacon), shifted 30 minutes earlier to approximate
-  Cold Spring.
-- **Currents:** station ACT3726_1 (West Point, off Duck Island), ~1.5 miles
-  downriver and used unshifted.
+Every launch picks its own stations, and a shift in minutes where the nearest
+station is not quite at the launch:
+
+| Launch | Tide | Current |
+|---|---|---|
+| Cold Spring | 8518934 Beacon, −30 min | ACT3726_1 West Point, unshifted |
+| Beacon | 8518934 Beacon, unshifted | HUR0506_7 Newburgh-Beacon, unshifted |
+
+Mean flood and ebb headings differ by station too, which matters because the
+wind-versus-current calculation depends on them.
 
 Timestamps are converted from Eastern wall-clock to absolute epoch minutes at
 fetch time, including the ambiguous hour when DST ends, so the page never has to
@@ -108,7 +124,8 @@ endpoints still return the fields the page reads.
 No dependencies beyond the Python standard library.
 
 ```bash
-python3 scripts/build.py                  # rebuild index.html from source
+python3 scripts/build.py                  # rebuild every launch
+python3 scripts/build.py beacon           # or just one
 python3 scripts/fetch_predictions.py      # re-download predictions (needed before 2029)
 ```
 

@@ -1,6 +1,8 @@
 /* Pure-logic tests. No network. Run: node tests/offline.js */
-const {load} = require("./harness.js");
-const {T} = load();
+const {load, sites, pageFor} = require("./harness.js");
+const fs = require("fs");
+const ALL = sites();
+const {T} = load();          // the root site, for the bulk of the assertions
 const MIN = 60000, HOUR = 3600000;
 
 let pass = 0, fail = 0;
@@ -193,6 +195,55 @@ group("Formatting and parsing");
   eq("valueAt with no series", T.valueAt(null, Date.now()), null);
   eq("conditionsAt with no grid", T.conditionsAt(Date.now()), null);
 }
+
+/* ---------- every launch site builds and behaves ---------- */
+group("All launch sites");
+for (const site of ALL){
+  const {T: S} = load(site);
+  const html = fs.readFileSync(pageFor(site), "utf8");
+  ok(`${site.name}: no unfilled placeholders`, !/\{\{\w+\}\}/.test(html));
+  const title = (/<title>([^<]*)<\/title>/.exec(html) || [])[1];
+  eq(`${site.name}: page title`, title, site.title);
+  ok(`${site.name}: title names this launch`, (title||"").includes(site.name));
+  // a launch's own identity must never show another launch's name
+  const heading = (/<h1[^>]*>([^<]*)<\/h1>/.exec(html) || [])[1] || "";
+  ok(`${site.name}: headline names this launch`, heading.includes(site.name), heading);
+  for (const other of ALL) if (other.slug !== site.slug){
+    ok(`${site.name}: headline does not say ${other.name}`, !heading.includes(other.name), heading);
+    ok(`${site.name}: title does not say ${other.name}`, !(title||"").includes(other.name));
+  }
+  ok(`${site.name}: site config matches locations/`,
+     S.SITE.slug === site.slug && S.SITE.lat === site.lat && S.SITE.riverMile === site.riverMile);
+  eq(`${site.name}: tide shift`, S.TIDE_SHIFT_MIN, site.tide.shiftMin);
+  eq(`${site.name}: NWS grid`, S.SITE.nwsGrid, site.nws.grid);
+  ok(`${site.name}: page names its own NWS office`,
+     html.includes("NWS " + site.nws.grid.split("/")[0]));
+  ok(`${site.name}: shows its own station labels`,
+     html.includes(site.tide.label) && html.includes(site.current.label));
+  eq(`${site.name}: current shift`, S.CUR_SHIFT_MIN, site.current.shiftMin);
+  ok(`${site.name}: has three years of tides`, S.TIDE.length > 4000 && S.TIDE.length < 4500);
+  ok(`${site.name}: has three years of currents`, S.CUR.length > 8000 && S.CUR.length < 9000);
+  ok(`${site.name}: tide alternates high/low`,
+     S.TIDE.every((p,i) => i===0 || p.type !== S.TIDE[i-1].type));
+  ok(`${site.name}: flood and ebb headings are roughly opposite`,
+     Math.abs((((site.current.floodToward - site.current.ebbToward) % 360) + 360) % 360 - 180) < 30,
+     `${site.current.floodToward} vs ${site.current.ebbToward}`);
+  ok(`${site.name}: astronomy uses its own coordinates`,
+     Math.abs(S.skyFor(Date.now()).sunset - T.skyFor(Date.now()).sunset) < 20*60000);
+  // the marsh card belongs to Cold Spring only
+  const hasMarsh = (site.features || []).includes("marsh");
+  eq(`${site.name}: marsh card ${hasMarsh ? "present" : "absent"}`,
+     /id="gate"/.test(html), hasMarsh);
+  eq(`${site.name}: marsh logic ${hasMarsh ? "present" : "absent"}`,
+     /Constitution Marsh/.test(html), hasMarsh);
+  eq(`${site.name}: marsh helpers ${hasMarsh ? "present" : "absent"}`, S.blockedAt !== undefined, hasMarsh);
+  eq(`${site.name}: trestle constant ${hasMarsh ? "present" : "absent"}`, S.TRESTLE_MIN !== undefined, hasMarsh);
+  // cross-links to the other launches
+  for (const other of ALL) if (other.slug !== site.slug)
+    ok(`${site.name}: links to ${other.name}`, html.includes(">" + other.name + "</a>"));
+}
+ok("more than one launch site is configured", ALL.length > 1, `${ALL.length}`);
+ok("exactly one site is the root", ALL.filter(s => s.root).length === 1);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

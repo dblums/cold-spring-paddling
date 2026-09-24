@@ -1,0 +1,34 @@
+{
+  "slug": "beacon",
+  "root": false,
+  "name": "Beacon",
+  "title": "Hudson River Paddling Conditions Near Beacon, NY",
+  "lat": 41.5045,
+  "lon": -73.9885,
+  "riverMile": 61,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "8518934",
+    "label": "NOAA 8518934 Beacon",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station 8518934, which is Beacon itself, so it is used unshifted.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "HUR0506",
+    "bin": 7,
+    "label": "NOAA HUR0506_7 Newburgh-Beacon",
+    "shiftMin": 0,
+    "floodToward": 350,
+    "ebbToward": 171,
+    "upriverTo": "Newburgh",
+    "downriverTo": "Cold Spring",
+    "note": "Current from NOAA station HUR0506_7 (Newburgh Beacon Bridge), less than a mile from the launch, at the 4 ft bin nearest the surface.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=HUR0506_7"
+  },
+  "nws": {
+    "grid": "ALY/72,10"
+  },
+  "features": []
+}

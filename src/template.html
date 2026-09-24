@@ -1,4 +1,4 @@
-<title>Hudson River Paddling Conditions Near Cold Spring, NY</title>
+<title>{{TITLE}}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
@@ -70,6 +70,16 @@ body{
   background:linear-gradient(to top, rgba(8,20,26,.92) 0%, rgba(8,20,26,.55) 30%,
                                      rgba(8,20,26,.10) 58%, rgba(8,20,26,0) 80%);
 }
+
+.locnav{
+  display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;
+  margin:-4px 0 -4px; font-size:14px;
+}
+.locnav a{
+  color:var(--river); text-underline-offset:3px; font-weight:500;
+}
+.locnav a + a{margin-left:4px}
+
 .hero h1{
   position:absolute; z-index:1; left:clamp(16px,3.4vw,26px); right:clamp(16px,3.4vw,26px);
   bottom:clamp(13px,2.4vw,20px); margin:0; color:#f4f9fa;
@@ -77,6 +87,17 @@ body{
   font-size:clamp(27px,5.6vw,40px); line-height:1.04; letter-spacing:-.01em;
   text-wrap:balance; text-shadow:0 1px 14px rgba(8,20,26,.6);
 }
+
+/* A site with no photo yet still gets a deliberate opening rather than a gap:
+   the same shape and type, on the river colours. */
+.hero-plain{
+  aspect-ratio:auto; min-height:0; background:
+    linear-gradient(145deg, #12303b 0%, #0e2029 55%, #14262c 100%);
+  border:1px solid var(--line);
+}
+.hero-plain::after{display:none}
+.hero-plain h1{position:static; padding:clamp(22px,4vw,34px) clamp(16px,3.4vw,26px)}
+@media (max-width:560px){ .hero-plain{aspect-ratio:auto} }
 .coords{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:baseline}
 .coords .num{font-size:12px; color:var(--muted); letter-spacing:.02em}
 
@@ -289,10 +310,10 @@ footer .label{margin-bottom:-2px}
 </style>
 
 <div class="wrap">
-  <header class="hero">
-    <img src="{{BANNER}}" alt="The Hudson River seen from a kayak at Cold Spring, looking downriver between Storm King and Breakneck Ridge on a calm morning">
-    <h1>Hudson River Paddling Conditions Near Cold Spring, NY</h1>
+  <header class="hero{{HERO_CLASS}}">
+{{BANNER_IMG}}    <h1>{{TITLE}}</h1>
   </header>
+{{LOCNAV}}
 
   <div class="timebar">
     <span class="label">Conditions at</span>
@@ -308,7 +329,7 @@ footer .label{margin-bottom:-2px}
   <section class="card" id="wxCard">
     <div class="card-head">
       <h2>Weather &amp; Water</h2>
-      <span class="station">NWS OKX &middot; NOAA water temp</span>
+      <span class="station">{{NWS_LABEL}} &middot; NOAA water temp</span>
     </div>
     <div class="tiles w">
       <div class="tile">
@@ -333,13 +354,13 @@ footer .label{margin-bottom:-2px}
     </div>
     <div class="answer" id="wxAnswer"><p id="wxAnswerText"></p></div>
     <div id="wxBands"></div>
-    <p class="card-note"><a href="https://forecast.weather.gov/MapClick.php?lat=41.4204&amp;lon=-73.9568" target="_blank" rel="noopener">NWS Forecast for Cold Spring &#8599;</a></p>
+    <p class="card-note"><a href="{{NWS_LINK}}" target="_blank" rel="noopener">NWS Forecast for {{NAME}} &#8599;</a></p>
   </section>
 
   <section class="card">
     <div class="card-head">
       <h2>River Current</h2>
-      <span class="station">NOAA ACT3726_1 West Point</span>
+      <span class="station">{{CURRENT_LABEL}}</span>
     </div>
     <div class="readout">
       <svg class="dial" id="dial" viewBox="0 0 100 100" role="img" aria-label="Current direction"></svg>
@@ -360,7 +381,7 @@ footer .label{margin-bottom:-2px}
   <section class="card">
     <div class="card-head">
       <h2>Tide</h2>
-      <span class="station">NOAA 8518934 Beacon &minus;30 min</span>
+      <span class="station">{{TIDE_LABEL}}</span>
     </div>
     <div class="readout">
       <div class="readout-main">
@@ -370,9 +391,10 @@ footer .label{margin-bottom:-2px}
     </div>
     <div class="next" id="tideNext"></div>
     <svg class="chart" id="tideChart" viewBox="0 0 720 190" preserveAspectRatio="none" role="img" aria-label="Tide curve through the day, marked with high and low tide"></svg>
-    <p class="card-note">Unless you plan on paddling into Constitution Marsh or landing on a beach, tide is likely not very important to you.</p>
+    <p class="card-note">{{TIDE_CARD_NOTE}}</p>
   </section>
 
+<!--@if marsh-->
   <section class="card" id="gate">
     <div class="card-head">
       <h2>Constitution Marsh Access</h2>
@@ -397,11 +419,12 @@ footer .label{margin-bottom:-2px}
     </div>
     <p class="card-note">Constitution Marsh is a 270-acre tidal wetland that you can access by paddling under the Metro-North train trestle just south of Cold Spring &mdash; but only when there is enough vertical clearance to do so safely.</p>
   </section>
+<!--@endif-->
 
   <section class="card" id="skyCard">
     <div class="card-head">
       <h2>Sun &amp; Moon</h2>
-      <span class="station">computed for 41.42&deg;N 73.96&deg;W</span>
+      <span class="station">{{COORD_LABEL}}</span>
     </div>
     <div class="tiles s">
       <div class="tile">
@@ -436,19 +459,24 @@ footer .label{margin-bottom:-2px}
       <span class="label">Important note</span>
       <p>Tides and currents are predictions, not observations. Wind, waves, runoff, storm surge and other factors can affect actual conditions. Weather is sourced from the National Weather Service. Use your own judgment and paddle at your own risk.</p>
     </div>
-    <p>Current from NOAA station ACT3726_1 (West Point, off Duck Island) &mdash; about a mile and a half downriver, so it is used unshifted. Tide from NOAA station 8518934 (Beacon), shifted 30 minutes earlier to approximate Cold Spring. Both are predictions, baked into this page and good through 31&nbsp;Dec&nbsp;2028; values between NOAA&rsquo;s published points are interpolated. Weather and alerts come live from the National Weather Service grid covering Cold Spring. Water temperature has no nearby sensor &mdash; it is estimated between NOAA Turkey Point, 41 miles upriver, and The Battery, 50 miles down. Sun and moon are computed rather than fetched, and agree with the US Naval Observatory to within a couple of minutes. The &plusmn;2h trestle and mud rules are local rules of thumb &mdash; look at the clearance yourself before you commit, and remember the tide inside the marsh lags the river.</p>
-    <p><a href="https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=ACT3726_1">NOAA currents &#8599;</a> &nbsp; <a href="https://tidesandcurrents.noaa.gov/stationhome.html?id=8518934">NOAA tides &#8599;</a></p>
+    <p>{{CURRENT_NOTE}} {{TIDE_NOTE}} Both are predictions, baked into this page and good through 31&nbsp;Dec&nbsp;2028; values between NOAA&rsquo;s published points are interpolated. Weather and alerts come live from the National Weather Service grid covering {{NAME}}. Water temperature has no nearby sensor &mdash; it is estimated between NOAA Turkey Point, upriver, and The Battery, down. Sun and moon are computed rather than fetched, and agree with the US Naval Observatory to within a couple of minutes.{{MARSH_NOTE}}</p>
+    <p><a href="{{CURRENT_LINK}}">NOAA currents &#8599;</a> &nbsp; <a href="https://tidesandcurrents.noaa.gov/stationhome.html?id=8518934">NOAA tides &#8599;</a></p>
   </footer>
 </div>
 
 <script>
 "use strict";
+/* Everything specific to this launch site, written in by scripts/build.py from
+   the matching file in locations/. The rest of this script is site-agnostic. */
+const SITE = {{SITE_JSON}};
 const RAW = {{PREDICTIONS}};
 const TZ = "America/New_York";
-const TIDE_SHIFT_MIN = -30;     // Beacon -> Cold Spring approximation
-const CUR_SHIFT_MIN = 0;        // West Point/Duck Island is already at Cold Spring
+const TIDE_SHIFT_MIN = SITE.tideShiftMin;   // minutes to shift the tide station to this launch
+const CUR_SHIFT_MIN  = SITE.curShiftMin;
+/*@if marsh*/
 const TRESTLE_MIN = 120;        // within 2h of high tide the trestle has no clearance
 const MUD_MIN = 120;            // within 2h of low tide the marsh is mud
+/*@endif*/
 const MIN = 60000;
 
 /* ---------- decode ---------- */
@@ -493,25 +521,25 @@ function curAt(t){
    so nothing here is allowed to block the first paint or break the rest of the
    page when it fails. Every reader below handles null.
    =================================================== */
-const NWS_GRID  = "https://api.weather.gov/gridpoints/OKX/30,74";
-const NWS_ALERT = "https://api.weather.gov/alerts/active?point=41.4204,-73.9568";
+const NWS_GRID  = "https://api.weather.gov/gridpoints/" + SITE.nwsGrid;
+const NWS_ALERT = "https://api.weather.gov/alerts/active?point=" + SITE.lat + "," + SITE.lon;
 const COOPS = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter";
 
-/* Cold Spring has no live water-temperature sensor anywhere near it. The USGS
-   gauge at West Point is 2.4 miles away and stopped reporting temperature in
-   2014; the tide station at Beacon has no sensors at all. The nearest live
-   readings bracket us at 40-plus miles in each direction, so we interpolate
-   between them by river mile and label the result an estimate. */
+/* No launch on this stretch has a live water-temperature sensor near it. The
+   USGS gauge at West Point stopped reporting temperature in 2014 and the tide
+   station at Beacon has no sensors at all, so the nearest live readings bracket
+   the whole reach at 40-plus miles in each direction. Interpolate between them
+   by river mile and label the result an estimate. */
 const WATER_N = {id:"8518962", name:"Turkey Point", mile:100};
 const WATER_S = {id:"8518750", name:"The Battery",  mile:0};
-const COLD_SPRING_MILE = 54;
+const SITE_RIVER_MILE = SITE.riverMile;
 
 /* ---------- sun and moon ----------
    Computed, not fetched. No API publishes moon data for 2028, and this keeps
    working with no network like the tide data does. Standard low-precision
    astronomy; checked against the US Naval Observatory across four years, worst
    disagreement 2 minutes on the sun, 8 on the moon, 1 point on illumination. */
-const LAT = 41.4204, LON = -73.9568;
+const LAT = SITE.lat, LON = SITE.lon;
 const RAD = Math.PI / 180, DAY_MS = 86400000, J1970 = 2440588, J2000 = 2451545;
 const OBL = RAD * 23.4397;                       // obliquity of the ecliptic
 
@@ -691,7 +719,7 @@ async function loadConditions(){
   const n = readWater(north), sth = readWater(south);
   // linear by river mile: 0 at the Battery, 1 at Turkey Point
   WX.water = (n != null && sth != null)
-      ? {f:sth + (n - sth) * (COLD_SPRING_MILE / WATER_N.mile), from:"both"}
+      ? {f:sth + (n - sth) * (SITE_RIVER_MILE / WATER_N.mile), from:"both"}
     : n != null ? {f:n, from:WATER_N.name}
     : sth != null ? {f:sth, from:WATER_S.name}
     : null;
@@ -707,7 +735,7 @@ const compass = deg => COMPASS[Math.round(((deg % 360) + 360) % 360 / 22.5) % 16
 // travels toward. The river runs roughly north-south here, so an east or west
 // wind crosses it rather than fighting or helping it - less common than a
 // northerly or southerly, but it behaves completely differently.
-const FLOOD_TOWARD = 10, EBB_TOWARD = 190;
+const FLOOD_TOWARD = SITE.floodToward, EBB_TOWARD = SITE.ebbToward;
 function windVsCurrent(windFromDeg, cv){
   if (Math.abs(cv) < 0.15) return "slack";
   const windToward = (windFromDeg + 180) % 360;
@@ -734,6 +762,7 @@ const MOONS = [[0.03,"New moon"],[0.22,"Waxing crescent"],[0.28,"First quarter"]
                [0.78,"Last quarter"],[0.97,"Waning crescent"],[1.01,"New moon"]];
 const moonName = ph => (MOONS.find(m => ph < m[0]) || MOONS[MOONS.length-1])[1];
 
+/*@if marsh*/
 /* ---------- Constitution Marsh access ----------
    Two independent gates. Near high tide the river is up against the trestle and
    you cannot pass under it; near low tide the marsh has drained and there is
@@ -750,6 +779,7 @@ function nearestIn(arr, t){
 }
 const blockedAt = t => Math.abs(t - nearestIn(HIGHS, t).t) <= TRESTLE_MIN * MIN;
 const muddyAt   = t => Math.abs(t - nearestIn(LOWS, t).t)  <= MUD_MIN * MIN;
+/*@endif*/
 
 
 const nextAfter = (arr, t, pred) => arr.find(p => p.t > t && (!pred || pred(p))) || null;
@@ -956,9 +986,9 @@ function drawDial(v){
 /* ---------- what the current and wind do to your speed ----------
    A current adds to or subtracts from speed over the ground directly, so a knot
    of it is the difference between covering ground and grinding. North is given
-   first: from Cold Spring the ordinary trips are into the marsh or upriver, and
-   the southern stretch through World's End is not a default anyone should be
-   nudged toward. */
+   first: on this stretch the ordinary trips are upriver, and the southern run
+   past West Point through World's End is not a default anyone should be nudged
+   toward. */
 const PADDLE_MPH = 3;      // a steady, unhurried recreational pace
 
 function windCurrentBand(w, cv){
@@ -1018,7 +1048,7 @@ function drawWeather(t, cv){
     card.classList.add("nodata");
     const why = WX.status === "loading" ? "Loading conditions…"
       : WX.status === "failed" ? "Could not reach the weather service. Everything below works without it."
-      : "No forecast reaches this far ahead. The tide, current and marsh windows below are still exact.";
+      : "No forecast reaches this far ahead. The tide and current below are still exact.";
     $("wxAnswer").className = "answer mute";
     $("wxAnswerText").innerHTML = why;
     $("wxBands").innerHTML = "";
@@ -1104,6 +1134,7 @@ function render(){
     ? '<span class="now-dot"></span> Live &mdash; ' + fmtDate.format(t) + ", " + fmtT.format(t) + " ET"
     : "Planning for " + fmtDate.format(t) + ", " + fmtT.format(t) + " ET &nbsp;&middot;&nbsp; now is " + fmtT.format(nowMs);
 
+  /*@if marsh*/
   /* --- marsh: two independent gates --- */
   const crossOK = !blockedAt(t), marshOK = !muddyAt(t);
   const hiT = nearestIn(HIGHS, t), loT = nearestIn(LOWS, t);
@@ -1156,6 +1187,7 @@ function render(){
       + (reopen ? " or you&rsquo;ll have to stay in the marsh until the next possible exit at <b>" + fmtT.format(reopen) + "</b>." : ".");
   }
   $("summaryText").innerHTML = summary;
+  /*@endif*/
 
   /* --- current --- */
   const cv = curAt(t);
@@ -1170,8 +1202,8 @@ function render(){
   $("curCaption").innerHTML = cls === "slack"
     ? '<b class="state-slack">Slack water</b>'
     : cls === "flood"
-      ? '<b class="state-flood">Flooding</b> &mdash; running north, upriver toward Beacon.'
-      : '<b class="state-ebb">Ebbing</b> &mdash; running south, downriver toward Bear Mountain.';
+      ? '<b class="state-flood">Flooding</b> &mdash; running north, upriver toward {{UPRIVER}}.'
+      : '<b class="state-ebb">Ebbing</b> &mdash; running south, downriver toward {{DOWNRIVER}}.';
   drawDial(cv);
   const cn = nextAfter(CUR, t);
   const wcb = windCurrentBand(conditionsAt(t), cv);
@@ -1209,6 +1241,7 @@ function render(){
   for (const p of TIDE){
     if (p.t < t || p.t > t1) continue;
     ev.push({t:p.t, kind:"tide", what:(p.type === "H" ? "High tide" : "Low tide"), amt:p.v.toFixed(1) + " ft", col:"var(--river)"});
+    /*@if marsh*/
     const w = (p.type === "H" ? TRESTLE_MIN : MUD_MIN) * MIN;
     if (p.type === "H"){
       ev.push({t:p.t - w, kind:"gate", what:"Trestle crossing closes", amt:"crossing", col:"var(--closed)"});
@@ -1217,6 +1250,7 @@ function render(){
       ev.push({t:p.t - w, kind:"gate", what:"Marsh drains to mud", amt:"marsh", col:"var(--mud)"});
       ev.push({t:p.t + w, kind:"gate", what:"Marsh refloats", amt:"marsh", col:"var(--safe)"});
     }
+    /*@endif*/
   }
   for (const p of CUR){
     if (p.t < t || p.t > t1) continue;

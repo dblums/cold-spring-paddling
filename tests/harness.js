@@ -4,7 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 
-const EXPORTS = ["sunTimes","moonTimes","moonIllumination","moonAltitude","skyFor",
+const EXPORTS = ["SITE","sunTimes","moonTimes","moonIllumination","moonAltitude","skyFor",
   "tideAt","curAt","TIDE","CUR","HIGHS","LOWS","RANGE","fromNY","nyParts","dayStartNY",
   "dur","compass","windVsCurrent","windCurrentBand","immersionLede",
   "blockedAt","muddyAt","nearestIn","conditionsAt","valueAt","isoDurMs","skyWord",
@@ -21,8 +21,21 @@ function stubEl(){
   return el;
 }
 
-function load(){
-  const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+/* Every built page, so the tests run against each launch site rather than
+   assuming there is only one. */
+function sites(){
+  const dir = path.join(__dirname, "..", "locations");
+  return fs.readdirSync(dir).map(f => JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")))
+           .sort((a,b) => (b.root?1:0) - (a.root?1:0));
+}
+function pageFor(site){
+  return site.root ? path.join(__dirname, "..", "index.html")
+                   : path.join(__dirname, "..", site.slug, "index.html");
+}
+
+function load(site){
+  const file = site ? pageFor(site) : path.join(__dirname, "..", "index.html");
+  const html = fs.readFileSync(file, "utf8");
   const m = /<script>\n([\s\S]*?)<\/script>/.exec(html);
   if (!m) throw new Error("no <script> found in index.html");
   const els = {};
@@ -37,8 +50,11 @@ function load(){
     console, Intl, Date, Math, JSON, Promise, Error,
     parseFloat, parseInt, isFinite, isNaN, String, Number, Array, Object
   });
-  vm.runInContext(m[1] + "\n;globalThis.__T={" + EXPORTS.join(",") + "};", ctx,
-    {filename:"index.html<script>"});
+  // feature-gated symbols are absent on sites without that feature, so probe
+  // each one rather than assuming it exists
+  const grab = "\n;globalThis.__T={};" +
+    EXPORTS.map(n => `try{globalThis.__T.${n}=${n}}catch(e){}`).join("");
+  vm.runInContext(m[1] + grab, ctx, {filename:"index.html<script>"});
   return {T: ctx.__T, els};
 }
-module.exports = {load};
+module.exports = {load, sites, pageFor};

@@ -1,0 +1,36 @@
+{
+  "slug": "cold-spring",
+  "root": true,
+  "name": "Cold Spring",
+  "title": "Hudson River Paddling Conditions Near Cold Spring, NY",
+  "lat": 41.4204,
+  "lon": -73.9568,
+  "riverMile": 54,
+  "banner": "cold-spring.jpg",
+  "bannerAlt": "The Hudson River seen from a kayak at Cold Spring, looking downriver between Storm King and Breakneck Ridge on a calm morning",
+  "tide": {
+    "station": "8518934",
+    "label": "NOAA 8518934 Beacon \u2212 30 min",
+    "shiftMin": -30,
+    "note": "Tide from NOAA station 8518934 (Beacon), shifted 30 minutes earlier to approximate Cold Spring.",
+    "cardNote": "Unless you plan on paddling into Constitution Marsh or landing on a beach, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "ACT3726",
+    "bin": 1,
+    "label": "NOAA ACT3726_1 West Point",
+    "shiftMin": 0,
+    "floodToward": 10,
+    "ebbToward": 190,
+    "upriverTo": "Beacon",
+    "downriverTo": "Bear Mountain",
+    "note": "Current from NOAA station ACT3726_1 (West Point, off Duck Island) \u2014 about a mile and a half downriver, so it is used unshifted.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=ACT3726_1"
+  },
+  "nws": {
+    "grid": "OKX/30,74"
+  },
+  "features": [
+    "marsh"
+  ]
+}
