@@ -163,12 +163,10 @@ group("Immersion advice");
   ok("water 45 despite 125 total: warns", u(80,45));
   ok("air 45 despite 125 total: warns",   u(45,80));
   ok("missing readings: no warning",      !u(null,60) && !u(70,null));
-  ok("always says dress for immersion",   T.immersionLede(80,75).html.includes("Always dress for immersion"));
+  ok("always says life jacket and immersion", T.immersionLede(80,75).html.includes("life jacket") && T.immersionLede(80,75).html.includes("dress for immersion"));
+  ok("no wetsuit line on a warm day",     !T.immersionLede(80,75).html.includes("drysuit"));
+  ok("wetsuit line when the rule trips",  T.immersionLede(61,52).html.includes("wet or drysuit"));
   ok("warning names the combined figure", T.immersionLede(61,52).html.includes("113"));
-  eq("water word: 49F", T.waterWord(49), "Dangerously cold");
-  eq("water word: 55F", T.waterWord(55), "Cold");
-  eq("water word: 65F", T.waterWord(65), "Cool");
-  eq("water word: 75F", T.waterWord(75), "Mild");
 }
 
 /* ---------- small helpers ---------- */

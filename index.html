@@ -346,7 +346,6 @@ img{max-width:100%}
       <div class="tile">
         <div class="lab">Water</div>
         <div class="big"><span id="wxWater">&mdash;</span><span class="u">&deg;F</span></div>
-        <div class="sub" id="wxWaterSub"></div>
       </div>
     </div>
     <div class="answer" id="wxAnswer"><p id="wxAnswerText"></p></div>
@@ -735,16 +734,14 @@ function windVsCurrent(windFromDeg, cv){
   return d < 60 ? "aligned" : d > 120 ? "opposed" : "across";
 }
 
-const waterWord = f => f < 50 ? "Dangerously cold" : f < 60 ? "Cold" : f < 70 ? "Cool" : "Mild";
-
 // The "120 rule": if air plus water is 120F or less, paddlers are advised to
 // wear a wetsuit or drysuit. Either figure under 50F is its own reason. On a hot
 // day the advice still stands, it just needs no explaining.
 function immersionLede(airF, waterF){
-  if (airF == null || waterF == null) return {urgent:false, html:"<b>Always dress for immersion!</b>"};
+  if (airF == null || waterF == null) return {urgent:false, html:"<b>Be safe! Always wear a life jacket and dress for immersion.</b>"};
   const combined = airF + waterF;
   const trips = combined <= 120 || airF < 50 || waterF < 50;
-  return {urgent:trips, html:"<b>Always dress for immersion!</b>"
+  return {urgent:trips, html:"<b>Be safe! Always wear a life jacket and dress for immersion.</b>"
     + (trips ? " Consider wearing a wet or drysuit today, since the combined water + air temp is only "
         + combined + "\u00B0F." : "")};
 }
@@ -1043,7 +1040,7 @@ function drawWeather(t, cv){
     $("wxAnswerText").innerHTML = why;
     $("wxBands").innerHTML = "";
     for (const id of ["wxWind", "wxSky", "wxAir", "wxWater"]) set(id, "—");
-    for (const id of ["wxWindSub", "wxSkySub", "wxAirSub", "wxWaterSub"]) sub(id, "");
+    for (const id of ["wxWindSub", "wxSkySub", "wxAirSub"]) sub(id, "");
     $("windArrow").textContent = "";
     return;
   }
@@ -1066,8 +1063,6 @@ function drawWeather(t, cv){
   set("wxAir", w.airF);
   sub("wxAirSub", w.feelsF == null ? "" : "feels like " + w.feelsF + "&deg;");
   set("wxWater", w.waterF == null ? "—" : w.waterF);
-  sub("wxWaterSub", w.waterF == null ? "<em>no nearby sensor</em>"
-    : waterWord(w.waterF) + (WX.water.from === "both" ? "<br><em>estimated</em>" : "<br><em>" + WX.water.from + "</em>"));
 
   const imm = immersionLede(w.airF, w.waterF);
   $("wxAnswer").className = "answer" + (imm.urgent ? " warn" : "");
