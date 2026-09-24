@@ -452,7 +452,7 @@ img{max-width:100%}
   <footer>
     <div class="important">
       <span class="label">Important note</span>
-      <p>These are predictions, not observations. They do not include wind, waves, barge traffic, upstream rain runoff, or storm surge &mdash; any of which can change conditions. Use your own judgment!</p>
+      <p>Tides and currents are predictions, not observations. Wind, waves, runoff, storm surge and other factors can affect actual conditions. Weather is sourced from the National Weather Service. Use your own judgment and paddle at your own risk.</p>
     </div>
     <p>Current from NOAA station ACT3726_1 (West Point, off Duck Island) &mdash; about a mile and a half downriver, so it is used unshifted. Tide from NOAA station 8518934 (Beacon), shifted 30 minutes earlier to approximate Cold Spring. Both are predictions, baked into this page and good through 31&nbsp;Dec&nbsp;2028; values between NOAA&rsquo;s published points are interpolated. Weather and alerts come live from the National Weather Service grid covering Cold Spring. Water temperature has no nearby sensor &mdash; it is estimated between NOAA Turkey Point, 41 miles upriver, and The Battery, 50 miles down. Sun and moon are computed rather than fetched, and agree with the US Naval Observatory to within a couple of minutes. The &plusmn;2h trestle and mud rules are local rules of thumb &mdash; look at the clearance yourself before you commit, and remember the tide inside the marsh lags the river.</p>
     <p><a href="https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=ACT3726_1">NOAA currents &#8599;</a> &nbsp; <a href="https://tidesandcurrents.noaa.gov/stationhome.html?id=8518934">NOAA tides &#8599;</a></p>
@@ -1106,8 +1106,6 @@ function drawSky(t){
     text:dur(left) + " until sunset"
       + (k.dusk ? ", and usable light until about " + hm(k.dusk) : "")
       + ". Allow for getting back, landing and carrying out — all of which take longer in the dark."});
-  else if (left != null && left <= 0) bands.push({cls:"warn", lead:"After sunset.",
-    text:"Paddling after dark needs lights, and the trestle and the marsh channels are hard to read without them."});
   $("skyBands").innerHTML = bands.map(b =>
     '<div class="answer ' + b.cls + '"><p><b>' + b.lead + "</b> " + b.text + "</p></div>").join("");
 }
