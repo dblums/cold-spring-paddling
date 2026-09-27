@@ -202,6 +202,13 @@ for (const site of ALL){
   const {T: S} = load(site);
   const html = fs.readFileSync(pageFor(site), "utf8");
   ok(`${site.name}: no unfilled placeholders`, !/\{\{\w+\}\}/.test(html));
+  // a photo inlined as base64 has to be parsed before anything below it renders,
+  // so the deployed page links its photo instead. Guard against it creeping back.
+  ok(`${site.name}: page carries no inlined image`, !/src="data:image/.test(html),
+     `${Math.round(html.length/1024)} KB`);
+  ok(`${site.name}: page under 200 KB`, html.length < 200*1024, `${Math.round(html.length/1024)} KB`);
+  if (site.banner) ok(`${site.name}: banner shipped as a file`,
+     fs.existsSync(pageFor(site).replace(/index\.html$/, "banner.jpg")));
   const title = (/<title>([^<]*)<\/title>/.exec(html) || [])[1];
   eq(`${site.name}: page title`, title, site.title);
   ok(`${site.name}: title names this launch`, (title||"").includes(site.name));

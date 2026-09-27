@@ -39,13 +39,19 @@ def strip_features(html, features):
     return html
 
 
-def hero(site, features):
+def hero(site):
+    """The artifact build inlines the photo because Claude Artifacts cannot fetch
+    anything; the deployed page links to it instead. Inlining a 250 KB JPEG costs
+    the whole page - the parser has to read past it before anything below can
+    render - and buys nothing, since a decorative photo is the one thing the page
+    can happily do without."""
     if not site.get("banner"):
         return {"HERO_CLASS": " hero-plain", "BANNER_IMG": ""}
     path = os.path.join(L.ROOT, "src", "banners", site["banner"])
     uri = "data:image/jpeg;base64," + base64.b64encode(open(path, "rb").read()).decode()
     alt = site.get("bannerAlt") or (site["name"] + " on the Hudson River")
-    return {"HERO_CLASS": "", "BANNER_IMG": f'    <img src="{uri}" alt="{alt}">\n'}
+    return {"HERO_CLASS": "",
+            "BANNER_IMG": f'    <img src="{uri}" alt="{alt}" width="1600" height="1201" fetchpriority="high">\n'}
 
 
 def locnav(site, sites):
@@ -85,7 +91,7 @@ def render(site, sites):
         "CURRENT_LINK": cur["link"],
         "NWS_LINK": f'https://forecast.weather.gov/MapClick.php?lat={site["lat"]}&amp;lon={site["lon"]}',
         "LOCNAV": locnav(site, sites),
-        **hero(site, site.get("features", [])),
+        **hero(site),
     }
     for token, value in fields.items():
         html = html.replace("{{" + token + "}}", str(value))
@@ -99,6 +105,13 @@ def render(site, sites):
     with open(os.path.join(out, "artifact.html"), "w") as f:
         f.write(html)
 
+    # the deployed page links the photo rather than carrying it
+    if site.get("banner"):
+        src = os.path.join(L.ROOT, "src", "banners", site["banner"])
+        with open(os.path.join(out, "banner.jpg"), "wb") as f:
+            f.write(open(src, "rb").read())
+        html = re.sub(r'src="data:image/jpeg;base64,[A-Za-z0-9+/=]+"', 'src="banner.jpg"', html, count=1)
+
     split = html.index('<div class="wrap">')
     head, body = html[:split].rstrip(), html[split:].rstrip()
     page = f"""<!doctype html>
@@ -106,6 +119,8 @@ def render(site, sites):
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://api.weather.gov" crossorigin>
+<link rel="preconnect" href="https://api.tidesandcurrents.noaa.gov" crossorigin>
 <meta name="description" content="Hudson River tides, current and paddling conditions for {site['name']}, NY.">
 <meta name="theme-color" content="#eaeeee" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0c1518" media="(prefers-color-scheme: dark)">
