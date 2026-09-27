@@ -140,19 +140,17 @@ group("Wind relative to current");
   eq("61 deg off = across",  T.windVsCurrent((190 + 61) % 360, 1), "across");
   eq("121 deg off = opposed", T.windVsCurrent((190 + 121) % 360, 1), "opposed");
 
-  // assert the relationship, not literal figures - the speed model owns those
-  const speedsIn = txt => {
-    const n = /([\d.]+) mph<\/b> heading north/.exec(txt), so = /([\d.]+) mph<\/b> heading south/.exec(txt);
-    return {north: n ? +n[1] : null, south: so ? +so[1] : null};
-  };
-  const b = T.windCurrentBand({windMph:12, windGustMph:18, windFromDeg:10}, 1);
-  const bs = speedsIn(b.text);
-  ok("flood: faster north than south", bs.north > bs.south, JSON.stringify(bs));
-  ok("north is named first", b.text.indexOf("heading north") < b.text.indexOf("heading south"));
-  ok("opposed wind is called out", b.text.includes("blowing against the current"));
-  const e = T.windCurrentBand({windMph:12, windGustMph:18, windFromDeg:10}, -1);
-  const es = speedsIn(e.text);
-  ok("ebb: faster south than north", es.south > es.north, JSON.stringify(es));
+  // the speed sentence now lives in the summary at the top of the page
+  const brief = (cv, wind) => T.buildBrief(T.fromNY(2026, 6, 15, 12, 0), cv,
+    {windMph:wind.mph, windGustMph:wind.mph + 6, windFromDeg:wind.from, airF:72, waterF:70, stormPct:0},
+    T.skyFor(T.fromNY(2026, 6, 15, 12, 0)));
+  const bf = brief(1, {mph:12, from:10});
+  ok("flood: faster north than south", bf.speeds.north > bf.speeds.south,
+     `${bf.speeds.north.toFixed(2)} vs ${bf.speeds.south.toFixed(2)}`);
+  ok("north is named first", bf.body.indexOf("north") < bf.body.indexOf("south"));
+  const be = brief(-1, {mph:12, from:10});
+  ok("ebb: faster south than north", be.speeds.south > be.speeds.north,
+     `${be.speeds.south.toFixed(2)} vs ${be.speeds.north.toFixed(2)}`);
 
   // the model itself, which those sentences are reporting
   eq("still air, slack water is the baseline", +T.groundSpeedMph(0, 0).toFixed(2), 3);
@@ -163,12 +161,11 @@ group("Wind relative to current");
   // same tailwind gives - 1.2 mph lost against 0.7 gained, at 15 mph
   ok("a headwind costs more than the same tailwind gives",
      T.groundSpeedMph(0, -15) - 3 < 3 - T.groundSpeedMph(0, 15));
-  const calm = T.windCurrentBand({windMph:3, windGustMph:5, windFromDeg:10}, 1);
-  ok("light wind defers to the current", calm.text.includes("wind is light"), calm.text);
-  ok("no wind data still gives speeds", T.windCurrentBand(null, 1).text.includes("heading north"));
-  ok("slack and calm says nothing at all", T.windCurrentBand({windMph:2, windGustMph:3, windFromDeg:10}, 0) === null);
-  ok("slack but windy still warns about the wind",
-     (T.windCurrentBand({windMph:15, windGustMph:22, windFromDeg:10}, 0)||{}).text.includes("slack"));
+  // with no weather at all the summary still reports what the current will do
+  const noWx = T.buildBrief(T.fromNY(2026, 6, 15, 12, 0), 1, null,
+    T.skyFor(T.fromNY(2026, 6, 15, 12, 0)));
+  ok("no wind data still gives speeds", /paddle about [\d.]+ mph going north/.test(noWx.body), noWx.body);
+  ok("no wind data invents no weather", !/wind|rain|cloud/i.test(noWx.body), noWx.body);
   eq("paddling pace", T.PADDLE_MPH, 3);
 }
 

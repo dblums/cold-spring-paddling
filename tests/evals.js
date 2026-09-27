@@ -184,8 +184,11 @@ for (const s of SCENARIOS){
     s.wind === null ? null : {windMph:s.wind, windGustMph:s.gust != null ? s.gust : s.wind,
       windFromDeg:s.from != null ? s.from : 0, airF:s.air, waterF:s.water, stormPct:s.storm || 0},
     T.skyFor(s.at || NOON)).concerns.filter(c => c.level === b.level).map(c => c.head);
-  if (heads.length) check(s.name, `headline must come from a ${b.level}-level concern`,
-    heads.includes(b.head), `"${b.head}" vs [${heads.join(" | ")}]`);
+  // either a concern at the verdict's own level speaks for it, or the verdict
+  // speaks for itself - never a lesser worry
+  check(s.name, `headline must speak for a ${b.level} verdict`,
+    heads.includes(b.head) || b.head === T.HEADLINE[b.level],
+    `"${b.head}" vs [${heads.join(" | ")}] or "${T.HEADLINE[b.level]}"`);
 
   // coherence: nothing at warn or worse may reassure, whatever raised it
   if (b.level === "stop" || b.level === "warn")
