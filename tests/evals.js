@@ -219,6 +219,30 @@ for (const s of SCENARIOS){
     check(s.name, "the speed note names a direction or says it is slow both ways",
       /north|south|whichever way/.test(b.note), b.note);
 
+  // the two-direction outlook: always both, always in the same shape
+  for (const dir of ["north", "south"]){
+    const o = b.outlook[dir];
+    check(s.name, `${dir} outlook exists with wind and current`, o && o.lines.length >= 1,
+      JSON.stringify(o && o.lines));
+    check(s.name, `${dir} speed matches the module`, o.speed === b.speeds[dir]);
+    check(s.name, `${dir} outlook has no stub text`,
+      o.lines.every(l => l.length > 8 && !/undefined|NaN|null/.test(l)), JSON.stringify(o.lines));
+  }
+  {
+    const n = b.outlook.north.lines.join(" | "), so = b.outlook.south.lines.join(" | ");
+    // a headwind one way is a tailwind the other - never both faces, never both backs
+    check(s.name, "wind cannot be in your face both ways",
+      !(/in your face/.test(n) && /in your face/.test(so)), n + " // " + so);
+    check(s.name, "wind cannot be at your back both ways",
+      !(/at your back/.test(n) && /at your back/.test(so)), n + " // " + so);
+    // likewise the current
+    check(s.name, "current cannot help both ways",
+      !(/helping|real push/.test(n) && /helping|real push/.test(so)), n + " // " + so);
+    // chop is a property of the river, so it is either there or it is not
+    check(s.name, "chop appears in both directions or neither",
+      /Choppy/.test(n) === /Choppy/.test(so), n + " // " + so);
+  }
+
   // speeds live in their own module now, always present and always numbers
   check(s.name, "speeds are finite numbers",
     Number.isFinite(b.speeds.north) && Number.isFinite(b.speeds.south),

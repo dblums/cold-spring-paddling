@@ -194,23 +194,43 @@ button.on{background:var(--river); border-color:var(--river); color:var(--surfac
 }
 .brief p{margin:0; font-size:15.5px; line-height:1.5; color:var(--ink-2)}
 .brief p b{color:var(--ink); font-weight:600}
-/* The speeds live in the same place every time, whatever the conditions, so
-   there is one spot to look for the thing most people came to find out. */
-.brief .speeds{margin-top:4px; padding-top:10px; border-top:1px solid var(--line-2)}
-.brief .speeds .label{display:block; margin-bottom:6px}
-.brief .speeds .label em{
+/* The same conditions told twice, once for each way you can go, because that is
+   how a paddler decides. Always in the same place, whatever the verdict. */
+.brief .expect{margin-top:4px; padding-top:11px; border-top:1px solid var(--line-2)}
+.brief .expect > .label{display:block; margin-bottom:9px}
+.brief .expect > .label em{
   font-style:normal; font-weight:400; text-transform:none;
-  letter-spacing:0; font-size:11.5px; opacity:.8;
+  letter-spacing:0; font-size:11.5px; opacity:.75;
 }
-.brief .speeds .rows{display:flex; gap:10px 34px; flex-wrap:wrap}
-.brief .speeds .rows div{display:flex; align-items:baseline; gap:9px}
-.brief .speeds .rows span{font-size:14px; color:var(--ink-2)}
-.brief .speed-note{margin:8px 0 0; font-size:13.5px; color:var(--muted); line-height:1.45}
-.brief .speed-note:empty{display:none}
-.brief .speeds .rows b{
-  font-family:"IBM Plex Mono",monospace; font-weight:500; font-size:19px;
+.brief .dirs{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+@media (max-width:560px){ .brief .dirs{grid-template-columns:1fr} }
+.brief .dir{
+  background:var(--surface-2); border-radius:9px; padding:11px 13px 12px;
+  display:flex; flex-direction:column; min-width:0;
+}
+.brief .dirhd{
+  font-family:"Barlow Semi Condensed",sans-serif; font-weight:600; font-size:11px;
+  text-transform:uppercase; letter-spacing:.09em; color:var(--muted);
+}
+.brief .dir ul{margin:7px 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:5px}
+.brief .dir li{
+  font-size:13.5px; line-height:1.4; color:var(--ink-2);
+  padding-left:13px; position:relative;
+}
+.brief .dir li::before{
+  content:""; position:absolute; left:0; top:.55em;
+  width:5px; height:5px; border-radius:50%; background:var(--line);
+}
+.brief .dir .spd{
+  margin-top:auto; padding-top:10px; display:flex; align-items:baseline; gap:7px;
+}
+.brief .dir .spd b{
+  font-family:"IBM Plex Mono",monospace; font-weight:500; font-size:21px;
   color:var(--ink); font-variant-numeric:tabular-nums;
 }
+.brief .dir .spd em{font-style:normal; font-size:12px; color:var(--muted)}
+.brief .speed-note{margin:9px 0 0; font-size:13.5px; color:var(--muted); line-height:1.45}
+.brief .speed-note:empty{display:none}
 .brief.good{border-left-color:var(--safe)}      .brief.good h2{color:var(--safe)}
 .brief.fine{border-left-color:var(--river)}     .brief.fine h2{color:var(--river)}
 .brief.caution{border-left-color:var(--mud)}    .brief.caution h2{color:var(--mud)}
@@ -364,11 +384,19 @@ footer .label{margin-bottom:-2px}
   <section class="brief" id="brief">
     <h2 id="briefHead">&mdash;</h2>
     <p id="briefBody"></p>
-    <div class="speeds">
-      <span class="label">Expected paddling speed <em>assumes a 3 mph base speed</em></span>
-      <div class="rows">
-        <div><span>Heading north</span><b id="spNorth">&mdash;</b></div>
-        <div><span>Heading south</span><b id="spSouth">&mdash;</b></div>
+    <div class="expect">
+      <span class="label">What to expect <em>speeds assume a 3 mph base pace</em></span>
+      <div class="dirs">
+        <div class="dir">
+          <span class="dirhd">Heading north</span>
+          <ul id="expNorth"></ul>
+          <div class="spd"><b id="spNorth">&mdash;</b> <em>expected speed</em></div>
+        </div>
+        <div class="dir">
+          <span class="dirhd">Heading south</span>
+          <ul id="expSouth"></ul>
+          <div class="spd"><b id="spSouth">&mdash;</b> <em>expected speed</em></div>
+        </div>
       </div>
       <p class="speed-note" id="spNote"></p>
     </div>
@@ -1263,20 +1291,56 @@ function briefConcerns(t, cv, w, sky){
    one is driving into wind and spray and the other is being pushed along - and
    if you stop paddling into a headwind you go backwards, which is a margin
    worth knowing about. One line, not a second table of numbers. */
+/* The columns already show which way is easier, so the only thing left worth
+   saying is the trap: riding wind and current out, then having to come back. */
 function speedNote(cv, w, sp){
-  const n = sp.north, s = sp.south, gap = Math.abs(n - s);
+  const n = sp.north, s = sp.south;
   if (n < 1.5 && s < 1.5) return "Slow going whichever way you turn.";
-  if (gap >= 1) {
+  if (Math.abs(n - s) >= 1){
     const easy = n > s ? "north" : "south", hard = n > s ? "south" : "north";
-    return "Going " + easy + " is the easy way, so leave time for the paddle back " + hard + ".";
-  }
-  if (w && w.windMph != null && w.windFromDeg != null && w.windMph >= 10){
-    const hn = headwindMph(w.windFromDeg, w.windMph, 0);
-    if (Math.abs(hn) >= 8)
-      return "Similar speeds, but the wind is against you going " + (hn > 0 ? "north" : "south")
-        + " and behind you going " + (hn > 0 ? "south" : "north") + ".";
+    return "Going " + easy + " is much easier than coming back " + hard + " \u2014 leave time for it.";
   }
   return "";
+}
+
+/* ---------- what each direction will be like ----------
+   Ground speed alone hides the thing people actually want: whether the wind is
+   in your face or at your back, whether the river is helping, and what the
+   surface will do. Same conditions, told twice - once for each way you can go. */
+const windWord = mph => mph == null ? null
+  : mph < 4 ? "Barely any wind" : mph < 12 ? "Light wind"
+  : mph < 19 ? "Moderate wind" : mph < 26 ? "Strong wind" : "Very strong wind";
+
+function directionOutlook(bearing, cv, w, speed){
+  const lines = [];
+  const wind = w && w.windMph != null && w.windFromDeg != null ? w : null;
+  let head = 0;
+  if (wind){
+    head = headwindMph(wind.windFromDeg, wind.windMph, bearing);
+    const word = windWord(wind.windMph);
+    const sideways = wind.windMph > 0 && Math.abs(head) / wind.windMph < 0.4;
+    lines.push(wind.windMph < 4 ? word
+      : word + (sideways ? " across you" : head > 0 ? " in your face" : " at your back"));
+  }
+
+  // positive means the river is carrying you the way you are going
+  const curFor = (bearing === 0 ? cv : -cv);
+  const kt = Math.abs(curFor);
+  lines.push(kt < 0.15 ? "Current slack, no help either way"
+    : kt < 0.6 ? (curFor > 0 ? "Current helping you a little" : "Current holding you back a little")
+    : (curFor > 0 ? "Current giving you a real push" : "Current pushing against you"));
+
+  // wind against current is what raises chop, and the waves travel with the wind
+  if (wind && wind.windMph >= 12 && Math.abs(cv) >= 0.5
+      && windVsCurrent(wind.windFromDeg, cv) === "opposed"){
+    const sideways = Math.abs(head) / wind.windMph < 0.4;
+    lines.push(sideways
+      ? "Choppy water hitting you side-on, which is the tippy direction"
+      : head > 0
+        ? "Choppy water, and you are heading into the waves — expect spray in your face"
+        : "Choppy water, and the waves come from behind — you may surf a little, and steering is harder");
+  }
+  return {lines, speed};
 }
 
 function buildBrief(t, cv, w, sky){
@@ -1291,10 +1355,14 @@ function buildBrief(t, cv, w, sky){
   // Speeds have their own module now, so the prose stays prose.
   // no trip planning on a day we have just said not to go out
   const note = level === "stop" ? "" : speedNote(cv, w, speeds);
+  const outlook = {
+    north: directionOutlook(0, cv, w, speeds.north),
+    south: directionOutlook(180, cv, w, speeds.south)
+  };
   if (!concerns.length){
     const body = w ? scene(cv, w).trim()
       : "There is no weather reading right now, so this is the tide and current alone.";
-    return {level, head:HEADLINE[level], body, speeds, note};
+    return {level, head:HEADLINE[level], body, speeds, note, outlook};
   }
 
   const lead = concerns[0];
@@ -1317,7 +1385,7 @@ function buildBrief(t, cv, w, sky){
   const tail = sceneTail(w, !windNamed);
 
   return {level, head: lead.head || HEADLINE[level],
-    body:[...said, tail].filter(Boolean).join(" "), speeds, note};
+    body:[...said, tail].filter(Boolean).join(" "), speeds, note, outlook};
 }
 
 /* ---------- weather, alerts, water ---------- */
@@ -1429,8 +1497,12 @@ function drawBrief(t, cv){
   $("briefBody").innerHTML = b.body;
 
   const mph = v => v <= 0.05 ? "none" : v.toFixed(1) + " mph";
-  $("spNorth").textContent = mph(b.speeds.north);
-  $("spSouth").textContent = mph(b.speeds.south);
+  for (const dir of ["north", "south"]){
+    const o = b.outlook[dir];
+    $("exp" + dir.charAt(0).toUpperCase() + dir.slice(1)).innerHTML =
+      o.lines.map(l => "<li>" + l + "</li>").join("");
+    $("sp" + dir.charAt(0).toUpperCase() + dir.slice(1)).textContent = mph(o.speed);
+  }
   $("spNote").textContent = b.note || "";
 }
 
