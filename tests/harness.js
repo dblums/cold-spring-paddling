@@ -6,7 +6,7 @@ const vm = require("vm");
 
 const EXPORTS = ["SITE","WX","sunTimes","moonTimes","moonIllumination","moonAltitude","skyFor",
   "tideAt","curAt","TIDE","CUR","HIGHS","LOWS","RANGE","fromNY","nyParts","dayStartNY",
-  "dur","compass","windVsCurrent","immersionLede","groundSpeedMph","headwindMph","speedsFor","buildBrief","briefConcerns","LEVELS","HEADLINE","scene","feelsLike","tempWord","precipWord","PADDLE_POWER",
+  "dur","compass","windVsCurrent","immersionLede","groundSpeedMph","headwindMph","speedsFor","buildBrief","speedNote","briefConcerns","LEVELS","HEADLINE","scene","feelsLike","tempWord","precipWord","PADDLE_POWER",
   "blockedAt","muddyAt","nearestIn","conditionsAt","valueAt","isoDurMs","skyWord",
   "PADDLE_MPH","TRESTLE_MIN","MUD_MIN","TIDE_SHIFT_MIN","CUR_SHIFT_MIN","MIN"];
 

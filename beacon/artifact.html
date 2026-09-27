@@ -205,6 +205,8 @@ button.on{background:var(--river); border-color:var(--river); color:var(--surfac
 .brief .speeds .rows{display:flex; gap:10px 34px; flex-wrap:wrap}
 .brief .speeds .rows div{display:flex; align-items:baseline; gap:9px}
 .brief .speeds .rows span{font-size:14px; color:var(--ink-2)}
+.brief .speed-note{margin:8px 0 0; font-size:13.5px; color:var(--muted); line-height:1.45}
+.brief .speed-note:empty{display:none}
 .brief .speeds .rows b{
   font-family:"IBM Plex Mono",monospace; font-weight:500; font-size:19px;
   color:var(--ink); font-variant-numeric:tabular-nums;
@@ -367,6 +369,7 @@ footer .label{margin-bottom:-2px}
         <div><span>Heading north</span><b id="spNorth">&mdash;</b></div>
         <div><span>Heading south</span><b id="spSouth">&mdash;</b></div>
       </div>
+      <p class="speed-note" id="spNote"></p>
     </div>
   </section>
 
@@ -1154,15 +1157,13 @@ function briefConcerns(t, cv, w, sky){
     const hard = Math.max(sp.north, sp.south) < 1.2;
     const figures = "(" + wind + " mph from the " + compass(w.windFromDeg)
       + (gust != null && gust > wind + 4 ? ", gusting to " + gust : "") + ")";
-    if (wind >= 25 || (gust != null && gust >= 35)) out.push({level:"stop", key:"wind",
-      say:"The wind is blowing very hard " + figures
-        + " \u2014 that is a fight rather than a paddle, and a capsize in it would be a serious one."});
-    else if (wind >= 15 || (gust != null && gust >= 25)) out.push({level:"warn", key:"wind",
-      say:"The wind is blowing hard " + figures
-        + ", so you will work for every bit of ground into it and get shoved around coming back."});
+    if (wind >= 25 || (gust != null && gust >= 35)) out.push({level:"stop", key:"wind", rank:1,
+      say:"The wind is blowing very hard " + figures + "."});
+    else if (wind >= 15 || (gust != null && gust >= 25)) out.push({level:"warn", key:"wind", rank:1,
+      say:"The wind is blowing hard " + figures + "."});
     if (hard && wind >= 12) out.push({level:"warn", key:"noprogress",
       head:"You would barely move.",
-      say:"Into this wind there is not much forward progress to be had, whichever way you turn."});
+      say:"There is not much forward progress to be had into that, whichever way you turn."});
   }
 
   if (w && w.airF != null && w.waterF != null){
@@ -1184,10 +1185,10 @@ function briefConcerns(t, cv, w, sky){
   if (wind != null && wind >= 12 && windVsCurrent(w.windFromDeg, cv) === "opposed"
       && Math.abs(cv) >= 0.5) out.push({level:"caution", key:"chop",
     head:"Choppy out there.",
-    say:"The wind is running opposite to the current right now, which makes the surface choppy "
-      + "and raises the chance of a capsize.",
-    alt:"That wind is running opposite to the current right now, which makes the surface choppy "
-      + "and raises the chance of a capsize.",
+    say:"The wind is running against the current, which makes the surface choppy and raises "
+      + "the chance of a capsize.",
+    alt:"It is running against the current, which makes the surface choppy and raises the "
+      + "chance of a capsize.",
     soft:" Nothing alarming if you are dressed for it, just a bumpy ride."});
 
   if (sky && sky.sunset != null && sky.sunrise != null){
@@ -1212,6 +1213,26 @@ function briefConcerns(t, cv, w, sky){
   return {concerns:out, speeds:sp};
 }
 
+/* Ground speed alone can mislead. Two directions can come out the same while
+   one is driving into wind and spray and the other is being pushed along - and
+   if you stop paddling into a headwind you go backwards, which is a margin
+   worth knowing about. One line, not a second table of numbers. */
+function speedNote(cv, w, sp){
+  const n = sp.north, s = sp.south, gap = Math.abs(n - s);
+  if (n < 1.5 && s < 1.5) return "Slow going whichever way you turn.";
+  if (gap >= 1) {
+    const easy = n > s ? "north" : "south", hard = n > s ? "south" : "north";
+    return "Going " + easy + " is the easy way, so leave time for the paddle back " + hard + ".";
+  }
+  if (w && w.windMph != null && w.windFromDeg != null && w.windMph >= 10){
+    const hn = headwindMph(w.windFromDeg, w.windMph, 0);
+    if (Math.abs(hn) >= 8)
+      return "Similar speeds, but the wind is against you going " + (hn > 0 ? "north" : "south")
+        + " and behind you going " + (hn > 0 ? "south" : "north") + ".";
+  }
+  return "";
+}
+
 function buildBrief(t, cv, w, sky){
   const {concerns: raw, speeds} = briefConcerns(t, cv, w, sky);
   // worst level first; within a level, the concrete conditions before the
@@ -1222,10 +1243,12 @@ function buildBrief(t, cv, w, sky){
     : (w && w.windMph != null && w.windMph < 8 ? "good" : "fine");
 
   // Speeds have their own module now, so the prose stays prose.
+  // no trip planning on a day we have just said not to go out
+  const note = level === "stop" ? "" : speedNote(cv, w, speeds);
   if (!concerns.length){
     const body = w ? scene(cv, w).trim()
       : "There is no weather reading right now, so this is the tide and current alone.";
-    return {level, head:HEADLINE[level], body, speeds};
+    return {level, head:HEADLINE[level], body, speeds, note};
   }
 
   const lead = concerns[0];
@@ -1248,7 +1271,7 @@ function buildBrief(t, cv, w, sky){
   const tail = sceneTail(w, !windNamed);
 
   return {level, head: lead.head || HEADLINE[level],
-    body:[...said, tail].filter(Boolean).join(" "), speeds};
+    body:[...said, tail].filter(Boolean).join(" "), speeds, note};
 }
 
 /* ---------- weather, alerts, water ---------- */
@@ -1362,6 +1385,7 @@ function drawBrief(t, cv){
   const mph = v => v <= 0.05 ? "none" : v.toFixed(1) + " mph";
   $("spNorth").textContent = mph(b.speeds.north);
   $("spSouth").textContent = mph(b.speeds.south);
+  $("spNote").textContent = b.note || "";
 }
 
 /* ---------- render ---------- */

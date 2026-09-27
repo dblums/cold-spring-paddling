@@ -60,6 +60,12 @@ const SCENARIOS = [
     level: "fine",
     mustNot: [/wetsuit/i, /windy/i] },
 
+  { name: "one way much easier than the other",
+    wind: 18, gust: 24, from: 0, cur: 0.2, air: 66, water: 68,
+    level: "warn",
+    must: [/18 mph/],
+    mustNot: [/every bit of ground/i, /shoved around/i] },
+
   { name: "windy, 20 gusting 28",
     wind: 20, gust: 28, from: 0, cur: 0.2, air: 66, water: 68,
     level: "warn",
@@ -204,6 +210,15 @@ for (const s of SCENARIOS){
   check(s.name, "no unrendered values", !/undefined|NaN|\[object/.test(text), text.slice(0,140));
   for (const re of NEVER)
     check(s.name, `must never reassure: ${re}`, !re.test(text), text.slice(0,140));
+  // the one-line note must never plan a trip on a day we said not to go
+  if (b.level === "stop")
+    check(s.name, "a stop verdict offers no trip planning", !b.note,
+      b.note || "");
+  // and when it does speak, it must name a real direction
+  if (b.note)
+    check(s.name, "the speed note names a direction or says it is slow both ways",
+      /north|south|whichever way/.test(b.note), b.note);
+
   // speeds live in their own module now, always present and always numbers
   check(s.name, "speeds are finite numbers",
     Number.isFinite(b.speeds.north) && Number.isFinite(b.speeds.south),
