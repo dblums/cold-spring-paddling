@@ -734,7 +734,9 @@ function precipWord(series){
                  fog:"foggy", haze:"hazy", thunderstorms:"thunderstorms about"};
   return {happening, heavy, text: happening
     ? (heavy ? "heavy " + raw : (DOING[raw] || raw))
-    : "a chance of " + raw};
+    : "a chance of " + raw,
+    // "It is raining" needs a verb; "The forecast calls for rain" needs a noun.
+    noun: happening ? (heavy ? "heavy " + raw : raw) : "a chance of " + raw};
 }
 
 const SKY_WORDS = [[12,"Clear"],[37,"Mostly clear"],[62,"Partly cloudy"],[87,"Mostly cloudy"],[101,"Overcast"]];
@@ -1127,39 +1129,46 @@ function feelsLike(w){
 /* The ambient conditions, as a trailing sentence. Most people want sun and
    light air, so anything else is worth saying plainly - but when a concern has
    already covered the wind, do not say it twice. */
-function sceneTail(w, includeWind, sunsetSoon){
+function sceneTail(w, includeWind, sunsetSoon, future){
   if (!w) return "";
   const bits = [];
   const temp = tempWord(feelsLike(w));
-  if (temp) bits.push(temp.toLowerCase());
-  if (w.wx && w.wx.happening) bits.push(w.wx.text);
-  else if (w.skyText) bits.push(w.skyText.toLowerCase());
-  if (!bits.length && !includeWind && !sunsetSoon) return "";
+  // "mild" is an adjective and wants a verb; "mild air" is a noun and can follow
+  // "the forecast calls for". Same word, two grammars.
+  if (temp) bits.push(temp.toLowerCase() + (future ? " air" : ""));
+  if (w.wx && w.wx.happening) bits.push(future ? w.wx.noun : w.wx.text);
+  else if (w.skyText) bits.push(w.skyText.toLowerCase() + (future ? " skies" : ""));
   let out = bits.join(", ").replace(/, ([^,]*)$/, " and $1");
   if (includeWind && w.windMph != null)
     out += (out ? ", with " : "") + (w.windMph < 5 ? "barely any wind"
       : w.windMph + " mph from the " + compass(w.windFromDeg));
+  let s = out ? (future ? "The forecast calls for " + out : "It is " + out) : "";
   // the light going is worth saying in the sentence people actually read
-  if (sunsetSoon) out += (out ? ", and " : "") + "the sun is going down soon";
-  return out ? "It is " + out + "." : "";
+  if (sunsetSoon){
+    const sun = (future ? "the sun will be going down soon" : "the sun is going down soon");
+    // stands on its own when there is no weather to lead with
+    s += s ? ", and " + sun : sun.charAt(0).toUpperCase() + sun.slice(1);
+  }
+  return s ? s + "." : "";
 }
 
 /* When there is nothing to flag, the prose is just what the day is like. Still
    no figures - those are in the module - but enough to be worth reading. */
-function quietDay(cv, w){
+function quietDay(cv, w, future){
   if (!w) return "";
   const bits = [];
   const temp = tempWord(feelsLike(w));
-  if (temp) bits.push(temp);
-  if (w.wx && w.wx.happening) bits.push(w.wx.text);
-  else if (w.skyText) bits.push(w.skyText.toLowerCase());
+  if (temp) bits.push(future ? temp.toLowerCase() + " air" : temp);
+  if (w.wx && w.wx.happening) bits.push(future ? w.wx.noun : w.wx.text);
+  else if (w.skyText) bits.push(w.skyText.toLowerCase() + (future ? " skies" : ""));
   const extras = [];
   if (w.windMph != null) extras.push(windWord(w.windMph).toLowerCase());
   extras.push(Math.abs(cv) < 0.15 ? "the river nearly slack"
     : "the current running " + (cv > 0 ? "north" : "south"));
   let out = bits.join(" and ");
   out += (out ? ", with " : "") + extras.join(" and ");
-  out = out.charAt(0).toUpperCase() + out.slice(1) + ".";
+  out = future ? "The forecast calls for " + out + "."
+      : out.charAt(0).toUpperCase() + out.slice(1) + ".";
   // a genuinely lovely day is worth saying out loud, without telling anyone to go
   const lovely = (w.windMph == null || w.windMph < 8) && Math.abs(cv) < 0.4
     && !(w.wx && w.wx.happening) && (w.airF == null || w.airF >= 60);
@@ -1198,8 +1207,16 @@ function stormOutlook(t, hours){
   return pct > 0 ? {pct, at, soon: at - t <= 2 * 3600e3} : null;
 }
 
-function briefConcerns(t, cv, w, sky){
+/* Anything much past now is a forecast, and prose about a forecast should not
+   be phrased as a report from the riverbank. Half an hour of slack keeps the
+   live view reading as live when the clock ticks past the picker.
+   `now` is injected so the tests have a fixed present and do not quietly change
+   their answers as the wall clock passes the dates in the fixtures. */
+const isFuture = (t, now) => t > (now == null ? Date.now() : now) + 30 * MIN;
+
+function briefConcerns(t, cv, w, sky, now){
   const out = [];
+  const future = isFuture(t, now);
   const sp = speedsFor(cv, w);
   const wind = w && w.windMph != null ? w.windMph : null;
   const gust = w && w.windGustMph != null ? w.windGustMph : null;
@@ -1263,13 +1280,22 @@ function briefConcerns(t, cv, w, sky){
     const dark = (sky.dusk != null && t > sky.dusk) || (sky.dawn != null && t < sky.dawn);
     const moonUp = sky.moonrise != null && sky.moonset != null
       && ((sky.moonrise < sky.moonset) ? (t > sky.moonrise && t < sky.moonset) : (t > sky.moonrise || t < sky.moonset));
+    // Only promise a moon when we know the sky is open. Under a deck of cloud a
+    // full moon is a rumor, and an unknown sky is not a reason to be cute.
+    const moonVisible = moonUp && sky.lit >= 80
+      && w && w.skyPct != null && w.skyPct <= 40;
+    // Not a preference. 33 CFR 83.25(d)(ii) and NY Navigation Law 43 both put a
+    // white light on a kayak from sunset, so say so where it is still useful to
+    // hear it - plainly, and with the reason, which is what makes it stick.
     if (dark) out.push({level:"warn", key:"dark", rank:1,
-      head:"It is dark out.",
-      say:"You would want lights"
-        + (moonUp && sky.lit >= 80 ? ", though there is a bright moon up for company." : ".")});
+      head: future ? "It will be dark out." : "It is dark out.",
+      say:"A white light is required after dark \u2014 at minimum one you can hold up "
+        + "in time for another boat to see you."
+        + (moonVisible ? " There is a bright moon up for company." : "")});
     else if (left <= 0) out.push({level:"caution", key:"dusk", rank:1,
-      head:"The sun is down.",
-      say:"There is a little usable light left, but it is going fast."});
+      head: future ? "The sun will be down." : "The sun is down.",
+      say:"There is a little usable light left, but it is going fast. A white light "
+        + "is required from sunset on."});
     else if (left < 90 * MIN) out.push({level:"caution", key:"light", rank:1,
       head:"Not much daylight left.",
       say:"Getting back, landing and carrying out all take longer than you think in the dark."});
@@ -1373,9 +1399,10 @@ function riverAhead(t, cv){
     + ". If you are heading " + running + ", that is your window.";
 }
 
-function buildBrief(t, cv, w, sky){
+function buildBrief(t, cv, w, sky, now){
   const safety = immersionLede(w && w.airF, w && w.waterF);
-  const {concerns: raw, speeds} = briefConcerns(t, cv, w, sky);
+  const future = isFuture(t, now);
+  const {concerns: raw, speeds} = briefConcerns(t, cv, w, sky, now);
   // worst level first; within a level, the concrete conditions before the
   // paperwork, so a gale leads rather than the advisory that describes it
   const concerns = raw.slice().sort((a, b) =>
@@ -1393,7 +1420,7 @@ function buildBrief(t, cv, w, sky){
     south: directionOutlook(180, cv, w, speeds.south)
   };
   if (!concerns.length){
-    const body = w ? quietDay(cv, w)
+    const body = w ? quietDay(cv, w, future)
       : "There is no weather reading right now, so this is the tide and current alone.";
     // "Beautiful" is for a still river as well as still air; otherwise just calm
     const head = level === "good" && !lovely ? "Calm conditions." : HEADLINE[level];
@@ -1427,7 +1454,7 @@ function buildBrief(t, cv, w, sky){
     windNamed = windNamed || lastNamedWind;
   }
   const sunsetSoon = sky && sky.sunset != null && sky.sunset > t && sky.sunset - t < 90 * MIN;
-  const tail = sceneTail(w, false, sunsetSoon);
+  const tail = sceneTail(w, false, sunsetSoon, future);
 
   return {level, head: lead.head || HEADLINE[level],
     body:[...said, tail].filter(Boolean).join(" "),

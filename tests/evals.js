@@ -25,6 +25,7 @@ function check(scenario, prop, cond, detail){
 /* ---------- the world, held still ---------- */
 const NOON = T.fromNY(2026, 6, 15, 12, 0);     // mid-June, long day, nothing else going on
 const EVENING = T.fromNY(2026, 6, 15, 19, 30); // an hour or so before sunset
+const DAY = 24 * 3600 * 1000;
 
 // Phrases that must never appear in any summary, whatever the conditions.
 // "Nothing to watch out for" is the page inviting someone to stop paying
@@ -43,8 +44,14 @@ function run(s){
     windFromDeg: s.from != null ? s.from : 0,
     airF: s.air, waterF: s.water, stormPct: s.storm || 0
   };
+  if (w && s.skyPct != null){ w.skyPct = s.skyPct; w.skyText = T.skyWord(s.skyPct); }
+  if (w && s.wx) w.wx = T.precipWord([{weather:s.wx, coverage:s.wxCoverage || "likely"}]);
   const t = s.at || NOON;
-  return T.buildBrief(t, s.cur || 0, w, T.skyFor(t));
+  // a fixed present, so "is it a forecast?" does not depend on the wall clock
+  const now = s.now != null ? s.now : t + DAY;
+  const b = T.buildBrief(t, s.cur || 0, w, T.skyFor(t), now);
+  b.__in = {t, cv: s.cur || 0, w, now};   // so properties test the same inputs
+  return b;
 }
 
 /* ---------- scenarios ----------
@@ -146,13 +153,64 @@ const SCENARIOS = [
   { name: "after dark",
     wind: 5, from: 180, cur: 0.2, air: 70, water: 68, at: T.fromNY(2026, 6, 15, 22, 30),
     level: "warn",
-    must: [/dark/i, /lights/i],
-    mustNot: [/good day/i] },
+    // 33 CFR 83.25(d)(ii) and NY Nav Law 43: this is the law, not a suggestion
+    must: [/dark/i, /white light/i, /required/i],
+    mustNot: [/good day/i, /you would want/i] },
+
+  { name: "after dark, bright moon, clear sky",
+    wind: 5, from: 180, cur: 0.2, air: 70, water: 68, skyPct: 5,
+    at: T.fromNY(2026, 7, 29, 23, 30),
+    level: "warn",
+    must: [/white light/i, /required/i, /moon/i] },
+
+  { name: "after dark, bright moon, overcast",
+    wind: 5, from: 180, cur: 0.2, air: 70, water: 68, skyPct: 95,
+    at: T.fromNY(2026, 7, 29, 23, 30),
+    level: "warn",
+    // a full moon behind a deck of cloud is not company
+    must: [/white light/i],
+    mustNot: [/moon/i] },
+
+  { name: "after dark, bright moon, sky unknown",
+    wind: 5, from: 180, cur: 0.2, air: 70, water: 68,
+    at: T.fromNY(2026, 7, 29, 23, 30),
+    level: "warn",
+    mustNot: [/moon/i] },
 
   { name: "just after sunset",
     wind: 5, from: 180, cur: 0.2, air: 70, water: 68, at: T.fromNY(2026, 6, 15, 20, 45),
     level: "caution",
-    must: [/sun is down|sunset/i] },
+    // lights are due from sunset, not from full dark
+    must: [/sun is down|sunset/i, /white light/i] },
+
+  // ---- tense: a forecast is not a report from the riverbank ----
+  { name: "planning ahead, rain",
+    wind: 6, from: 180, cur: 0.2, air: 64, water: 66, skyPct: 95, wx: "rain",
+    at: EVENING, now: T.fromNY(2026, 6, 13, 9, 0),
+    level: "caution",
+    must: [/the forecast calls for/i, /sun will be going down/i],
+    mustNot: [/\bit is (mild|cool|warm|cold|hot|raining|overcast)/i,
+              /sun is going down/i] },
+
+  { name: "planning ahead, quiet day",
+    wind: 4, from: 180, cur: 0.2, air: 72, water: 70, skyPct: 5,
+    at: NOON, now: T.fromNY(2026, 6, 13, 9, 0),
+    level: "good",
+    must: [/the forecast calls for/i] },
+
+  { name: "planning ahead, after dark",
+    wind: 5, from: 180, cur: 0.2, air: 70, water: 68, skyPct: 95,
+    at: T.fromNY(2026, 6, 15, 22, 30), now: T.fromNY(2026, 6, 13, 9, 0),
+    level: "warn",
+    must: [/it will be dark out/i, /white light/i],
+    mustNot: [/it is dark out/i] },
+
+  { name: "right now, rain",
+    wind: 6, from: 180, cur: 0.2, air: 64, water: 66, skyPct: 95, wx: "rain",
+    at: EVENING, now: EVENING,
+    level: "caution",
+    must: [/it is mild and raining/i, /sun is going down/i],
+    mustNot: [/the forecast calls for/i, /sun will be going down/i] },
 
   { name: "before sunrise",
     wind: 5, from: 180, cur: 0.2, air: 66, water: 68, at: T.fromNY(2026, 6, 15, 4, 0),
@@ -209,10 +267,9 @@ for (const s of SCENARIOS){
   check(s.name, "the readings are present", b.facts.length >= 2, factsText);
 
   // coherence: the headline must speak for the verdict, not for a lesser worry
-  const heads = T.briefConcerns(s.at || NOON, s.cur || 0,
-    s.wind === null ? null : {windMph:s.wind, windGustMph:s.gust != null ? s.gust : s.wind,
-      windFromDeg:s.from != null ? s.from : 0, airF:s.air, waterF:s.water, stormPct:s.storm || 0},
-    T.skyFor(s.at || NOON)).concerns.filter(c => c.level === b.level).map(c => c.head);
+  const inp = b.__in;
+  const heads = T.briefConcerns(inp.t, inp.cv, inp.w, T.skyFor(inp.t), inp.now)
+    .concerns.filter(c => c.level === b.level).map(c => c.head);
   // either a concern at the verdict's own level speaks for it, or the verdict
   // speaks for itself - never a lesser worry
   check(s.name, `headline must speak for a ${b.level} verdict`,
