@@ -30,7 +30,11 @@ const EVENING = T.fromNY(2026, 6, 15, 19, 30); // an hour or so before sunset
 // "Nothing to watch out for" is the page inviting someone to stop paying
 // attention, which is not its job on a river.
 const NEVER = [/nothing (much )?to watch out for/i, /you'?ll be fine/i, /no need to worry/i,
-               /perfectly safe/i, /don'?t worry/i];
+               /perfectly safe/i, /don'?t worry/i,
+               // the page informs and suggests; it never rules on whether to go
+               /not a day for paddling/i, /too windy to paddle/i, /do ?n'?t paddle/i,
+               /stay (home|ashore)/i, /wait this one out/i, /a glorious day for a paddle/i,
+               /you should (not )?go/i];
 
 function run(s){
   T.WX.alerts = (s.alerts || []).map(e => ({properties:{event:e.event, severity:e.severity}}));
@@ -63,45 +67,46 @@ const SCENARIOS = [
   { name: "one way much easier than the other",
     wind: 18, gust: 24, from: 0, cur: 0.2, air: 66, water: 68,
     level: "warn",
-    must: [/18 mph/],
+    factsMust: [/18 mph/],
     mustNot: [/every bit of ground/i, /shoved around/i] },
 
   { name: "windy, 20 gusting 28",
     wind: 20, gust: 28, from: 0, cur: 0.2, air: 66, water: 68,
     level: "warn",
-    must: [/20 mph/, /28/],
+    factsMust: [/20 mph/, /28/],
     mustNot: [/good day/i] },
 
   { name: "nor'easter, 25 gusting 40, advisory out",
     wind: 25, gust: 40, from: 45, cur: -0.8, air: 58, water: 66,
     alerts: [{event:"Wind Advisory", severity:"Moderate"}],
     level: "stop",
-    must: [/25 mph/, /40/],
+    factsMust: [/25 mph/, /40/],
     mustNot: [/not dangerous/i, /bumpy/i, /good day/i, /relax/i, /easy way/i] },
 
   { name: "nor'easter onto a flood - the copy must not reassure",
     wind: 25, gust: 40, from: 0, cur: 0.9, air: 58, water: 66,
     level: "stop",
-    must: [/25 mph/],
+    factsMust: [/25 mph/],
     mustNot: [/not dangerous/i, /bumpy/i, /if you are dressed/i] },
 
   { name: "severe thunderstorm warning",
     wind: 10, from: 180, cur: 0.3, air: 78, water: 72,
     alerts: [{event:"Severe Thunderstorm Warning", severity:"Severe"}],
     level: "stop",
-    must: [/Severe Thunderstorm Warning/],
+    must: [/Severe Thunderstorm Warning/i],
     mustNot: [/good day/i, /fine for a paddle/i] },
 
   { name: "warm April afternoon, cold river",
     wind: 6, from: 225, cur: 0.2, air: 70, water: 46,
     level: "caution",
-    must: [/46/, /70/, /wetsuit or drysuit/i],
+    must: [/wetsuit or drysuit/i, /colder than the air/i],
+    factsMust: [/46/, /70/],
     mustNot: [/good day/i] },
 
   { name: "freezing water, calm air",
     wind: 5, from: 0, cur: 0.1, air: 44, water: 38,
     level: "caution",
-    must: [/dress for the water/i],
+    must: [/dress for the water/i, /wetsuit/i],
     mustNot: [/good day/i] },
 
   { name: "advisory plus chop - the reassurance must not survive",
@@ -125,13 +130,13 @@ const SCENARIOS = [
   { name: "pure crosswind, 18 mph",
     wind: 18, from: 90, cur: 0.3, air: 70, water: 68,
     level: "warn",
-    must: [/18 mph/],
+    factsMust: [/18 mph/],
     mustNot: [/no forward progress/i] },
 
   { name: "thunderstorms likely",
     wind: 9, from: 200, cur: 0.2, air: 80, water: 74, storm: 55,
     level: "warn",               // 50% and up is a warn, not a caution
-    must: [/55%|thunderstorm/i] },
+    must: [/thunderstorm/i] },
 
   { name: "an hour before sunset",
     wind: 5, from: 180, cur: 0.2, air: 70, water: 68, at: EVENING,
@@ -157,7 +162,7 @@ const SCENARIOS = [
   { name: "thunderstorms brewing, 25%",
     wind: 7, from: 200, cur: 0.2, air: 80, water: 74, storm: 25,
     level: "caution",
-    must: [/thunderstorm/i, /25%/],
+    must: [/thunderstorm/i],
     mustNot: [/good day/i] },
 
   { name: "thunderstorms likely, 60%",
@@ -181,6 +186,15 @@ for (const s of SCENARIOS){
     check(s.name, `copy must mention ${re}`, re.test(text), text.slice(0, 140));
   for (const re of s.mustNot || [])
     check(s.name, `copy must NOT contain ${re}`, !re.test(text), text.slice(0, 140));
+  const factsText = b.facts.map(f => f[0] + " " + f[1]).join(" | ");
+  for (const re of s.factsMust || [])
+    check(s.name, `the readings must show ${re}`, re.test(factsText), factsText);
+
+  // the summary is prose now; the numbers belong in the module
+  check(s.name, "the summary carries no figures",
+    !/\d+\s?(mph|\u00B0F|kt)\b/.test(b.body), b.body);
+  check(s.name, "the summary stays short", b.body.length <= 240, `${b.body.length} chars`);
+  check(s.name, "the readings are present", b.facts.length >= 2, factsText);
 
   // coherence: the headline must speak for the verdict, not for a lesser worry
   const heads = T.briefConcerns(s.at || NOON, s.cur || 0,

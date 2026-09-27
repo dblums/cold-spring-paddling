@@ -202,6 +202,12 @@ button.on{background:var(--river); border-color:var(--river); color:var(--surfac
   font-style:normal; font-weight:400; text-transform:none;
   letter-spacing:0; font-size:11.5px; opacity:.75;
 }
+.brief .facts{
+  display:flex; gap:6px 18px; flex-wrap:wrap; margin-bottom:11px;
+  padding-bottom:10px; border-bottom:1px solid var(--line-2);
+}
+.brief .facts span{font-family:"IBM Plex Mono",monospace; font-size:12.5px; color:var(--muted)}
+.brief .facts b{color:var(--ink-2); font-weight:500}
 .brief .dirs{display:grid; grid-template-columns:1fr 1fr; gap:12px}
 @media (max-width:560px){ .brief .dirs{grid-template-columns:1fr} }
 .brief .dir{
@@ -385,6 +391,7 @@ footer .label{margin-bottom:-2px}
     <p id="briefBody"></p>
     <div class="expect">
       <span class="label">What to expect <em>speeds assume a 3 mph base pace</em></span>
+      <div class="facts" id="briefFacts"></div>
       <div class="dirs">
         <div class="dir">
           <span class="dirhd">Heading north</span>
@@ -1091,13 +1098,16 @@ function speedsFor(cv, w){
 const LEVELS = ["stop", "warn", "caution", "fine", "good"];
 const worst = (a, b) => LEVELS.indexOf(a) < LEVELS.indexOf(b) ? a : b;
 
-// What the day will feel like, when no single concern speaks better for it.
+/* What the day is like, when no single concern speaks better for it.
+   These describe conditions and never instruct. The page is here to tell
+   someone what they are walking into, not to decide for them - in either
+   direction, since "a glorious day for a paddle" is a verdict too. */
 const HEADLINE = {
-  stop:    "Not a day for paddling.",
+  stop:    "Severe conditions.",
   warn:    "Very challenging conditions.",
-  caution: "Workable, but you will feel it.",
-  fine:    "Good conditions for a paddle.",
-  good:    "A glorious day for a paddle."
+  caution: "A few things to be aware of.",
+  fine:    "Pleasant conditions.",
+  good:    "Beautiful conditions."
 };
 
 const tempWord = f => f == null ? null
@@ -1132,6 +1142,24 @@ function sceneTail(w, includeWind){
     out += (out ? ", with " : "") + (w.windMph < 5 ? "barely any wind"
       : w.windMph + " mph from the " + compass(w.windFromDeg));
   return out ? "It is also " + out + "." : "";
+}
+
+/* When there is nothing to flag, the prose is just what the day is like. Still
+   no figures - those are in the module - but enough to be worth reading. */
+function quietDay(cv, w){
+  if (!w) return "";
+  const bits = [];
+  const temp = tempWord(feelsLike(w));
+  if (temp) bits.push(temp);
+  if (w.wx && w.wx.happening) bits.push(w.wx.text);
+  else if (w.skyText) bits.push(w.skyText.toLowerCase());
+  const extras = [];
+  if (w.windMph != null) extras.push(windWord(w.windMph).toLowerCase());
+  extras.push(Math.abs(cv) < 0.15 ? "the river nearly slack"
+    : "the " + (cv > 0 ? "flood running north" : "ebb running south"));
+  let out = bits.join(" and ");
+  out += (out ? ", with " : "") + extras.join(" and ");
+  return out.charAt(0).toUpperCase() + out.slice(1) + ".";
 }
 
 /* One sentence on what it is actually like out there. Most people want sun and
@@ -1172,71 +1200,65 @@ function briefConcerns(t, cv, w, sky){
   const wind = w && w.windMph != null ? w.windMph : null;
   const gust = w && w.windGustMph != null ? w.windGustMph : null;
 
+  // Each concern carries one short sentence. No figures - those live in the
+  // module below, where they can be read once instead of woven into prose.
   const alerts = WX.alerts || [];
   const severe = alerts.filter(a => ["Extreme","Severe"].includes(a.properties.severity));
   if (severe.length) out.push({level:"stop", key:"alert", rank:0,
-    say:"The Weather Service has " + (severe.length > 1 ? severe.length + " warnings"
-      : "a " + severe[0].properties.event) + " out for this stretch of river."});
+    say: severe.length > 1 ? "There are " + severe.length + " weather warnings out for this stretch."
+       : "There is a " + severe[0].properties.event + " out for this stretch."});
   else if (alerts.length) out.push({level:"warn", key:"advisory", rank:8,
-    say:"The Weather Service has " + (alerts.length > 1 ? alerts.length + " advisories"
-      : "a " + alerts[0].properties.event) + " out for this stretch of river."});
+    say: alerts.length > 1 ? "There are " + alerts.length + " advisories out for this stretch."
+       : "There is a " + alerts[0].properties.event + " out for this stretch."});
 
   if (wind != null){
     const hard = Math.max(sp.north, sp.south) < 1.2;
-    const figures = "(" + wind + " mph from the " + compass(w.windFromDeg)
-      + (gust != null && gust > wind + 4 ? ", gusting to " + gust : "") + ")";
     if (wind >= 25 || (gust != null && gust >= 35)) out.push({level:"stop", key:"wind", rank:1,
-      say:"The wind is blowing very hard " + figures + "."});
+      say:"The wind is very strong."});
     else if (wind >= 15 || (gust != null && gust >= 25)) out.push({level:"warn", key:"wind", rank:1,
-      say:"The wind is blowing hard " + figures + "."});
-    if (hard && wind >= 12) out.push({level:"warn", key:"noprogress",
+      say:"The wind is strong."});
+    if (hard && wind >= 12) out.push({level:"warn", key:"noprogress", rank:2,
       head:"You would barely move.",
-      say:"There is not much forward progress to be had into that, whichever way you turn."});
+      say:"There is not much forward progress to be had in it, whichever way you turn."});
   }
 
   if (w && w.airF != null && w.waterF != null){
     const imm = immersionLede(w.airF, w.waterF);
-    if (imm.urgent) out.push({level:"caution", key:"cold",
+    if (imm.urgent) out.push({level:"caution", key:"cold", rank:1,
       head: w.airF - w.waterF >= 15 ? "Warm air, cold water." : "The water is cold.",
-      say:"It is " + w.airF + "°F out and the river is " + w.waterF
-        + "°F. Dress for the water, not the air - a wetsuit or drysuit is a good idea today."});
+      say:"The river is a lot colder than the air, so dress for the water rather than the day. "
+        + "A wetsuit or drysuit is a good idea."});
   }
 
   const ahead = stormOutlook(t, 6);
   const stormPct = Math.max((w && w.stormPct) || 0, ahead ? ahead.pct : 0);
-  if (stormPct >= 20) out.push({level: stormPct >= 50 ? "warn" : "caution", key:"storm",
+  if (stormPct >= 20) out.push({level: stormPct >= 50 ? "warn" : "caution", key:"storm", rank:1,
     head: stormPct >= 50 ? "Thunderstorms likely." : "Thunderstorms possible.",
-    say:stormPct + "% chance"
-      + (ahead && ahead.at && !ahead.soon ? ", rising toward " + fmtT.format(ahead.at) : " in the next few hours")
-      + ". There is no shelter on the river, so watch the sky and know where you would get off."});
+    say:"Thunderstorms are " + (stormPct >= 50 ? "likely" : "possible")
+      + " in the next few hours, and there is no shelter on the river."});
 
   if (wind != null && wind >= 12 && windVsCurrent(w.windFromDeg, cv) === "opposed"
-      && Math.abs(cv) >= 0.5) out.push({level:"caution", key:"chop",
+      && Math.abs(cv) >= 0.5) out.push({level:"caution", key:"chop", rank:3,
     head:"Choppy out there.",
-    say:"The wind is running against the current, which makes the surface choppy and raises "
-      + "the chance of a capsize.",
-    alt:"It is running against the current, which makes the surface choppy and raises the "
-      + "chance of a capsize.",
-    soft:" Nothing alarming if you are dressed for it, just a bumpy ride."});
+    say:"The wind is running against the current, which makes for a choppy, splashy ride.",
+    alt:"It is running against the current, which makes for a choppy, splashy ride.",
+    soft:" Nothing alarming if you are dressed for it."});
 
   if (sky && sky.sunset != null && sky.sunrise != null){
     const left = sky.sunset - t;
     const dark = (sky.dusk != null && t > sky.dusk) || (sky.dawn != null && t < sky.dawn);
     const moonUp = sky.moonrise != null && sky.moonset != null
       && ((sky.moonrise < sky.moonset) ? (t > sky.moonrise && t < sky.moonset) : (t > sky.moonrise || t < sky.moonset));
-    if (dark) out.push({level:"warn", key:"dark",
+    if (dark) out.push({level:"warn", key:"dark", rank:1,
       head:"It is dark out.",
-      say:"The sun " + (t < sky.sunrise ? "is not up until " + fmtT.format(sky.sunrise)
-                                        : "went down at " + fmtT.format(sky.sunset))
-        + ". Paddling in the dark needs lights and is not a normal way to use this river"
-        + (moonUp && sky.lit >= 80 ? ", though there is a " + sky.lit + "% moon up." : ".")});
-    else if (left <= 0) out.push({level:"caution", key:"dusk",
+      say:"Paddling in the dark needs lights"
+        + (moonUp && sky.lit >= 80 ? ", though there is a bright moon up." : ".")});
+    else if (left <= 0) out.push({level:"caution", key:"dusk", rank:1,
       head:"The sun is down.",
-      say:"Sunset was at " + fmtT.format(sky.sunset)
-        + (sky.dusk ? ", and the usable light goes at about " + fmtT.format(sky.dusk) : "") + "."});
-    else if (left < 90 * MIN) out.push({level:"caution", key:"light",
+      say:"There is a little usable light left, but not much."});
+    else if (left < 90 * MIN) out.push({level:"caution", key:"light", rank:1,
       head:"Not much daylight left.",
-      say:dur(left) + " until sunset. Allow for getting back and carrying out, which take longer in the dark."});
+      say:"Getting back, landing and carrying out all take longer in the dark."});
   }
   return {concerns:out, speeds:sp};
 }
@@ -1262,8 +1284,8 @@ function speedNote(cv, w, sp){
    in your face or at your back, whether the river is helping, and what the
    surface will do. Same conditions, told twice - once for each way you can go. */
 const windWord = mph => mph == null ? null
-  : mph < 4 ? "Barely any wind" : mph < 12 ? "Light wind"
-  : mph < 19 ? "Moderate wind" : mph < 26 ? "Strong wind" : "Very strong wind";
+  : mph < 5 ? "Very light wind" : mph < 10 ? "Light wind"
+  : mph < 15 ? "Moderate wind" : mph < 25 ? "Strong wind" : "Very strong wind";
 
 function directionOutlook(bearing, cv, w, speed){
   const lines = [];
@@ -1297,6 +1319,22 @@ function directionOutlook(bearing, cv, w, speed){
   return {lines, speed};
 }
 
+/* The readings, once, where they can be read rather than woven into sentences. */
+function briefFacts(t, cv, w, sky){
+  const f = [];
+  if (w && w.windMph != null) f.push(["wind", w.windMph + " mph " + compass(w.windFromDeg)
+    + (w.windGustMph && w.windGustMph > w.windMph + 4 ? ", gusts " + w.windGustMph : "")]);
+  f.push(["current", Math.abs(cv) < 0.15 ? "slack"
+    : Math.abs(cv).toFixed(1) + " kt " + (cv > 0 ? "flooding north" : "ebbing south")]);
+  if (w && w.airF != null) f.push(["air", w.airF + "\u00B0F"]);
+  if (w && w.waterF != null) f.push(["water", w.waterF + "\u00B0F"]);
+  if (w && (w.wx || w.skyText)) f.push(["sky", w.wx && w.wx.happening ? w.wx.text
+    : (w.skyText || "").toLowerCase()]);
+  if (sky && sky.sunset != null) f.push([t < sky.sunset ? "sunset" : "sunrise",
+    fmtT.format(t < sky.sunset ? sky.sunset : sky.sunrise).replace(/\s/g, "").toLowerCase()]);
+  return f;
+}
+
 function buildBrief(t, cv, w, sky){
   const {concerns: raw, speeds} = briefConcerns(t, cv, w, sky);
   // worst level first; within a level, the concrete conditions before the
@@ -1314,14 +1352,23 @@ function buildBrief(t, cv, w, sky){
     south: directionOutlook(180, cv, w, speeds.south)
   };
   if (!concerns.length){
-    const body = w ? scene(cv, w).trim()
+    const body = w ? quietDay(cv, w)
       : "There is no weather reading right now, so this is the tide and current alone.";
-    return {level, head:HEADLINE[level], body, speeds, note, outlook};
+    return {level, head:HEADLINE[level], body, speeds, note, outlook,
+      facts: briefFacts(t, cv, w, sky)};
   }
 
+  // The verdict is set by severity, but the second thing said should be the one
+  // a paddler will actually notice on the water - so pick it by rank, which puts
+  // chop and cold water ahead of the advisory that merely describes them.
   const lead = concerns[0];
-  const shown = concerns.slice(0, 3)
+  const rest = concerns.slice(1)
     .filter(c => level !== "stop" || LEVELS.indexOf(c.level) <= LEVELS.indexOf("warn"));
+  const second = rest.slice().sort((a, b) => (a.rank || 1) - (b.rank || 1))[0];
+  // an official alert is always worth saying, even when something more vivid leads
+  const official = rest.find(c => c.key === "alert" || c.key === "advisory");
+  const shown = [lead, second, official].filter(Boolean)
+    .filter((c, i, a) => a.indexOf(c) === i).slice(0, 3);
 
   // A concern's reassuring half only survives when that concern is the whole
   // story - never under an advisory, and never under "not a day for paddling".
@@ -1336,10 +1383,11 @@ function buildBrief(t, cv, w, sky){
     lastNamedWind = c.key === "wind" || c.key === "noprogress";
     windNamed = windNamed || lastNamedWind;
   }
-  const tail = sceneTail(w, !windNamed);
+  const tail = sceneTail(w, false);
 
   return {level, head: lead.head || HEADLINE[level],
-    body:[...said, tail].filter(Boolean).join(" "), speeds, note, outlook};
+    body:[...said, tail].filter(Boolean).join(" "),
+    speeds, note, outlook, facts: briefFacts(t, cv, w, sky)};
 }
 
 /* ---------- weather, alerts, water ---------- */
@@ -1450,6 +1498,8 @@ function drawBrief(t, cv){
   $("briefHead").textContent = b.head;
   $("briefBody").innerHTML = b.body;
 
+  $("briefFacts").innerHTML = b.facts.map(f =>
+    "<span>" + f[0] + " <b>" + f[1] + "</b></span>").join("");
   const mph = v => v <= 0.05 ? "none" : v.toFixed(1) + " mph";
   for (const dir of ["north", "south"]){
     const o = b.outlook[dir];
