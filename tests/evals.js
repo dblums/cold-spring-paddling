@@ -99,7 +99,7 @@ const SCENARIOS = [
   { name: "warm April afternoon, cold river",
     wind: 6, from: 225, cur: 0.2, air: 70, water: 46,
     level: "caution",
-    must: [/wet or drysuit|wetsuit/i, /colder than the air/i],
+    must: [/wet or drysuit|wetsuit/i, /be careful/i, /dress for the water/i],
     factsMust: [/46/, /70/],
     mustNot: [/good day/i] },
 
@@ -168,7 +168,9 @@ const SCENARIOS = [
   { name: "thunderstorms likely, 60%",
     wind: 7, from: 200, cur: 0.2, air: 80, water: 74, storm: 60,
     level: "warn",
-    must: [/thunderstorm/i, /nowhere to hide|no shelter/i] },
+    must: [/thunderstorm/i, /radar/i],
+    // the page must not claim there is nowhere to land - there are places
+    mustNot: [/nowhere to hide|no shelter/i, /likely/i] },
 
   { name: "no weather data at all",
     wind: null, cur: 0.6, air: null, water: null,
@@ -195,9 +197,15 @@ for (const s of SCENARIOS){
   check(s.name, "the summary carries no figures",
     !/\d+\s?(mph|\u00B0F|kt)\b/.test(b.body), b.body);
   check(s.name, "the summary stays short", b.body.length <= 260, `${b.body.length} chars`);
-  // the river's next move is the one thing we can state about the future
-  check(s.name, "says what the river does next",
-    !b.ahead || /slack|flood|ebb/i.test(b.ahead), b.ahead);
+  // a dangling "It is running..." reads as nonsense after a sentence about water temp
+  check(s.name, "no sentence starts with an unanchored It",
+    !/(?:^|[.!?]\s)It is running/.test(b.body)
+      || /wind|blowing/i.test(b.body.split(/It is running/)[0]), b.body);
+
+  // tidal jargon needs a plain-language gloss, or it should not appear at all
+  check(s.name, "no unexplained tide jargon in the summary",
+    !/\b(flood|ebb|flooding|ebbing)\b/i.test(b.body)
+      || /running (north|south)|current/i.test(b.body), b.body);
   check(s.name, "the readings are present", b.facts.length >= 2, factsText);
 
   // coherence: the headline must speak for the verdict, not for a lesser worry
