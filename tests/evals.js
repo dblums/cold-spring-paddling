@@ -99,14 +99,14 @@ const SCENARIOS = [
   { name: "warm April afternoon, cold river",
     wind: 6, from: 225, cur: 0.2, air: 70, water: 46,
     level: "caution",
-    must: [/wetsuit or drysuit/i, /colder than the air/i],
+    must: [/wet or drysuit|wetsuit/i, /colder than the air/i],
     factsMust: [/46/, /70/],
     mustNot: [/good day/i] },
 
   { name: "freezing water, calm air",
     wind: 5, from: 0, cur: 0.1, air: 44, water: 38,
     level: "caution",
-    must: [/dress for the water/i, /wetsuit/i],
+    must: [/dress for the water/i, /wet or drysuit|wetsuit|drysuit/i],
     mustNot: [/good day/i] },
 
   { name: "advisory plus chop - the reassurance must not survive",
@@ -168,19 +168,20 @@ const SCENARIOS = [
   { name: "thunderstorms likely, 60%",
     wind: 7, from: 200, cur: 0.2, air: 80, water: 74, storm: 60,
     level: "warn",
-    must: [/thunderstorm/i, /no shelter/i] },
+    must: [/thunderstorm/i, /nowhere to hide|no shelter/i] },
 
   { name: "no weather data at all",
     wind: null, cur: 0.6, air: null, water: null,
     level: "fine",          // not "good" - with no wind reading we cannot claim it
-    mustNot: [/undefined|NaN|null/, /wind|rain|cloud/i] }
+    // \b matters here: "window" contains "wind"
+    mustNot: [/undefined|NaN|null/, /\bwind\b|\brain\b|\bcloud/i] }
 ];
 
 /* ---------- properties ---------- */
 console.log("SEVERITY, CONTENT AND COHERENCE\n");
 for (const s of SCENARIOS){
   const b = run(s);
-  const text = b.head + " " + b.body;
+  const text = [b.head, b.body, b.safety && b.safety.html, b.ahead].filter(Boolean).join(" ");
   check(s.name, `level should be ${s.level}, got ${b.level}`, b.level === s.level, text.slice(0, 110));
   for (const re of s.must || [])
     check(s.name, `copy must mention ${re}`, re.test(text), text.slice(0, 140));
@@ -193,7 +194,10 @@ for (const s of SCENARIOS){
   // the summary is prose now; the numbers belong in the module
   check(s.name, "the summary carries no figures",
     !/\d+\s?(mph|\u00B0F|kt)\b/.test(b.body), b.body);
-  check(s.name, "the summary stays short", b.body.length <= 240, `${b.body.length} chars`);
+  check(s.name, "the summary stays short", b.body.length <= 260, `${b.body.length} chars`);
+  // the river's next move is the one thing we can state about the future
+  check(s.name, "says what the river does next",
+    !b.ahead || /slack|flood|ebb/i.test(b.ahead), b.ahead);
   check(s.name, "the readings are present", b.facts.length >= 2, factsText);
 
   // coherence: the headline must speak for the verdict, not for a lesser worry

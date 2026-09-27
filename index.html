@@ -215,6 +215,8 @@ button.on{background:var(--river); border-color:var(--river); color:var(--surfac
   font-style:normal; font-weight:400; text-transform:none;
   letter-spacing:0; font-size:11.5px; opacity:.75;
 }
+.brief .ahead{margin:0; font-size:15.5px; line-height:1.5; color:var(--ink-2)}
+.brief .ahead:empty{display:none}
 .brief .safety{
   margin:0; font-size:14px; line-height:1.5; color:var(--muted);
 }
@@ -410,6 +412,7 @@ img{max-width:100%}
   <section class="brief" id="brief">
     <h2 id="briefHead">&mdash;</h2>
     <p id="briefBody"></p>
+    <p class="ahead" id="briefAhead"></p>
     <p class="safety" id="briefSafety"></p>
     <div class="expect">
       <span class="label">What to expect <em>speeds assume a 3 mph base pace</em></span>
@@ -1223,7 +1226,11 @@ function quietDay(cv, w){
     : "the " + (cv > 0 ? "flood running north" : "ebb running south"));
   let out = bits.join(" and ");
   out += (out ? ", with " : "") + extras.join(" and ");
-  return out.charAt(0).toUpperCase() + out.slice(1) + ".";
+  out = out.charAt(0).toUpperCase() + out.slice(1) + ".";
+  // a genuinely lovely day is worth saying out loud, without telling anyone to go
+  const lovely = (w.windMph == null || w.windMph < 8) && Math.abs(cv) < 0.4
+    && !(w.wx && w.wx.happening) && (w.airF == null || w.airF >= 60);
+  return lovely ? "About as easy as this river gets. " + out : out;
 }
 
 /* One sentence on what it is actually like out there. Most people want sun and
@@ -1269,44 +1276,43 @@ function briefConcerns(t, cv, w, sky){
   const alerts = WX.alerts || [];
   const severe = alerts.filter(a => ["Extreme","Severe"].includes(a.properties.severity));
   if (severe.length) out.push({level:"stop", key:"alert", rank:0,
-    say: severe.length > 1 ? "There are " + severe.length + " weather warnings out for this stretch."
-       : "There is a " + severe[0].properties.event + " out for this stretch."});
+    say: severe.length > 1 ? "The Weather Service has " + severe.length + " warnings out for this stretch."
+       : "The Weather Service has a " + severe[0].properties.event + " out for this stretch."});
   else if (alerts.length) out.push({level:"warn", key:"advisory", rank:8,
-    say: alerts.length > 1 ? "There are " + alerts.length + " advisories out for this stretch."
-       : "There is a " + alerts[0].properties.event + " out for this stretch."});
+    say: alerts.length > 1 ? "There are " + alerts.length + " advisories out for this stretch, too."
+       : "There is a " + alerts[0].properties.event + " out for this stretch, too."});
 
   if (wind != null){
     const hard = Math.max(sp.north, sp.south) < 1.2;
     if (wind >= 25 || (gust != null && gust >= 35)) out.push({level:"stop", key:"wind", rank:1,
-      say:"The wind is very strong."});
+      say:"It is really blowing out there today."});
     else if (wind >= 15 || (gust != null && gust >= 25)) out.push({level:"warn", key:"wind", rank:1,
-      say:"The wind is strong."});
+      say:"It is blowing pretty good out there today."});
     if (hard && wind >= 12) out.push({level:"warn", key:"noprogress", rank:2,
       head:"You would barely move.",
-      say:"There is not much forward progress to be had in it, whichever way you turn."});
+      say:"You would be working hard for very little ground, whichever way you turned."});
   }
 
   if (w && w.airF != null && w.waterF != null){
     const imm = immersionLede(w.airF, w.waterF);
     if (imm.urgent) out.push({level:"caution", key:"cold", rank:1,
       head: w.airF - w.waterF >= 15 ? "Warm air, cold water." : "The water is cold.",
-      say:"The river is a lot colder than the air, so dress for the water rather than the day. "
-        + "A wetsuit or drysuit is a good idea."});
+      say:"The river is still a lot colder than the air, which is the classic spring trap \u2014 "
+        + "people dress for the sunshine and go in wearing a t-shirt. Dress for the water instead."});
   }
 
   const ahead = stormOutlook(t, 6);
   const stormPct = Math.max((w && w.stormPct) || 0, ahead ? ahead.pct : 0);
   if (stormPct >= 20) out.push({level: stormPct >= 50 ? "warn" : "caution", key:"storm", rank:1,
     head: stormPct >= 50 ? "Thunderstorms likely." : "Thunderstorms possible.",
-    say:"Thunderstorms are " + (stormPct >= 50 ? "likely" : "possible")
-      + " in the next few hours, and there is no shelter on the river."});
+    say:"There is thunder in the forecast for the next few hours, and nowhere to hide on the river."});
 
   if (wind != null && wind >= 12 && windVsCurrent(w.windFromDeg, cv) === "opposed"
       && Math.abs(cv) >= 0.5) out.push({level:"caution", key:"chop", rank:3,
     head:"Choppy out there.",
-    say:"The wind is running against the current, which makes for a choppy, splashy ride.",
-    alt:"It is running against the current, which makes for a choppy, splashy ride.",
-    soft:" Nothing alarming if you are dressed for it."});
+    say:"It is running straight into the current, which piles the water up into short steep chop.",
+    alt:"It is running straight into the current, which piles the water up into short steep chop.",
+    soft:" The splashy kind rather than the frightening kind, if you are dressed for it."});
 
   if (sky && sky.sunset != null && sky.sunrise != null){
     const left = sky.sunset - t;
@@ -1315,14 +1321,14 @@ function briefConcerns(t, cv, w, sky){
       && ((sky.moonrise < sky.moonset) ? (t > sky.moonrise && t < sky.moonset) : (t > sky.moonrise || t < sky.moonset));
     if (dark) out.push({level:"warn", key:"dark", rank:1,
       head:"It is dark out.",
-      say:"Paddling in the dark needs lights"
-        + (moonUp && sky.lit >= 80 ? ", though there is a bright moon up." : ".")});
+      say:"You would want lights"
+        + (moonUp && sky.lit >= 80 ? ", though there is a bright moon up for company." : ".")});
     else if (left <= 0) out.push({level:"caution", key:"dusk", rank:1,
       head:"The sun is down.",
-      say:"There is a little usable light left, but not much."});
+      say:"There is a little usable light left, but it is going fast."});
     else if (left < 90 * MIN) out.push({level:"caution", key:"light", rank:1,
       head:"Not much daylight left.",
-      say:"Getting back, landing and carrying out all take longer in the dark."});
+      say:"Getting back, landing and carrying out all take longer than you think in the dark."});
   }
   return {concerns:out, speeds:sp};
 }
@@ -1335,10 +1341,11 @@ function briefConcerns(t, cv, w, sky){
    saying is the trap: riding wind and current out, then having to come back. */
 function speedNote(cv, w, sp){
   const n = sp.north, s = sp.south;
-  if (n < 1.5 && s < 1.5) return "Slow going whichever way you turn.";
+  if (n < 1.5 && s < 1.5) return "It is slow going whichever way you turn.";
   if (Math.abs(n - s) >= 1){
     const easy = n > s ? "north" : "south", hard = n > s ? "south" : "north";
-    return "Going " + easy + " is much easier than coming back " + hard + " \u2014 leave time for it.";
+    return "Heading " + easy + " is the easy half. The paddle back " + hard
+      + " is the one to leave time for.";
   }
   return "";
 }
@@ -1399,7 +1406,31 @@ function briefFacts(t, cv, w, sky){
   return f;
 }
 
+/* The river is going to do something different in an hour, and that is the
+   piece a visitor has no way to know. Tides are the one thing on this page that
+   can be stated about the future with confidence, so say it. */
+function riverAhead(t, cv){
+  const slack = nextAfter(CUR, t, p => p.type === "slack");
+  if (!slack) return "";
+  const after = nextAfter(CUR, slack.t, p => p.type !== "slack");
+  const turnsTo = after ? (after.v > 0 ? "north" : "south") : null;
+
+  if (Math.abs(cv) < 0.15)
+    return after
+      ? "The river is slack right now \u2014 the " + (after.v > 0 ? "flood" : "ebb")
+        + " fills in over the next hour or so and will be running " + turnsTo
+        + " hard by " + fmtT.format(after.t) + "."
+      : "The river is slack right now.";
+
+  const running = cv > 0 ? "north" : "south";
+  return "The " + (cv > 0 ? "flood" : "ebb") + " has about " + dur(slack.t - t)
+    + " left in it and goes slack around " + fmtT.format(slack.t)
+    + (turnsTo ? ", then turns " + turnsTo : "")
+    + ". If you are heading " + running + ", that is your window.";
+}
+
 function buildBrief(t, cv, w, sky){
+  const safety = immersionLede(w && w.airF, w && w.waterF);
   const {concerns: raw, speeds} = briefConcerns(t, cv, w, sky);
   // worst level first; within a level, the concrete conditions before the
   // paperwork, so a gale leads rather than the advisory that describes it
@@ -1418,8 +1449,8 @@ function buildBrief(t, cv, w, sky){
   if (!concerns.length){
     const body = w ? quietDay(cv, w)
       : "There is no weather reading right now, so this is the tide and current alone.";
-    return {level, head:HEADLINE[level], body, speeds, note, outlook,
-      facts: briefFacts(t, cv, w, sky)};
+    return {level, head:HEADLINE[level], body, ahead: riverAhead(t, cv),
+      speeds, note, outlook, safety, facts: briefFacts(t, cv, w, sky)};
   }
 
   // The verdict is set by severity, but the second thing said should be the one
@@ -1451,7 +1482,8 @@ function buildBrief(t, cv, w, sky){
 
   return {level, head: lead.head || HEADLINE[level],
     body:[...said, tail].filter(Boolean).join(" "),
-    speeds, note, outlook, facts: briefFacts(t, cv, w, sky)};
+    ahead: riverAhead(t, cv),
+    speeds, note, outlook, safety, facts: briefFacts(t, cv, w, sky)};
 }
 
 /* ---------- weather, alerts, water ---------- */
@@ -1561,10 +1593,10 @@ function drawSky(t){
 
 function drawBrief(t, cv){
   const w = conditionsAt(t), sky = skyFor(t);
-  const imm = immersionLede(w && w.airF, w && w.waterF);
-  $("briefSafety").className = "safety" + (imm.urgent ? "" : " plain");
-  $("briefSafety").innerHTML = imm.html;
   const b = buildBrief(t, cv, w, sky);
+  $("briefAhead").textContent = b.ahead || "";
+  $("briefSafety").className = "safety" + (b.safety.urgent ? "" : " plain");
+  $("briefSafety").innerHTML = b.safety.html;
   $("brief").className = "brief " + b.level;
   $("briefHead").textContent = b.head;
   $("briefBody").innerHTML = b.body;
