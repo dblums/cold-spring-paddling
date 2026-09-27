@@ -100,6 +100,13 @@ const SCENARIOS = [
     must: [/dress for the water/i],
     mustNot: [/good day/i] },
 
+  { name: "advisory plus chop - the reassurance must not survive",
+    wind: 23, gust: 33, from: 22, cur: 1.3, air: 58, water: 66,
+    alerts: [{event:"Wind Advisory", severity:"Moderate"}],
+    level: "warn",
+    must: [/advisor/i, /chop/i],
+    mustNot: [/not dangerous/i, /bumpy/i] },
+
   { name: "wind against a strong flood",
     wind: 14, from: 0, cur: 0.9, air: 72, water: 70,
     level: "caution",
@@ -180,10 +187,10 @@ for (const s of SCENARIOS){
   if (heads.length) check(s.name, `headline must come from a ${b.level}-level concern`,
     heads.includes(b.head), `"${b.head}" vs [${heads.join(" | ")}]`);
 
-  // coherence: a stop verdict may not also reassure
-  if (b.level === "stop")
-    check(s.name, "a stop verdict must not soften itself",
-      !/not dangerous|should stay smooth|bumpy ride|easy way|nothing much/i.test(text), text.slice(0,140));
+  // coherence: nothing at warn or worse may reassure, whatever raised it
+  if (b.level === "stop" || b.level === "warn")
+    check(s.name, `a ${b.level} verdict must not soften itself`,
+      !/not dangerous|should stay smooth|bumpy ride|nothing much/i.test(text), text.slice(0,150));
 
   // numeracy: every mph figure quoted must be one the page actually computed
   const quoted = [...text.matchAll(/([\d.]+) mph/g)].map(m => parseFloat(m[1]));

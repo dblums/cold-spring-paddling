@@ -193,6 +193,33 @@ button.on{background:var(--river); border-color:var(--river); color:var(--surfac
 .answer.mute p{color:var(--muted); font-size:14.5px}
 /* The cells are supporting detail. They keep their color but stop out-shouting
    the sentence above them, which is the part that actually answers the question. */
+/* ---- the one-glance summary, first thing on the page ---- */
+.brief{
+  border-radius:12px; padding:16px 18px 17px;
+  border:1px solid var(--line); border-left:5px solid var(--muted);
+  background:var(--surface); box-shadow:var(--shadow);
+  display:flex; flex-direction:column; gap:7px;
+}
+.brief h2{
+  font-family:"Barlow Semi Condensed",sans-serif; font-weight:700; margin:0;
+  font-size:clamp(21px,3.6vw,26px); line-height:1.12; letter-spacing:-.01em;
+  text-wrap:balance;
+}
+.brief p{margin:0; font-size:15.5px; line-height:1.5; color:var(--ink-2)}
+.brief p b{color:var(--ink); font-weight:600}
+.brief .facts{
+  display:flex; gap:7px 16px; flex-wrap:wrap; margin-top:3px;
+  padding-top:9px; border-top:1px solid var(--line-2);
+}
+.brief .facts span{font-family:"IBM Plex Mono",monospace; font-size:12.5px; color:var(--muted)}
+.brief .facts b{color:var(--ink-2); font-weight:500}
+.brief.good{border-left-color:var(--safe)}      .brief.good h2{color:var(--safe)}
+.brief.fine{border-left-color:var(--river)}     .brief.fine h2{color:var(--river)}
+.brief.caution{border-left-color:var(--mud)}    .brief.caution h2{color:var(--mud)}
+.brief.warn{border-left-color:var(--ebb)}       .brief.warn h2{color:var(--ebb)}
+.brief.stop{border-left-color:var(--closed); background:var(--closed-soft)}
+.brief.stop h2{color:var(--closed)}
+
 /* ---- NWS alerts: outrank every number below them ---- */
 .alerts{display:flex; flex-direction:column; gap:8px}
 .alert{
@@ -343,6 +370,12 @@ img{max-width:100%}
   <div class="stamp" id="stamp"></div>
 
   <div class="warn" id="outofrange"></div>
+
+  <section class="brief" id="brief">
+    <h2 id="briefHead">&mdash;</h2>
+    <p id="briefBody"></p>
+    <div class="facts" id="briefFacts"></div>
+  </section>
 
   <div class="alerts" id="alerts"></div>
 
@@ -1107,7 +1140,8 @@ function briefConcerns(t, cv, w, sky){
       && Math.abs(cv) >= 0.5) out.push({level:"caution", key:"chop",
     head:"Choppy. Wind and current are fighting.",
     say:"The " + wind + " mph " + dir + " wind is blowing against the current, which stacks the water "
-      + "into short steep chop. Not dangerous if you are dressed for it, but a bumpy ride."});
+      + "into short steep chop.",
+    soft:" Not dangerous if you are dressed for it, but a bumpy ride."});
 
   if (sky && sky.sunset != null && sky.sunrise != null){
     const left = sky.sunset - t;
@@ -1172,13 +1206,16 @@ function buildBrief(t, cv, w, sky){
       body: scene + speedSay, speeds};
   }
   const lead = concerns[0];
-  // on a stop day, softer notes only undercut the verdict - "not dangerous if
-  // you are dressed for it" has no business under "too windy to paddle"
+  // A concern's reassuring half only survives when that concern is the whole
+  // story. "Not dangerous if you are dressed for it" has no business sitting
+  // under an advisory, and none at all under "too windy to paddle".
+  const soften = c => c.say + (c === lead && level === c.level
+    && LEVELS.indexOf(level) >= LEVELS.indexOf("caution") ? (c.soft || "") : "");
   const also = concerns.slice(1, 3)
     .filter(c => level !== "stop" || LEVELS.indexOf(c.level) <= LEVELS.indexOf("warn"))
-    .map(c => c.say);
+    .map(soften);
   return {level, head:lead.head,
-    body:[lead.say, ...also, speedSay].filter(Boolean).join(" "), speeds};
+    body:[soften(lead), ...also, speedSay].filter(Boolean).join(" "), speeds};
 }
 
 /* ---------- weather, alerts, water ---------- */
@@ -1278,6 +1315,27 @@ function drawSky(t){
     '<div class="answer ' + b.cls + '"><p><b>' + b.lead + "</b> " + b.text + "</p></div>").join("");
 }
 
+function drawBrief(t, cv){
+  const w = conditionsAt(t), sky = skyFor(t);
+  const b = buildBrief(t, cv, w, sky);
+  $("brief").className = "brief " + b.level;
+  $("briefHead").textContent = b.head;
+  $("briefBody").innerHTML = b.body;
+
+  // the handful of figures worth repeating; everything else stays below
+  const facts = [];
+  if (w && w.windMph != null) facts.push(["wind", w.windMph + " mph " + compass(w.windFromDeg)
+    + (w.windGustMph && w.windGustMph > w.windMph + 3 ? ", gusts " + w.windGustMph : "")]);
+  if (w && w.airF != null) facts.push(["air", w.airF + "\u00B0F"]);
+  if (w && w.waterF != null) facts.push(["water", w.waterF + "\u00B0F"]);
+  facts.push(["current", Math.abs(cv) < 0.15 ? "slack"
+    : Math.abs(cv).toFixed(1) + " kt " + (cv > 0 ? "flood" : "ebb")]);
+  if (sky.sunset != null) facts.push([t < sky.sunset ? "sunset" : "sunrise",
+    fmtT.format(t < sky.sunset ? sky.sunset : sky.sunrise).replace(/\s/g, "").toLowerCase()]);
+  $("briefFacts").innerHTML = facts.map(f =>
+    "<span>" + f[0] + " <b>" + f[1] + "</b></span>").join("");
+}
+
 /* ---------- render ---------- */
 function render(){
   setPicker();
@@ -1337,6 +1395,7 @@ function render(){
   /* --- charts --- */
   // not t0 + 24h: on the two DST changeover days the local day is 23 or 25 hours
   const t0 = dayStartNY(t), t1 = dayStartNY(t0 + 36 * 3600e3);
+  drawBrief(t, cv);
   drawTide(t0, t1);
   drawCur(t0, t1);
   drawWeather(t, cv);
