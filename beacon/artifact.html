@@ -1021,6 +1021,18 @@ function windCurrentBand(w, cv){
 const LEVELS = ["stop", "warn", "caution", "fine", "good"];
 const worst = (a, b) => LEVELS.indexOf(a) < LEVELS.indexOf(b) ? a : b;
 
+// Thunder is worth knowing about before it arrives, so scan the next few hours
+// of the forecast rather than only asking what is overhead now.
+function stormOutlook(t, hours){
+  if (!WX.grid) return null;
+  let pct = 0, at = null;
+  for (let h = 0; h <= hours; h++){
+    const v = valueAt(WX.grid.probabilityOfThunder, t + h * 3600e3);
+    if (v != null && v > pct){ pct = v; at = t + h * 3600e3; }
+  }
+  return pct > 0 ? {pct, at, soon: at - t <= 2 * 3600e3} : null;
+}
+
 function briefConcerns(t, cv, w, sky){
   const out = [];
   const sp = speedsFor(cv, w);
@@ -1063,9 +1075,13 @@ function briefConcerns(t, cv, w, sky){
         + "°F. Dress for the water, not the air - a wetsuit or drysuit is a good idea today."});
   }
 
-  if (w && w.stormPct != null && w.stormPct >= 30) out.push({level:"caution", key:"storm",
-    head:"Thunderstorms about.",
-    say:w.stormPct + "% chance today. Worth watching the sky and knowing where you would get off."});
+  const ahead = stormOutlook(t, 6);
+  const stormPct = Math.max((w && w.stormPct) || 0, ahead ? ahead.pct : 0);
+  if (stormPct >= 20) out.push({level: stormPct >= 50 ? "warn" : "caution", key:"storm",
+    head: stormPct >= 50 ? "Thunderstorms likely." : "Thunderstorms possible.",
+    say:stormPct + "% chance"
+      + (ahead && ahead.at && !ahead.soon ? ", rising toward " + fmtT.format(ahead.at) : " in the next few hours")
+      + ". There is no shelter on the river, so watch the sky and know where you would get off."});
 
   // it takes real wind against real current to raise chop worth mentioning
   if (wind != null && wind >= 12 && windVsCurrent(w.windFromDeg, cv) === "opposed"
@@ -1074,9 +1090,22 @@ function briefConcerns(t, cv, w, sky){
     say:"The " + wind + " mph " + dir + " wind is blowing against the current, which stacks the water "
       + "into short steep chop. Not dangerous if you are dressed for it, but a bumpy ride."});
 
-  if (sky && sky.sunset != null){
+  if (sky && sky.sunset != null && sky.sunrise != null){
     const left = sky.sunset - t;
-    if (left > 0 && left < 90 * MIN) out.push({level:"caution", key:"light",
+    const dark = (sky.dusk != null && t > sky.dusk) || (sky.dawn != null && t < sky.dawn);
+    const moonUp = sky.moonrise != null && sky.moonset != null
+      && ((sky.moonrise < sky.moonset) ? (t > sky.moonrise && t < sky.moonset) : (t > sky.moonrise || t < sky.moonset));
+    if (dark) out.push({level:"warn", key:"dark",
+      head:"It is dark.",
+      say:"The sun " + (t < sky.sunrise ? "is not up until " + fmtT.format(sky.sunrise)
+                                        : "went down at " + fmtT.format(sky.sunset))
+        + ". Paddling in the dark needs lights and is not a normal way to use this river"
+        + (moonUp && sky.lit >= 80 ? ", though there is a " + sky.lit + "% moon up." : ".")});
+    else if (left <= 0) out.push({level:"caution", key:"dusk",
+      head:"The sun is down.",
+      say:"Sunset was at " + fmtT.format(sky.sunset)
+        + (sky.dusk ? ", and the usable light goes at about " + fmtT.format(sky.dusk) : "") + "."});
+    else if (left < 90 * MIN) out.push({level:"caution", key:"light",
       head:"Not much daylight left.",
       say:dur(left) + " until sunset. Allow for getting back and carrying out, which take longer in the dark."});
   }
@@ -1093,26 +1122,35 @@ function buildBrief(t, cv, w, sky){
   const calm = w && w.windMph != null && w.windMph < 8;
 
   // the speed sentence, which is the thing most people came for
-  const show = v => v <= 0.05 ? "no forward progress" : v.toFixed(1) + " mph";
+  const show = v => v <= 0.05 ? "make no forward progress" : "paddle about " + v.toFixed(1) + " mph";
   const even = Math.abs(speeds.north - speeds.south) < 0.4;
   let speedSay;
   if (level === "stop") speedSay = "";
-  else if (even) speedSay = "Expect around " + show(speeds.north)
-    + " either way, so go whichever direction you feel like.";
+  else if (even) speedSay = "Expect to " + show(speeds.north) + " in either direction.";
   else {
     const easy = speeds.north > speeds.south ? "north" : "south";
     const hard = easy === "north" ? "south" : "north";
-    speedSay = "Expect about " + show(speeds.north) + " heading north and " + show(speeds.south)
-      + " heading south" + (Math.min(speeds.north, speeds.south) < 1.5
-        ? " — " + easy + " is the easy way, and " + hard + " is the way home."
+    speedSay = "Expect to " + show(speeds.north) + " going north and "
+      + (speeds.south <= 0.05 ? "make no forward progress" : "about " + speeds.south.toFixed(1) + " mph")
+      + " going south" + (Math.min(speeds.north, speeds.south) < 1.5
+        ? " \u2014 " + easy + " is the easy way, and " + hard + " is the way home."
         : ".");
   }
 
   if (!concerns.length){
+    // describe the day rather than pronouncing it safe. "Nothing to watch out
+    // for" is the page telling someone to stop paying attention, which is not
+    // its job on a river.
+    const bits = [];
+    if (w && w.windMph != null) bits.push(w.windMph < 5 ? "Light air"
+      : w.windMph + " mph from the " + compass(w.windFromDeg));
+    if (w && w.skyText) bits.push(w.skyText.toLowerCase());
+    bits.push(Math.abs(cv) < 0.2 ? "the river nearly slack"
+      : "the " + (cv > 0 ? "flood running north" : "ebb running south"));
+    const scene = bits.join(", ").replace(/, ([^,]*)$/, " and $1") + ". ";
     return {level: calm ? "good" : "fine",
       head: calm ? "A good day to be on the water." : "Fine for a paddle.",
-      body: (calm ? "Light air and nothing to watch out for. " : "Nothing much to watch out for. ") + speedSay,
-      speeds};
+      body: scene + speedSay, speeds};
   }
   const lead = concerns[0];
   // on a stop day, softer notes only undercut the verdict - "not dangerous if

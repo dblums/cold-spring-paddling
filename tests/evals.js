@@ -26,6 +26,12 @@ function check(scenario, prop, cond, detail){
 const NOON = T.fromNY(2026, 6, 15, 12, 0);     // mid-June, long day, nothing else going on
 const EVENING = T.fromNY(2026, 6, 15, 19, 30); // an hour or so before sunset
 
+// Phrases that must never appear in any summary, whatever the conditions.
+// "Nothing to watch out for" is the page inviting someone to stop paying
+// attention, which is not its job on a river.
+const NEVER = [/nothing (much )?to watch out for/i, /you'?ll be fine/i, /no need to worry/i,
+               /perfectly safe/i, /don'?t worry/i];
+
 function run(s){
   T.WX.alerts = (s.alerts || []).map(e => ({properties:{event:e.event, severity:e.severity}}));
   const w = s.wind === null ? null : {
@@ -113,13 +119,40 @@ const SCENARIOS = [
 
   { name: "thunderstorms likely",
     wind: 9, from: 200, cur: 0.2, air: 80, water: 74, storm: 55,
-    level: "caution",
+    level: "warn",               // 50% and up is a warn, not a caution
     must: [/55%|thunderstorm/i] },
 
   { name: "an hour before sunset",
     wind: 5, from: 180, cur: 0.2, air: 70, water: 68, at: EVENING,
     level: "caution",
     must: [/daylight|sunset/i] },
+
+  { name: "after dark",
+    wind: 5, from: 180, cur: 0.2, air: 70, water: 68, at: T.fromNY(2026, 6, 15, 22, 30),
+    level: "warn",
+    must: [/dark/i, /lights/i],
+    mustNot: [/good day/i] },
+
+  { name: "just after sunset",
+    wind: 5, from: 180, cur: 0.2, air: 70, water: 68, at: T.fromNY(2026, 6, 15, 20, 45),
+    level: "caution",
+    must: [/sun is down|sunset/i] },
+
+  { name: "before sunrise",
+    wind: 5, from: 180, cur: 0.2, air: 66, water: 68, at: T.fromNY(2026, 6, 15, 4, 0),
+    level: "warn",
+    must: [/dark/i] },
+
+  { name: "thunderstorms brewing, 25%",
+    wind: 7, from: 200, cur: 0.2, air: 80, water: 74, storm: 25,
+    level: "caution",
+    must: [/thunderstorm/i, /25%/],
+    mustNot: [/good day/i] },
+
+  { name: "thunderstorms likely, 60%",
+    wind: 7, from: 200, cur: 0.2, air: 80, water: 74, storm: 60,
+    level: "warn",
+    must: [/thunderstorm/i, /no shelter/i] },
 
   { name: "no weather data at all",
     wind: null, cur: 0.6, air: null, water: null,
@@ -162,6 +195,12 @@ for (const s of SCENARIOS){
 
   check(s.name, "no empty or stub copy", b.head.length > 8 && b.body.length > 25, text.slice(0,80));
   check(s.name, "no unrendered values", !/undefined|NaN|\[object/.test(text), text.slice(0,140));
+  for (const re of NEVER)
+    check(s.name, `must never reassure: ${re}`, !re.test(text), text.slice(0,140));
+  // a bare number is ambiguous - say what the speed is a speed of
+  if (/mph/.test(b.body) && b.level !== "stop")
+    check(s.name, "speeds are described as paddling speeds",
+      /paddle about|no forward progress/.test(b.body), b.body.slice(0,120));
 }
 
 /* ---------- monotonicity ---------- */
@@ -183,6 +222,16 @@ console.log("MONOTONICITY\n");
     if (water <= 50 && b.level === "good"){ coldOK = false; coldDetail = `${water}F water still reported as a good day`; }
   }
   check("water temp sweep 75 -> 40F", "cold water must never read as a good day", coldOK, coldDetail);
+
+  let stormOK = true, stormDetail = "";
+  for (const storm of [0,10,19,20,35,49,50,70,90]){
+    const b = run({wind:6, from:0, cur:0.2, air:74, water:72, storm, name:"storm sweep"});
+    const want = storm >= 50 ? "warn" : storm >= 20 ? "caution" : "good";
+    if (T.LEVELS.indexOf(b.level) > T.LEVELS.indexOf(want)){
+      stormOK = false; stormDetail = `${storm}% thunder gave ${b.level}, expected ${want} or worse`;
+    }
+  }
+  check("thunder sweep 0 -> 90%", "rising thunder chance must not give a friendlier verdict", stormOK, stormDetail);
 
   // speeds must fall as the headwind rises
   let speedOK = true, last = Infinity;
