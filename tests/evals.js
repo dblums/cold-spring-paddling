@@ -53,13 +53,11 @@ const SCENARIOS = [
   { name: "glassy June morning",
     wind: 4, from: 315, cur: 0.05, air: 72, water: 70,
     level: "good",
-    must: [/2\.\d mph|3\.\d mph/],
     mustNot: [/wetsuit|drysuit/i, /advisory/i, /chop/i] },
 
   { name: "ordinary day, ebb running",
     wind: 8, from: 180, cur: -0.5, air: 74, water: 71,
     level: "fine",
-    must: [/mph/],
     mustNot: [/wetsuit/i, /windy/i] },
 
   { name: "windy, 20 gusting 28",
@@ -164,8 +162,7 @@ const SCENARIOS = [
   { name: "no weather data at all",
     wind: null, cur: 0.6, air: null, water: null,
     level: "fine",          // not "good" - with no wind reading we cannot claim it
-    must: [/mph/],
-    mustNot: [/undefined|NaN|null/] }
+    mustNot: [/undefined|NaN|null/, /wind|rain|cloud/i] }
 ];
 
 /* ---------- properties ---------- */
@@ -196,9 +193,9 @@ for (const s of SCENARIOS){
       !/not dangerous|should stay smooth|bumpy ride|nothing much/i.test(text), text.slice(0,150));
 
   // numeracy: every mph figure quoted must be one the page actually computed
+  // any mph in the prose is a wind figure now, and must be the real one
   const quoted = [...text.matchAll(/([\d.]+) mph/g)].map(m => parseFloat(m[1]));
-  const allowed = [Math.abs(b.speeds.north), Math.abs(b.speeds.south), s.wind, s.gust, T.PADDLE_MPH]
-    .filter(v => v != null).map(v => +v.toFixed(1));
+  const allowed = [s.wind, s.gust, T.PADDLE_MPH].filter(v => v != null).map(v => +v.toFixed(1));
   const bogus = quoted.filter(q => !allowed.some(a => Math.abs(a - q) < 0.06));
   check(s.name, `every mph figure must be real (saw ${quoted.join(", ") || "none"})`,
     bogus.length === 0, bogus.length ? "unexplained: " + bogus.join(", ") : "");
@@ -207,10 +204,13 @@ for (const s of SCENARIOS){
   check(s.name, "no unrendered values", !/undefined|NaN|\[object/.test(text), text.slice(0,140));
   for (const re of NEVER)
     check(s.name, `must never reassure: ${re}`, !re.test(text), text.slice(0,140));
-  // a bare number is ambiguous - say what the speed is a speed of
-  if (/mph/.test(b.body) && b.level !== "stop")
-    check(s.name, "speeds are described as paddling speeds",
-      /paddle about|no forward progress/.test(b.body), b.body.slice(0,120));
+  // speeds live in their own module now, always present and always numbers
+  check(s.name, "speeds are finite numbers",
+    Number.isFinite(b.speeds.north) && Number.isFinite(b.speeds.south),
+    JSON.stringify(b.speeds));
+  check(s.name, "speeds are plausible for a kayak",
+    b.speeds.north < 9 && b.speeds.south < 9 && b.speeds.north > -3 && b.speeds.south > -3,
+    JSON.stringify(b.speeds));
 }
 
 /* ---------- monotonicity ---------- */

@@ -147,7 +147,7 @@ group("Wind relative to current");
   const bf = brief(1, {mph:12, from:10});
   ok("flood: faster north than south", bf.speeds.north > bf.speeds.south,
      `${bf.speeds.north.toFixed(2)} vs ${bf.speeds.south.toFixed(2)}`);
-  ok("north is named first", bf.body.indexOf("north") < bf.body.indexOf("south"));
+  ok("the summary never buries the speeds in prose", !/mph going (north|south)/.test(bf.body), bf.body);
   const be = brief(-1, {mph:12, from:10});
   ok("ebb: faster south than north", be.speeds.south > be.speeds.north,
      `${be.speeds.south.toFixed(2)} vs ${be.speeds.north.toFixed(2)}`);
@@ -164,7 +164,8 @@ group("Wind relative to current");
   // with no weather at all the summary still reports what the current will do
   const noWx = T.buildBrief(T.fromNY(2026, 6, 15, 12, 0), 1, null,
     T.skyFor(T.fromNY(2026, 6, 15, 12, 0)));
-  ok("no wind data still gives speeds", /paddle about [\d.]+ mph going north/.test(noWx.body), noWx.body);
+  ok("no wind data still gives speeds",
+     Number.isFinite(noWx.speeds.north) && Number.isFinite(noWx.speeds.south), JSON.stringify(noWx.speeds));
   ok("no wind data invents no weather", !/wind|rain|cloud/i.test(noWx.body), noWx.body);
   eq("paddling pace", T.PADDLE_MPH, 3);
 }

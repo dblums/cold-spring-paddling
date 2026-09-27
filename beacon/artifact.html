@@ -194,12 +194,21 @@ button.on{background:var(--river); border-color:var(--river); color:var(--surfac
 }
 .brief p{margin:0; font-size:15.5px; line-height:1.5; color:var(--ink-2)}
 .brief p b{color:var(--ink); font-weight:600}
-.brief .facts{
-  display:flex; gap:7px 16px; flex-wrap:wrap; margin-top:3px;
-  padding-top:9px; border-top:1px solid var(--line-2);
+/* The speeds live in the same place every time, whatever the conditions, so
+   there is one spot to look for the thing most people came to find out. */
+.brief .speeds{margin-top:4px; padding-top:10px; border-top:1px solid var(--line-2)}
+.brief .speeds .label{display:block; margin-bottom:6px}
+.brief .speeds .label em{
+  font-style:normal; font-weight:400; text-transform:none;
+  letter-spacing:0; font-size:11.5px; opacity:.8;
 }
-.brief .facts span{font-family:"IBM Plex Mono",monospace; font-size:12.5px; color:var(--muted)}
-.brief .facts b{color:var(--ink-2); font-weight:500}
+.brief .speeds .rows{display:flex; gap:10px 34px; flex-wrap:wrap}
+.brief .speeds .rows div{display:flex; align-items:baseline; gap:9px}
+.brief .speeds .rows span{font-size:14px; color:var(--ink-2)}
+.brief .speeds .rows b{
+  font-family:"IBM Plex Mono",monospace; font-weight:500; font-size:19px;
+  color:var(--ink); font-variant-numeric:tabular-nums;
+}
 .brief.good{border-left-color:var(--safe)}      .brief.good h2{color:var(--safe)}
 .brief.fine{border-left-color:var(--river)}     .brief.fine h2{color:var(--river)}
 .brief.caution{border-left-color:var(--mud)}    .brief.caution h2{color:var(--mud)}
@@ -352,7 +361,13 @@ footer .label{margin-bottom:-2px}
   <section class="brief" id="brief">
     <h2 id="briefHead">&mdash;</h2>
     <p id="briefBody"></p>
-    <div class="facts" id="briefFacts"></div>
+    <div class="speeds">
+      <span class="label">Expected paddling speed <em>assumes a 3 mph base speed</em></span>
+      <div class="rows">
+        <div><span>Heading north</span><b id="spNorth">&mdash;</b></div>
+        <div><span>Heading south</span><b id="spSouth">&mdash;</b></div>
+      </div>
+    </div>
   </section>
 
   <div class="alerts" id="alerts"></div>
@@ -1070,6 +1085,24 @@ function feelsLike(w){
   return f;
 }
 
+/* The ambient conditions, as a trailing sentence. Most people want sun and
+   light air, so anything else is worth saying plainly - but when a concern has
+   already covered the wind, do not say it twice. */
+function sceneTail(w, includeWind){
+  if (!w) return "";
+  const bits = [];
+  const temp = tempWord(feelsLike(w));
+  if (temp) bits.push(temp.toLowerCase());
+  if (w.wx && w.wx.happening) bits.push(w.wx.text);
+  else if (w.skyText) bits.push(w.skyText.toLowerCase());
+  if (!bits.length && !includeWind) return "";
+  let out = bits.join(", ").replace(/, ([^,]*)$/, " and $1");
+  if (includeWind && w.windMph != null)
+    out += (out ? ", with " : "") + (w.windMph < 5 ? "barely any wind"
+      : w.windMph + " mph from the " + compass(w.windFromDeg));
+  return out ? "It is also " + out + "." : "";
+}
+
 /* One sentence on what it is actually like out there. Most people want sun and
    light air, so anything else is worth saying plainly. */
 function scene(cv, w){
@@ -1110,19 +1143,23 @@ function briefConcerns(t, cv, w, sky){
 
   const alerts = WX.alerts || [];
   const severe = alerts.filter(a => ["Extreme","Severe"].includes(a.properties.severity));
-  if (severe.length) out.push({level:"stop", key:"alert",
+  if (severe.length) out.push({level:"stop", key:"alert", rank:0,
     say:"The Weather Service has " + (severe.length > 1 ? severe.length + " warnings"
       : "a " + severe[0].properties.event) + " out for this stretch of river."});
-  else if (alerts.length) out.push({level:"warn", key:"advisory",
+  else if (alerts.length) out.push({level:"warn", key:"advisory", rank:8,
     say:"The Weather Service has " + (alerts.length > 1 ? alerts.length + " advisories"
       : "a " + alerts[0].properties.event) + " out for this stretch of river."});
 
   if (wind != null){
     const hard = Math.max(sp.north, sp.south) < 1.2;
+    const figures = "(" + wind + " mph from the " + compass(w.windFromDeg)
+      + (gust != null && gust > wind + 4 ? ", gusting to " + gust : "") + ")";
     if (wind >= 25 || (gust != null && gust >= 35)) out.push({level:"stop", key:"wind",
-      say:"That is a fight rather than a paddle, and a capsize in it would be a serious one."});
+      say:"The wind is blowing very hard " + figures
+        + " \u2014 that is a fight rather than a paddle, and a capsize in it would be a serious one."});
     else if (wind >= 15 || (gust != null && gust >= 25)) out.push({level:"warn", key:"wind",
-      say:"You will work hard for every bit of ground into that, and get shoved around coming back."});
+      say:"The wind is blowing hard " + figures
+        + ", so you will work for every bit of ground into it and get shoved around coming back."});
     if (hard && wind >= 12) out.push({level:"warn", key:"noprogress",
       head:"You would barely move.",
       say:"Into this wind there is not much forward progress to be had, whichever way you turn."});
@@ -1147,7 +1184,10 @@ function briefConcerns(t, cv, w, sky){
   if (wind != null && wind >= 12 && windVsCurrent(w.windFromDeg, cv) === "opposed"
       && Math.abs(cv) >= 0.5) out.push({level:"caution", key:"chop",
     head:"Choppy out there.",
-    say:"The wind is running against the current, which stacks the water into short steep chop.",
+    say:"The wind is running opposite to the current right now, which makes the surface choppy "
+      + "and raises the chance of a capsize.",
+    alt:"That wind is running opposite to the current right now, which makes the surface choppy "
+      + "and raises the chance of a capsize.",
     soft:" Nothing alarming if you are dressed for it, just a bumpy ride."});
 
   if (sky && sky.sunset != null && sky.sunrise != null){
@@ -1174,39 +1214,41 @@ function briefConcerns(t, cv, w, sky){
 
 function buildBrief(t, cv, w, sky){
   const {concerns: raw, speeds} = briefConcerns(t, cv, w, sky);
-  const concerns = raw.slice().sort((a, b) => LEVELS.indexOf(a.level) - LEVELS.indexOf(b.level));
-  const level = concerns.length ? concerns[0].level : (w && w.windMph != null && w.windMph < 8 ? "good" : "fine");
+  // worst level first; within a level, the concrete conditions before the
+  // paperwork, so a gale leads rather than the advisory that describes it
+  const concerns = raw.slice().sort((a, b) =>
+    LEVELS.indexOf(a.level) - LEVELS.indexOf(b.level) || (a.rank || 1) - (b.rank || 1));
+  const level = concerns.length ? concerns[0].level
+    : (w && w.windMph != null && w.windMph < 8 ? "good" : "fine");
 
-  const show = v => v <= 0.05 ? "make no forward progress" : "paddle about " + v.toFixed(1) + " mph";
-  const even = Math.abs(speeds.north - speeds.south) < 0.4;
-  let speedSay;
-  if (level === "stop") speedSay = "";
-  else if (even) speedSay = "Expect to " + show(speeds.north) + " in either direction.";
-  else {
-    const easy = speeds.north > speeds.south ? "north" : "south";
-    const hard = easy === "north" ? "south" : "north";
-    speedSay = "Expect to " + show(speeds.north) + " going north and "
-      + (speeds.south <= 0.05 ? "make no forward progress" : "about " + speeds.south.toFixed(1) + " mph")
-      + " going south" + (Math.min(speeds.north, speeds.south) < 1.5
-        ? " — " + easy + " is the easy way, and " + hard + " is the way home."
-        : ".");
+  // Speeds have their own module now, so the prose stays prose.
+  if (!concerns.length){
+    const body = w ? scene(cv, w).trim()
+      : "There is no weather reading right now, so this is the tide and current alone.";
+    return {level, head:HEADLINE[level], body, speeds};
   }
 
-  const setting = scene(cv, w);
-  if (!concerns.length)
-    return {level, head:HEADLINE[level], body:setting + speedSay, speeds};
-
   const lead = concerns[0];
+  const shown = concerns.slice(0, 3)
+    .filter(c => level !== "stop" || LEVELS.indexOf(c.level) <= LEVELS.indexOf("warn"));
+
   // A concern's reassuring half only survives when that concern is the whole
   // story - never under an advisory, and never under "not a day for paddling".
-  const soften = c => c.say + (c === lead && level === c.level
-    && LEVELS.indexOf(level) >= LEVELS.indexOf("caution") ? (c.soft || "") : "");
-  const also = concerns.slice(1, 3)
-    .filter(c => level !== "stop" || LEVELS.indexOf(c.level) <= LEVELS.indexOf("warn"))
-    .map(soften);
+  const said = [];
+  let windNamed = false, lastNamedWind = false;
+  for (const c of shown){
+    // "That wind ..." only reads right directly after the sentence about the wind
+    let line = (c.alt && lastNamedWind) ? c.alt : c.say;
+    if (c === lead && level === c.level && LEVELS.indexOf(level) >= LEVELS.indexOf("caution"))
+      line += (c.soft || "");
+    said.push(line);
+    lastNamedWind = c.key === "wind" || c.key === "noprogress";
+    windNamed = windNamed || lastNamedWind;
+  }
+  const tail = sceneTail(w, !windNamed);
 
   return {level, head: lead.head || HEADLINE[level],
-    body:[setting.trim(), soften(lead), ...also, speedSay].filter(Boolean).join(" "), speeds};
+    body:[...said, tail].filter(Boolean).join(" "), speeds};
 }
 
 /* ---------- weather, alerts, water ---------- */
@@ -1317,18 +1359,9 @@ function drawBrief(t, cv){
   $("briefHead").textContent = b.head;
   $("briefBody").innerHTML = b.body;
 
-  // the handful of figures worth repeating; everything else stays below
-  const facts = [];
-  if (w && w.windMph != null) facts.push(["wind", w.windMph + " mph " + compass(w.windFromDeg)
-    + (w.windGustMph && w.windGustMph > w.windMph + 3 ? ", gusts " + w.windGustMph : "")]);
-  if (w && w.airF != null) facts.push(["air", w.airF + "\u00B0F"]);
-  if (w && w.waterF != null) facts.push(["water", w.waterF + "\u00B0F"]);
-  facts.push(["current", Math.abs(cv) < 0.15 ? "slack"
-    : Math.abs(cv).toFixed(1) + " kt " + (cv > 0 ? "flood" : "ebb")]);
-  if (sky.sunset != null) facts.push([t < sky.sunset ? "sunset" : "sunrise",
-    fmtT.format(t < sky.sunset ? sky.sunset : sky.sunrise).replace(/\s/g, "").toLowerCase()]);
-  $("briefFacts").innerHTML = facts.map(f =>
-    "<span>" + f[0] + " <b>" + f[1] + "</b></span>").join("");
+  const mph = v => v <= 0.05 ? "none" : v.toFixed(1) + " mph";
+  $("spNorth").textContent = mph(b.speeds.north);
+  $("spSouth").textContent = mph(b.speeds.south);
 }
 
 /* ---------- render ---------- */
