@@ -936,42 +936,192 @@ function drawDial(v){
   svg.appendChild(g);
 }
 
-/* ---------- what the current and wind do to your speed ----------
-   A current adds to or subtracts from speed over the ground directly, so a knot
-   of it is the difference between covering ground and grinding. North is given
-   first: on this stretch the ordinary trips are upriver, and the southern run
-   past West Point through World's End is not a default anyone should be nudged
-   toward. */
-const PADDLE_MPH = 3;      // a steady, unhurried recreational pace
+/* ---------- how fast you will actually go ----------
+   A paddler puts out roughly constant power, and settles at the speed where that
+   power equals the work done against two drags:
+
+     hull drag  grows with speed through the WATER
+     air drag   grows with speed through the AIR, which is ground speed + headwind
+
+   Ground speed is water speed plus current, so a current carries you for free
+   while wind does not - which is why a following current and a following wind
+   are not the same gift, and why a headwind costs far more than the equivalent
+   adverse current. Solved by bisection; it is a few microseconds.
+
+   Calibrated so still air and slack water give PADDLE_MPH, and checked against
+   the usual sea-kayaking rules of thumb: 10 mph of headwind is noticeable,
+   15 is hard work, 20 is barely progressing, 25 and you are going nowhere. */
+const PADDLE_MPH = 3;               // a steady, unhurried recreational pace
+const MPS = 0.44704;
+const AIR_K = 0.5 * 1.225 * 0.8;    // air density / 2, times frontal area x Cd
+const HULL_K = 11.0;                // ~20 N of hull drag at 3 mph, typical rec kayak
+const PADDLE_POWER = (HULL_K + AIR_K) * Math.pow(PADDLE_MPH * MPS, 3);
+
+// The component of the wind you are pushing into, travelling on a given bearing.
+// Positive is a headwind, negative a tailwind, and a crosswind is near zero.
+const headwindMph = (windFromDeg, windMph, bearing) =>
+  windMph * Math.cos((windFromDeg - bearing) * Math.PI / 180);
+
+function groundSpeedMph(currentMph, headMph){
+  const c = currentMph * MPS, w = headMph * MPS;
+  const excess = vw => {
+    const va = vw + c + w;
+    return (HULL_K * vw * Math.abs(vw) + AIR_K * va * Math.abs(va)) * vw - PADDLE_POWER;
+  };
+  let lo = 0, hi = 8;
+  for (let i = 0; i < 50; i++){ const mid = (lo + hi) / 2; excess(mid) > 0 ? hi = mid : lo = mid; }
+  return (lo + c) / MPS;              // over the ground, so it can go negative
+}
+
+// Speeds north and south for the moment, using wind when we have it.
+function speedsFor(cv, w){
+  const curNorth = cv * 1.15078;      // signed: positive is flowing north
+  const wind = (w && w.windMph != null && w.windFromDeg != null) ? w : null;
+  const head = b => wind ? headwindMph(wind.windFromDeg, wind.windMph, b) : 0;
+  return {
+    north: groundSpeedMph(curNorth, head(0)),
+    south: groundSpeedMph(-curNorth, head(180)),
+    hasWind: !!wind
+  };
+}
 
 function windCurrentBand(w, cv){
   const curMph = Math.abs(cv) * 1.15078;
   const haveWind = w && w.windMph != null && w.windFromDeg != null;
   const calm = haveWind && w.windMph < 8;
-  // slack water and no useful wind: there is genuinely nothing to say
-  if (curMph < 0.2 && (!haveWind || calm)) return null;
+  if (curMph < 0.2 && !haveWind) return null;
   const wind = haveWind ? "The " + w.windMph + " mph " + compass(w.windFromDeg) + " wind" : null;
   const rel = haveWind ? windVsCurrent(w.windFromDeg, cv) : (curMph < 0.2 ? "slack" : "unknown");
+  if (curMph < 0.2 && calm) return null;
 
-  if (rel === "slack") return {cls:"", text:"The river is slack, so expect to paddle at about your "
-    + "normal pace, around <b>" + PADDLE_MPH + " mph</b>, in either direction."
-    + (wind ? " " + wind + " is the only thing pushing you around." : "")};
-
+  const sp = speedsFor(cv, w);
+  const show = v => v <= 0.05 ? "no forward progress" : "<b>" + v.toFixed(1) + " mph</b>";
   const basis = ' <span class="qual">(based on a typical ' + PADDLE_MPH
-    + ' mph paddling speed in still conditions)</span>';
-  const pace = v => Math.max(0.3, v).toFixed(1);
-  const north = pace(cv > 0 ? PADDLE_MPH + curMph : PADDLE_MPH - curMph);
-  const south = pace(cv > 0 ? PADDLE_MPH - curMph : PADDLE_MPH + curMph);
-  const lead = "Expect to paddle at about <b>" + north + " mph heading north</b> and <b>"
-    + south + " mph heading south</b>" + basis + ". ";
+    + ' mph paddling speed in still air and slack water)</span>';
+  const lead = "Expect to paddle at about " + show(sp.north) + " heading north and "
+    + show(sp.south) + " heading south" + basis + ". ";
 
   const tail = !haveWind ? ""
     : calm ? "The wind is light right now, so the current is doing most of the work."
     : rel === "aligned" ? wind + " is blowing the same way the current runs, so the surface should stay smooth."
     : rel === "opposed" ? wind + " is blowing against the current, so expect the surface to be choppier than either one would make it alone."
-    : wind + " is crossing the river rather than running along it, so it will push you sideways more than it slows you down.";
+    : rel === "across" ? wind + " is crossing the river rather than running along it, so it will push you sideways more than it slows you down."
+    : "";
 
   return {cls: (!haveWind || calm) ? "" : rel === "opposed" ? "cold" : rel === "aligned" ? "good" : "", text:lead + tail};
+}
+
+/* ---------- the one-glance summary ----------
+   Everything below the fold, reduced to a headline and a sentence or two. Built
+   as a list of concerns rather than a chain of ifs, so each one can be asserted
+   on its own and the worst always wins. Severity is ordered, and nothing softer
+   is ever allowed to outrank something more serious.
+
+   Levels, worst first: stop, warn, caution, fine, good. */
+const LEVELS = ["stop", "warn", "caution", "fine", "good"];
+const worst = (a, b) => LEVELS.indexOf(a) < LEVELS.indexOf(b) ? a : b;
+
+function briefConcerns(t, cv, w, sky){
+  const out = [];
+  const sp = speedsFor(cv, w);
+  const wind = w && w.windMph != null ? w.windMph : null;
+  const gust = w && w.windGustMph != null ? w.windGustMph : null;
+  const dir = w && w.windFromDeg != null ? compass(w.windFromDeg) : null;
+
+  // an official advisory outranks anything we work out ourselves
+  const alerts = WX.alerts || [];
+  const severe = alerts.filter(a => ["Extreme","Severe"].includes(a.properties.severity));
+  if (severe.length) out.push({level:"stop", key:"alert",
+    head:"Not a day for paddling.",
+    say:"The National Weather Service has " + (severe.length > 1 ? severe.length + " active warnings" :
+      "a " + severe[0].properties.event) + " in effect."});
+  else if (alerts.length) out.push({level:"warn", key:"advisory",
+    head:"There is an advisory in effect.",
+    say:"The National Weather Service has " + (alerts.length > 1 ? alerts.length + " advisories" :
+      "a " + alerts[0].properties.event) + " out for this stretch of river."});
+
+  if (wind != null){
+    const hard = Math.max(sp.north, sp.south) < 1.2;
+    if (wind >= 25 || (gust != null && gust >= 35)) out.push({level:"stop", key:"wind",
+      head:"Too windy to paddle.",
+      say:"Sustained " + wind + " mph" + (gust ? " gusting to " + gust : "") + " out of the " + dir
+        + ". That is more than a paddle - it is a fight, and a capsize in it would be a serious one."});
+    else if (wind >= 15 || (gust != null && gust >= 25)) out.push({level:"warn", key:"wind",
+      head:"It is windy.",
+      say:"Sustained " + wind + " mph" + (gust ? " gusting to " + gust : "") + " from the " + dir + "."});
+    if (hard && wind >= 12) out.push({level:"warn", key:"noprogress",
+      head:"You will struggle to make headway.",
+      say:"Into this wind you would barely move, whichever way you turn."});
+  }
+
+  // the spring failure mode: dressing for the air instead of the water
+  if (w && w.airF != null && w.waterF != null){
+    const imm = immersionLede(w.airF, w.waterF);
+    if (imm.urgent) out.push({level:"caution", key:"cold",
+      head: w.airF - w.waterF >= 15 ? "Warm air, cold water." : "The water is cold.",
+      say:"It is " + w.airF + "°F out and the river is " + w.waterF
+        + "°F. Dress for the water, not the air - a wetsuit or drysuit is a good idea today."});
+  }
+
+  if (w && w.stormPct != null && w.stormPct >= 30) out.push({level:"caution", key:"storm",
+    head:"Thunderstorms about.",
+    say:w.stormPct + "% chance today. Worth watching the sky and knowing where you would get off."});
+
+  // it takes real wind against real current to raise chop worth mentioning
+  if (wind != null && wind >= 12 && windVsCurrent(w.windFromDeg, cv) === "opposed"
+      && Math.abs(cv) >= 0.5) out.push({level:"caution", key:"chop",
+    head:"Choppy. Wind and current are fighting.",
+    say:"The " + wind + " mph " + dir + " wind is blowing against the current, which stacks the water "
+      + "into short steep chop. Not dangerous if you are dressed for it, but a bumpy ride."});
+
+  if (sky && sky.sunset != null){
+    const left = sky.sunset - t;
+    if (left > 0 && left < 90 * MIN) out.push({level:"caution", key:"light",
+      head:"Not much daylight left.",
+      say:dur(left) + " until sunset. Allow for getting back and carrying out, which take longer in the dark."});
+  }
+  return {concerns:out, speeds:sp};
+}
+
+function buildBrief(t, cv, w, sky){
+  const {concerns: raw, speeds} = briefConcerns(t, cv, w, sky);
+  // worst first, so the headline always speaks for the verdict. Ties keep the
+  // order they were raised in, which puts official advisories ahead of our own
+  // reckoning at the same severity.
+  const concerns = raw.slice().sort((a, b) => LEVELS.indexOf(a.level) - LEVELS.indexOf(b.level));
+  const level = concerns.length ? concerns[0].level : "good";
+  const calm = w && w.windMph != null && w.windMph < 8;
+
+  // the speed sentence, which is the thing most people came for
+  const show = v => v <= 0.05 ? "no forward progress" : v.toFixed(1) + " mph";
+  const even = Math.abs(speeds.north - speeds.south) < 0.4;
+  let speedSay;
+  if (level === "stop") speedSay = "";
+  else if (even) speedSay = "Expect around " + show(speeds.north)
+    + " either way, so go whichever direction you feel like.";
+  else {
+    const easy = speeds.north > speeds.south ? "north" : "south";
+    const hard = easy === "north" ? "south" : "north";
+    speedSay = "Expect about " + show(speeds.north) + " heading north and " + show(speeds.south)
+      + " heading south" + (Math.min(speeds.north, speeds.south) < 1.5
+        ? " — " + easy + " is the easy way, and " + hard + " is the way home."
+        : ".");
+  }
+
+  if (!concerns.length){
+    return {level: calm ? "good" : "fine",
+      head: calm ? "A good day to be on the water." : "Fine for a paddle.",
+      body: (calm ? "Light air and nothing to watch out for. " : "Nothing much to watch out for. ") + speedSay,
+      speeds};
+  }
+  const lead = concerns[0];
+  // on a stop day, softer notes only undercut the verdict - "not dangerous if
+  // you are dressed for it" has no business under "too windy to paddle"
+  const also = concerns.slice(1, 3)
+    .filter(c => level !== "stop" || LEVELS.indexOf(c.level) <= LEVELS.indexOf("warn"))
+    .map(c => c.say);
+  return {level, head:lead.head,
+    body:[lead.say, ...also, speedSay].filter(Boolean).join(" "), speeds};
 }
 
 /* ---------- weather, alerts, water ---------- */

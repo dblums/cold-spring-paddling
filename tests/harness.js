@@ -4,9 +4,9 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 
-const EXPORTS = ["SITE","sunTimes","moonTimes","moonIllumination","moonAltitude","skyFor",
+const EXPORTS = ["SITE","WX","sunTimes","moonTimes","moonIllumination","moonAltitude","skyFor",
   "tideAt","curAt","TIDE","CUR","HIGHS","LOWS","RANGE","fromNY","nyParts","dayStartNY",
-  "dur","compass","windVsCurrent","windCurrentBand","immersionLede",
+  "dur","compass","windVsCurrent","windCurrentBand","immersionLede","groundSpeedMph","headwindMph","speedsFor","buildBrief","briefConcerns","LEVELS","PADDLE_POWER",
   "blockedAt","muddyAt","nearestIn","conditionsAt","valueAt","isoDurMs","skyWord",
   "PADDLE_MPH","TRESTLE_MIN","MUD_MIN","TIDE_SHIFT_MIN","CUR_SHIFT_MIN","MIN"];
 

@@ -85,6 +85,22 @@ validated against NOAA's own 6-minute data before shipping:
 | Tide height | Cosine between successive high/low | 0.07 ft |
 | Current speed | Quarter-sine anchored at slack | 0.02 kt |
 
+### How fast you will actually go
+
+A paddler puts out roughly constant power and settles at the speed where it
+balances two drags: hull drag grows with speed through the **water**, air drag
+with speed through the **air**, which is ground speed plus headwind. A current
+carries you for free; wind does not. Solved by bisection each render.
+
+| Headwind, mph | 0 | 5 | 10 | 15 | 20 | 25 | 30 |
+|---|---|---|---|---|---|---|---|
+| Into it | 3.0 | 2.8 | 2.3 | 1.8 | 1.3 | 0.9 | 0.7 |
+| Behind you | 3.0 | 3.1 | 3.3 | 3.7 | 4.2 | 4.9 | 5.6 |
+
+Only the along-river component counts, so a crosswind costs almost nothing. A
+25 mph headwind against a 1 mph adverse current comes out slightly negative —
+you lose ground — which is the case a linear model gets cheerfully wrong.
+
 Sun and moon are computed rather than fetched, and agree with the US Naval
 Observatory to within 2 minutes on sunrise, sunset and civil twilight, 7 minutes
 on moonrise and moonset, and 1 percentage point on illumination.
@@ -104,6 +120,7 @@ launching into the strongest flood of the cycle.
 ```bash
 node tests/offline.js     # pure logic, no network
 node tests/live.js        # checks the data against the sources it claims to come from
+node tests/evals.js       # checks the generated summary is sensible and safe
 ```
 
 Both load the built `index.html` into a sandbox and exercise the code that
@@ -112,6 +129,14 @@ actually ships, rather than a copy of it.
 `offline.js` covers time-zone and DST handling, the integrity of the baked-in
 predictions, interpolation shape, the marsh access windows and their boundaries,
 wind/current classification including crosswinds, the 120 rule, and formatting.
+
+`evals.js` is a different kind of check. The summary at the top of the page is
+generated prose with no single correct answer, so asserting exact strings would
+be brittle and beside the point. It asserts *properties* instead: that given
+conditions produce a given verdict, that the headline speaks for that verdict,
+that a "too windy to paddle" day never also says "not dangerous", that every
+mph figure quoted is one the page actually computed, and that worsening any
+input never produces a friendlier verdict.
 
 `live.js` is the one that matters for trust. It confirms every tide time is
 exactly 30 minutes before Beacon and every current time matches West Point
