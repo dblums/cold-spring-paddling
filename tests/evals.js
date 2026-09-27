@@ -38,7 +38,8 @@ const NEVER = [/nothing (much )?to watch out for/i, /you'?ll be fine/i, /no need
                /you should (not )?go/i];
 
 function run(s){
-  T.WX.alerts = (s.alerts || []).map(e => ({properties:{event:e.event, severity:e.severity}}));
+  T.WX.alerts = (s.alerts || []).map(e => ({properties:{event:e.event, severity:e.severity,
+    ends: e.ends != null ? new Date(e.ends).toISOString() : undefined}}));
   const w = s.wind === null ? null : {
     windMph: s.wind, windGustMph: s.gust != null ? s.gust : s.wind,
     windFromDeg: s.from != null ? s.from : 0,
@@ -205,6 +206,67 @@ const SCENARIOS = [
     must: [/it will be dark out/i, /white light/i],
     mustNot: [/it is dark out/i] },
 
+  // ---- tense: weather is a forecast, the river is a prediction ----
+  { name: "planning ahead, strong wind",
+    wind: 20, from: 90, cur: 0.2, air: 70, water: 68, skyPct: 30,
+    at: NOON, now: NOON - 2 * DAY,
+    level: "warn",
+    must: [/forecast has it blowing/i],
+    mustNot: [/it is blowing/i, /out there today/i] },
+
+  { name: "planning ahead, gale",
+    wind: 30, from: 90, cur: 0.2, air: 70, water: 68, skyPct: 30,
+    at: NOON, now: NOON - 2 * DAY,
+    level: "stop",
+    must: [/forecast has it really blowing/i],
+    mustNot: [/it is really blowing/i] },
+
+  { name: "planning ahead, wind against current",
+    // a southerly runs into an ebb; 13 mph stays under the wind concern's
+    // threshold so the chop line is the one that leads
+    wind: 13, from: 180, cur: -1.2, air: 70, water: 68, skyPct: 30,
+    at: NOON, now: NOON - 2 * DAY,
+    level: "caution",
+    must: [/forecast to run straight into the current/i],
+    mustNot: [/\bis running straight into/i] },
+
+  { name: "planning ahead, thunderstorms",
+    wind: 7, from: 200, cur: 0.2, air: 80, water: 74, storm: 60, skyPct: 60,
+    at: NOON, now: NOON - 2 * DAY,
+    level: "warn",
+    must: [/forecast around then/i],
+    mustNot: [/next few hours/i] },
+
+  { name: "planning ahead, cold water",
+    wind: 7, from: 200, cur: 0.2, air: 66, water: 48, skyPct: 20,
+    at: NOON, now: NOON - 2 * DAY,
+    level: "caution",
+    must: [/water is cold today/i, /dress for the water/i],
+    mustNot: [/water is still cold, despite/i] },
+
+  // the river is the one thing we can promise; it just should not be phrased
+  // as though the reader were standing on the bank
+  { name: "planning ahead, the river still speaks with confidence",
+    wind: 4, from: 180, cur: 0.05, air: 72, water: 70, skyPct: 5,
+    at: NOON, now: NOON - 2 * DAY,
+    level: "good",
+    mustNot: [/right now/i] },
+
+  // an alert that has expired by the time you are asking about
+  { name: "planning ahead, advisory already expired",
+    wind: 6, from: 180, cur: 0.2, air: 70, water: 68, skyPct: 30,
+    alerts: [{event:"Wind Advisory", severity:"Moderate", ends: NOON - 6 * 3600e3}],
+    at: NOON, now: NOON - 2 * DAY,
+    level: "good",
+    mustNot: [/advisory/i] },
+
+  { name: "planning ahead, advisory still in effect",
+    wind: 6, from: 180, cur: 0.2, air: 70, water: 68, skyPct: 30,
+    alerts: [{event:"Wind Advisory", severity:"Moderate", ends: NOON + 6 * 3600e3}],
+    at: NOON, now: NOON - 2 * DAY,
+    level: "warn",
+    must: [/wind advisory/i] },
+
   { name: "right now, rain",
     wind: 6, from: 180, cur: 0.2, air: 64, water: 66, skyPct: 95, wx: "rain",
     at: EVENING, now: EVENING,
@@ -250,6 +312,13 @@ for (const s of SCENARIOS){
   const factsText = b.facts.map(f => f[0] + " " + f[1]).join(" | ");
   for (const re of s.factsMust || [])
     check(s.name, `the readings must show ${re}`, re.test(factsText), factsText);
+
+  // A forecast must never be asserted as a reading. One property beats
+  // remembering to hedge each sentence by hand.
+  if (b.__in.t > b.__in.now + 30 * 60000)
+    check(s.name, "a forecast is never phrased as a reading",
+      !/\b(it is|the wind is running|there is thunder in the forecast for the next|right now)\b/i
+        .test(text.replace(/it is going fast/gi, "")), text);
 
   // the summary is prose now; the numbers belong in the module
   check(s.name, "the summary carries no figures",

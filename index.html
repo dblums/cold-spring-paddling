@@ -431,7 +431,7 @@ img{max-width:100%}
   <section class="card" id="wxCard">
     <div class="card-head">
       <h2>Weather &amp; Water</h2>
-      <span class="station"><a href="https://forecast.weather.gov/MapClick.php?lat=41.4204&amp;lon=-73.9568" target="_blank" rel="noopener">NWS OKX &#8599;</a> &middot; NOAA water temp</span>
+      <span class="station"><span id="wxWhen"></span><a href="https://forecast.weather.gov/MapClick.php?lat=41.4204&amp;lon=-73.9568" target="_blank" rel="noopener">NWS OKX &#8599;</a> &middot; NOAA water temp</span>
     </div>
     <div class="alerts" id="alerts"></div>
     <div class="tiles w">
@@ -453,6 +453,7 @@ img{max-width:100%}
       <div class="tile">
         <div class="lab">Water</div>
         <div class="big"><span id="wxWater">&mdash;</span><span class="u">&deg;F</span></div>
+        <div class="sub" id="wxWaterSub"></div>
       </div>
     </div>
     <div class="answer" id="wxAnswer"><p id="wxAnswerText"></p></div>
@@ -1279,6 +1280,16 @@ function stormOutlook(t, hours){
    their answers as the wall clock passes the dates in the fixtures. */
 const isFuture = (t, now) => t > (now == null ? Date.now() : now) + 30 * MIN;
 
+/* An alert is news about the window it covers. Looking at next Tuesday, a
+   warning that expires tonight has nothing to say - but an alert that starts
+   later today is still worth seeing now, so only the end is checked. */
+function alertsAt(t){
+  return (WX.alerts || []).filter(a => {
+    const end = a.properties.ends || a.properties.expires;
+    return !end || t <= Date.parse(end);
+  });
+}
+
 function briefConcerns(t, cv, w, sky, now){
   const out = [];
   const future = isFuture(t, now);
@@ -1288,7 +1299,7 @@ function briefConcerns(t, cv, w, sky, now){
 
   // Each concern carries one short sentence. No figures - those live in the
   // module below, where they can be read once instead of woven into prose.
-  const alerts = WX.alerts || [];
+  const alerts = alertsAt(t);
   const severe = alerts.filter(a => ["Extreme","Severe"].includes(a.properties.severity));
   if (severe.length) out.push({level:"stop", key:"alert", rank:0,
     say: severe.length > 1 ? "The Weather Service has " + severe.length + " warnings out for this stretch."
@@ -1300,9 +1311,11 @@ function briefConcerns(t, cv, w, sky, now){
   if (wind != null){
     const hard = Math.max(sp.north, sp.south) < 1.2;
     if (wind >= 25 || (gust != null && gust >= 35)) out.push({level:"stop", key:"wind", rank:1,
-      say:"It is really blowing out there today."});
+      say: future ? "The forecast has it really blowing."
+                  : "It is really blowing out there today."});
     else if (wind >= 15 || (gust != null && gust >= 25)) out.push({level:"warn", key:"wind", rank:1,
-      say:"It is blowing pretty good out there today."});
+      say: future ? "The forecast has it blowing pretty good."
+                  : "It is blowing pretty good out there today."});
     if (hard && wind >= 12) out.push({level:"warn", key:"noprogress", rank:2,
       head:"You would barely move.",
       say:"You would be working hard for very little ground, whichever way you turned."});
@@ -1315,10 +1328,16 @@ function briefConcerns(t, cv, w, sky, now){
       const gap = w.airF - w.waterF;
       const cold = gap >= 15
         ? {head:"Warm air, cold water.",
-           say:"Be careful: the water is still cold, despite the warm air. Dress for the water."}
+           say: future
+             ? "Be careful: the water is cold today and will not have warmed much by then, "
+               + "whatever the air does. Dress for the water."
+             : "Be careful: the water is still cold, despite the warm air. Dress for the water."}
         : w.waterF < 55
           ? {head:"Cold water.",
-             say:"Be careful: the water is cold, and the air is not much warmer. Dress for the water."}
+             say: future
+               ? "Be careful: the water is cold, and the air is not forecast to be much warmer. "
+                 + "Dress for the water."
+               : "Be careful: the water is cold, and the air is not much warmer. Dress for the water."}
           : {head:"Cool water.",
              say:"Be careful: the water is cold enough to matter if you end up in it. Dress for the water."};
       out.push({level:"caution", key:"cold", rank:1, head:cold.head, say:cold.say});
@@ -1329,15 +1348,19 @@ function briefConcerns(t, cv, w, sky, now){
   const stormPct = Math.max((w && w.stormPct) || 0, ahead ? ahead.pct : 0);
   if (stormPct >= 20) out.push({level: stormPct >= 50 ? "warn" : "caution", key:"storm", rank:1,
     head:"Possible thunderstorms.",
-    say:"There is thunder in the forecast for the next few hours. Worth checking the radar "
-      + "before you set out, and knowing where you could land if one comes over."});
+    say:(future ? "There is thunder in the forecast around then. "
+                : "There is thunder in the forecast for the next few hours. ")
+      + "Worth checking the radar before you set out, and knowing where you could land "
+      + "if one comes over."});
 
   if (wind != null && wind >= 12 && windVsCurrent(w.windFromDeg, cv) === "opposed"
       && Math.abs(cv) >= 0.5) out.push({level:"caution", key:"chop", rank:3,
-    head:"Choppy out there.",
+    head: future ? "Likely choppy." : "Choppy out there.",
     // "It" only has an antecedent when the sentence before named the wind
-    say:"The wind is running straight into the current, which piles the water up into short steep chop.",
-    alt:"It is running straight into the current, which piles the water up into short steep chop.",
+    say:"The wind is " + (future ? "forecast to run" : "running")
+      + " straight into the current, which piles the water up into short steep chop.",
+    alt:"It is " + (future ? "forecast to run" : "running")
+      + " straight into the current, which piles the water up into short steep chop.",
     soft:" The splashy kind rather than the frightening kind, if you are dressed for it."});
 
   if (sky && sky.sunset != null && sky.sunrise != null){
@@ -1374,9 +1397,10 @@ function briefConcerns(t, cv, w, sky, now){
    worth knowing about. One line, not a second table of numbers. */
 /* The columns already show which way is easier, so the only thing left worth
    saying is the trap: riding wind and current out, then having to come back. */
-function speedNote(cv, w, sp){
+function speedNote(cv, w, sp, future){
   const n = sp.north, s = sp.south;
-  if (n < 1.5 && s < 1.5) return "It is slow going whichever way you turn.";
+  if (n < 1.5 && s < 1.5) return (future ? "It would be" : "It is")
+    + " slow going whichever way you turn.";
   if (Math.abs(n - s) >= 1){
     const easy = n > s ? "north" : "south", hard = n > s ? "south" : "north";
     return "Heading " + easy + " is the easy half. The paddle back " + hard
@@ -1444,7 +1468,7 @@ function briefFacts(t, cv, w, sky){
 /* The river is going to do something different in an hour, and that is the
    piece a visitor has no way to know. Tides are the one thing on this page that
    can be stated about the future with confidence, so say it. */
-function riverAhead(t, cv){
+function riverAhead(t, cv, future){
   const slack = nextAfter(CUR, t, p => p.type === "slack");
   if (!slack) return "";
   const after = nextAfter(CUR, slack.t, p => p.type !== "slack");
@@ -1452,15 +1476,18 @@ function riverAhead(t, cv){
 
   if (Math.abs(cv) < 0.15)
     return after
-      ? "The river is slack right now \u2014 the " + (after.v > 0 ? "flood" : "ebb")
+      ? "The river " + (future ? "will be slack then" : "is slack right now")
+        + " \u2014 the " + (after.v > 0 ? "flood" : "ebb")
         + " fills in over the next hour or so and will be running " + turnsTo
         + " hard by " + fmtT.format(after.t) + "."
-      : "The river is slack right now.";
+      : "The river " + (future ? "will be slack then." : "is slack right now.");
 
   const running = cv > 0 ? "north" : "south";
-  return "The " + (cv > 0 ? "flood" : "ebb") + " has about " + dur(slack.t - t)
-    + " left in it and goes slack around " + fmtT.format(slack.t)
-    + (turnsTo ? ", then turns " + turnsTo : "")
+  return "The " + (cv > 0 ? "flood" : "ebb")
+    + (future ? " will have about " : " has about ") + dur(slack.t - t)
+    + (future ? " left in it, going slack around " : " left in it and goes slack around ")
+    + fmtT.format(slack.t)
+    + (turnsTo ? (future ? ", then turning " : ", then turns ") + turnsTo : "")
     + ". If you are heading " + running + ", that is your window.";
 }
 
@@ -1479,7 +1506,7 @@ function buildBrief(t, cv, w, sky, now){
 
   // Speeds have their own module now, so the prose stays prose.
   // no trip planning on a day we have just said not to go out
-  const note = level === "stop" ? "" : speedNote(cv, w, speeds);
+  const note = level === "stop" ? "" : speedNote(cv, w, speeds, future);
   const outlook = {
     north: directionOutlook(0, cv, w, speeds.north),
     south: directionOutlook(180, cv, w, speeds.south)
@@ -1489,7 +1516,7 @@ function buildBrief(t, cv, w, sky, now){
       : "There is no weather reading right now, so this is the tide and current alone.";
     // "Beautiful" is for a still river as well as still air; otherwise just calm
     const head = level === "good" && !lovely ? "Calm conditions." : HEADLINE[level];
-    return {level, head, body, ahead: riverAhead(t, cv),
+    return {level, head, body, ahead: riverAhead(t, cv, future),
       speeds, note, outlook, safety, facts: briefFacts(t, cv, w, sky)};
   }
 
@@ -1523,13 +1550,13 @@ function buildBrief(t, cv, w, sky, now){
 
   return {level, head: lead.head || HEADLINE[level],
     body:[...said, tail].filter(Boolean).join(" "),
-    ahead: riverAhead(t, cv),
+    ahead: riverAhead(t, cv, future),
     speeds, note, outlook, safety, facts: briefFacts(t, cv, w, sky)};
 }
 
 /* ---------- weather, alerts, water ---------- */
-function drawAlerts(){
-  const a = WX.alerts;
+function drawAlerts(t){
+  const a = alertsAt(t);
   if (!a || !a.length){ $("alerts").innerHTML = ""; return; }
   $("alerts").innerHTML = a.map(f => {
     const p = f.properties;
@@ -1544,8 +1571,12 @@ function drawAlerts(){
 }
 
 function drawWeather(t, cv){
-  drawAlerts();
+  drawAlerts(t);
   const card = $("wxCard"), w = conditionsAt(t);
+  const future = isFuture(t);
+  // wind, sky and air are predictions at this point; the water reading is not a
+  // prediction at all, it is just today's, which is a different caveat
+  $("wxWhen").innerHTML = future ? "forecast &middot; " : "";
   $("wxAnswer").hidden = true;
   const set = (id, v) => { $(id).textContent = v; };
   const sub = (id, v) => { $(id).innerHTML = v; };
@@ -1562,7 +1593,7 @@ function drawWeather(t, cv){
     $("wxBands").innerHTML = "";
     $("alerts").innerHTML = "";
     for (const id of ["wxWind", "wxSky", "wxAir", "wxWater"]) set(id, "—");
-    for (const id of ["wxWindSub", "wxSkySub", "wxAirSub"]) sub(id, "");
+    for (const id of ["wxWindSub", "wxSkySub", "wxAirSub", "wxWaterSub"]) sub(id, "");
     $("windArrow").textContent = "";
     return;
   }
@@ -1591,13 +1622,15 @@ function drawWeather(t, cv){
   set("wxAir", w.airF);
   sub("wxAirSub", w.feelsF == null ? "" : "feels like " + w.feelsF + "&deg;");
   set("wxWater", w.waterF == null ? "—" : w.waterF);
+  sub("wxWaterSub", w.waterF == null ? "" : (future ? "today&rsquo;s reading" : "estimated"));
 
   $("wxAnswer").className = "answer";
   $("wxAnswerText").innerHTML = "";
 
   const bands = [];
   if (w.stormPct >= 30) bands.push({cls:"warn", lead:"Thunderstorms possible.",
-    text:w.stormPct + "% chance right now. Worth keeping an eye on the sky and having somewhere in mind to get off the water."});
+    text:w.stormPct + "% chance " + (future ? "around then" : "right now")
+      + ". Worth keeping an eye on the sky and having somewhere in mind to get off the water."});
   $("wxBands").innerHTML = bands.map(b =>
     '<div class="answer ' + b.cls + '"><p><b>' + b.lead + "</b> " + b.text + "</p></div>").join("");
 }
