@@ -1820,7 +1820,7 @@ function render(){
       + "There should be enough water to paddle in again at <b>" + fmtT.format(marshFlip) + "</b>.";
   } else if (!risingNow){
     summary = "There is likely enough clearance to paddle under the trestle. The tide is going down, so be sure to exit before <b>"
-      + fmtT.format(marshFlip) + "</b> or you&rsquo;ll get stuck in the mud.";
+      + fmtT.format(marshFlip) + "</b> or you may get stuck in the mud.";
   } else {
     const reopen = nextHi ? nextHi.t + TRESTLE_MIN * MIN : null;
     summary = "There is likely enough clearance to paddle under the trestle. The tide is rising, so be sure to exit before <b>"
