@@ -1768,7 +1768,7 @@ function render(){
   $("crossSub").innerHTML = "As a general rule, there is enough clearance to paddle under the trestle when it&rsquo;s at least 2h before or after high tide. Storms and winds can change this calculus."
     + "<span class=\"fn\">*Use your own judgment and paddle at your own risk.</span>";
   $("crossWhen").innerHTML = crossFlip
-    ? (crossOK ? "No clearance at <b>" : "Clearance returns at <b>") + fmtT.format(crossFlip) + "</b> &middot; " + dur(Math.max(0, crossFlip - t))
+    ? (crossOK ? "No clearance at <b>" : "Clearance improves at <b>") + fmtT.format(crossFlip) + "</b> &middot; " + dur(Math.max(0, crossFlip - t))
     : "";
 
   $("marshCell").className = "gate-cell " + (marshOK ? "ok" : "no-mud");
