@@ -372,6 +372,28 @@ footer .label{margin-bottom:-2px}
   display:flex; flex-wrap:wrap; gap:4px 14px; align-items:baseline}
 .colophon p{flex:1 1 auto; min-width:min(100%, 24rem)}
 .colophon .owner{color:var(--muted); white-space:nowrap}
+.tip{
+  display:flex; align-items:center; flex-wrap:wrap;
+  gap:12px 16px; margin:0 0 18px; padding:15px 18px;
+  background:var(--surface-2); border:1px solid var(--line-2); border-radius:11px;
+}
+.tip img{
+  flex:0 0 auto; width:96px; height:96px; border-radius:12px;
+  object-fit:cover; display:block; border:1px solid var(--line-2);
+}
+.tip p{flex:1 1 17rem; margin:0; font-size:14px; color:var(--ink-2); line-height:1.5}
+.tip a{
+  flex:0 0 auto; text-decoration:none; white-space:nowrap;
+  font-size:14px; font-weight:600; color:var(--ink);
+  padding:9px 16px; border:1px solid var(--line); border-radius:8px;
+  background:var(--surface); transition:border-color .15s, color .15s;
+}
+.tip a:hover{border-color:var(--river); color:var(--river)}
+/* on a phone the photo and text share a row, and the button gets its own */
+@media (max-width:560px){
+  .tip img{width:76px; height:76px}
+  .tip a{flex:1 1 100%; text-align:center}
+}
 .important{
   background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--ebb);
   border-radius:0 9px 9px 0; padding:12px 15px 13px;

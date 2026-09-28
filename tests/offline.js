@@ -319,6 +319,39 @@ group("URL structure");
 
   ok("no launches page is deployed", !fs.existsSync(path.join(root, "launches.html")));
 
+  /* The tip module is all-or-nothing: a configured link means a complete
+     module, and no link means no module at all rather than a dead button. */
+  const cfg = fs.readFileSync(path.join(__dirname, "..", "scripts", "locations.py"), "utf8");
+  const tipUrl = (cfg.match(/^TIP_URL = "([^"]*)"/m) || [])[1];
+  const photo = (cfg.match(/^TIP_PHOTO = "([^"]*)"/m) || [])[1];
+  for (const site of ALL){
+    const html = fs.readFileSync(pageFor(site), "utf8");
+    if (tipUrl){
+      ok(`${site.name}: the tip module is present`, html.includes('<section class="tip">'));
+      ok(`${site.name}: the tip button points at the link`, html.includes(`href="${tipUrl}"`));
+      ok(`${site.name}: the tip link opens safely`, /class="tip"[\s\S]{0,600}rel="noopener"/.test(html));
+      ok(`${site.name}: the tip module sits above Sun & Moon`,
+         html.indexOf('<section class="tip">') < html.indexOf('id="skyCard"'));
+      ok(`${site.name}: no placeholder link is deployed`, !/PLACEHOLDER|example\.com/i.test(tipUrl), tipUrl);
+      if (photo){
+        ok(`${site.name}: the tip photo is linked`, html.includes(`src="${photo}"`));
+        ok(`${site.name}: the tip photo is sized and described`,
+           /<img src="[^"]*" alt="[^"]{20,}" width="\d+" height="\d+" loading="lazy"/.test(html));
+      }
+    } else {
+      ok(`${site.name}: no tip module without a link`, !html.includes('<section class="tip">'));
+    }
+  }
+  if (tipUrl && photo){
+    const f = path.join(root, photo);
+    ok("the tip photo is written to the root", fs.existsSync(f));
+    if (fs.existsSync(f))
+      ok("the tip photo stays small", fs.statSync(f).size < 60 * 1024,
+         `${Math.round(fs.statSync(f).size / 1024)} KB`);
+  }
+  if (!tipUrl && photo)
+    ok("no orphan tip photo is deployed", !fs.existsSync(path.join(root, photo)));
+
   /* The feedback address is a forwarding alias, but it should still not sit in
      the page source in one piece for a harvester to lift. */
   for (const site of ALL){

@@ -60,6 +60,34 @@ def hero(site):
             "BANNER_IMG": f'    <img src="{uri}" alt="{alt}" width="1600" height="1201" fetchpriority="high">\n'}
 
 
+def tip():
+    """The nudge above Sun & Moon. No link configured, no module - better a
+    missing ask than a button that goes nowhere.
+
+    The photo is the argument: the person asking actually paddles here, in
+    weather, with his kid. Cropped square and shrunk to 224px, so it costs
+    20 KB and loads lazily well below the fold."""
+    dest = os.path.join(L.ROOT, L.TIP_PHOTO) if L.TIP_PHOTO else None
+    if not L.TIP_URL:
+        # no module means no photo either; the build cleans up what it stopped
+        # emitting rather than leaving a stray file served at the domain
+        if dest and os.path.exists(dest):
+            os.remove(dest)
+        return ""
+    photo = ""
+    if L.TIP_PHOTO:
+        src = os.path.join(L.ROOT, "src", "photos", L.TIP_PHOTO)
+        with open(dest, "wb") as f:
+            f.write(open(src, "rb").read())
+        photo = (f'    <img src="{L.TIP_PHOTO}" alt="{L.TIP_PHOTO_ALT}"'
+                 ' width="224" height="224" loading="lazy" decoding="async">\n')
+    return ('  <section class="tip">\n'
+            + photo
+            + f'    <p>{L.TIP_LINE}</p>\n'
+            f'    <a href="{L.TIP_URL}" target="_blank" rel="noopener">{L.TIP_CTA}</a>\n'
+            '  </section>\n\n')
+
+
 def locnav(site, sites):
     others = [s for s in sites if s["slug"] != site["slug"]]
     if not others:
@@ -97,6 +125,7 @@ def render(site, sites):
         "CURRENT_LINK": cur["link"],
         "NWS_LINK": f'https://forecast.weather.gov/MapClick.php?lat={site["lat"]}&amp;lon={site["lon"]}',
         "LOCNAV": locnav(site, sites),
+        "TIP": tip(),
         "PHOTO_CREDIT": (f'Photo by {site["photoCredit"]}. ' if site.get("photoCredit") else ""),
         "FEEDBACK_USER": L.FEEDBACK_USER,
         "SITE_DOMAIN": L.DOMAIN,
