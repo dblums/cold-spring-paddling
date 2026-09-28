@@ -174,16 +174,24 @@ group("Wind relative to current");
 group("Immersion advice");
 {
   const u = (a,w) => T.immersionLede(a,w).urgent;
-  ok("135 total: no warning", !u(75,60));
-  ok("121 total: no warning", !u(71,50));
+  ok("135 total over 60F water: no warning", !u(75,60));
+  ok("121 total over 60F water: no warning", !u(61,60));
   ok("120 total: warns",      u(70,50));
   ok("water 45 despite 125 total: warns", u(80,45));
   ok("air 45 despite 125 total: warns",   u(45,80));
+  // the floor: warm air must never mask cold water, whatever the sum says
+  ok("59F water warns even at 130 total",  u(71,59));
+  ok("52F water warns at 124 total",       u(72,52));   // the May trap
+  ok("60F water is the boundary, not warm side", !u(75,60) && u(75,59));
   ok("missing readings: no warning",      !u(null,60) && !u(70,null));
   ok("always says life jacket and immersion", T.immersionLede(80,75).html.includes("life jacket") && T.immersionLede(80,75).html.includes("dress for immersion"));
   ok("no wetsuit line on a warm day",     !T.immersionLede(80,75).html.includes("drysuit"));
   ok("wetsuit line when the rule trips",  T.immersionLede(61,52).html.includes("wet or drysuit"));
-  ok("warning names the combined figure", T.immersionLede(61,52).html.includes("113"));
+  // the reason given must be the one that actually applies
+  ok("cold water names the water figure", T.immersionLede(72,52).html.includes("only 52"));
+  ok("cold water does not cite the sum",  !T.immersionLede(72,52).html.includes("combined"));
+  ok("combined rule names the sum",       T.immersionLede(58,62).html.includes("120"));
+  ok("combined rule flagged as not cold", !T.immersionLede(58,62).cold);
 }
 
 /* ---------- small helpers ---------- */

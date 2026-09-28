@@ -850,16 +850,27 @@ function windVsCurrent(windFromDeg, cv){
   return d < 60 ? "aligned" : d > 120 ? "opposed" : "across";
 }
 
-// The "120 rule": if air plus water is 120F or less, paddlers are advised to
-// wear a wetsuit or drysuit. Either figure under 50F is its own reason. On a hot
-// day the advice still stands, it just needs no explaining.
+/* The "120 rule": if air plus water is 120F or less, paddlers are advised to
+   wear a wetsuit or drysuit.
+
+   On its own it fails in exactly the season that drowns people. 72F air over
+   52F water sums to 124 and clears the rule, and that is the classic May
+   afternoon: warm enough to go out in shorts, cold enough that a capsize is an
+   emergency. Warm air is what does the deceiving, so cold water gets an
+   independent floor and the sum is only one of the ways in. */
+const COLD_WATER_F = 60;
 function immersionLede(airF, waterF){
-  if (airF == null || waterF == null) return {urgent:false, html:"<b>Be safe! Always wear a life jacket and dress for immersion.</b>"};
+  const base = "<b>Be safe! Always wear a life jacket and dress for immersion.</b>";
+  if (airF == null || waterF == null) return {urgent:false, html:base};
   const combined = airF + waterF;
-  const trips = combined <= 120 || airF < 50 || waterF < 50;
-  return {urgent:trips, html:"<b>Be safe! Always wear a life jacket and dress for immersion.</b>"
-    + (trips ? " Consider wearing a wet or drysuit today, since the combined water + air temp is only "
-        + combined + "\u00B0F." : "")};
+  const cold = waterF < COLD_WATER_F;
+  const trips = cold || combined <= 120 || airF < 50;
+  // say the reason that actually applies - "the combined temp is only 124F" is
+  // not why a 52F river is dangerous
+  const why = cold ? "the water is only " + waterF + "\u00B0F"
+            : "the combined water + air temp is only " + combined + "\u00B0F";
+  return {urgent:trips, cold, html: base
+    + (trips ? " Consider wearing a wet or drysuit today, since " + why + "." : "")};
 }
 
 const MOONS = [[0.03,"New moon"],[0.22,"Waxing crescent"],[0.28,"First quarter"],
@@ -1161,8 +1172,22 @@ const HEADLINE = {
   // "fine" only means nothing fired, which is not a compliment - plainHead()
   // describes the day instead. This is a backstop for having no weather at all.
   fine:    "Conditions below.",
-  good:    "Beautiful conditions."
+  // and "good" is described too: "beautiful" is a judgement, and one the page
+  // has no business making on someone else's behalf
+  good:    "Calm and glassy."
 };
+
+/* A pleasant day still gets described rather than graded. "Calm and glassy" is
+   a claim about the river, so it needs the air still AND the water quiet; a
+   3 mph morning over a 1.5 kt ebb is not glassy. Everything else says what it
+   is - "Hot and still.", "Warm and clear." */
+function goodHead(cv, w){
+  const temp = tempWord(feelsLike(w));
+  if (w.windMph != null && w.windMph < 5 && Math.abs(cv) < 0.4) return HEADLINE.good;
+  if (w.windMph != null && w.windMph < 8) return temp + " and still.";
+  if (w.skyText) return temp + " and " + w.skyText.toLowerCase() + ".";
+  return temp + " out there.";
+}
 
 /* "Pleasant" is a promise, and the page may only make it when every part of the
    day is actually pleasant: dry, light air, warm enough to sit still in, water
@@ -1189,8 +1214,8 @@ function plainHead(w){
   const temp = tempWord(feelsLike(w));
   if (w.wx && w.wx.happening) return temp + " and " + w.wx.adj + ".";
   if (w.precipPct != null && w.precipPct >= 30) return temp + ", rain possible.";
-  if (w.waterF != null && w.waterF < 60 && w.airF != null && w.airF >= 65)
-    return temp + " air, cool water.";
+  // no cool-water branch here: water under COLD_WATER_F always raises a concern,
+  // and plainHead only speaks when nothing did
   if (w.windMph != null && w.windMph >= 10) return temp + " and breezy.";
   if (w.skyText) return temp + " and " + w.skyText.toLowerCase() + ".";
   return temp + " out there.";
@@ -1353,12 +1378,13 @@ function briefConcerns(t, cv, w, sky, now){
                + "whatever the air does. Dress for the water."
              : "Be careful: the water is still cold, despite the warm air. Dress for the water."}
         : w.waterF < 55
-          ? {head:"Cold water.",
+          ? {head:"Cold water.",   // NOTE: both non-gap branches say cold now
+
              say: future
                ? "Be careful: the water is cold, and the air is not forecast to be much warmer. "
                  + "Dress for the water."
                : "Be careful: the water is cold, and the air is not much warmer. Dress for the water."}
-          : {head:"Cool water.",
+          : {head:"Cold water.",
              say:"Be careful: the water is cold enough to matter if you end up in it. Dress for the water."};
       out.push({level:"caution", key:"cold", rank:1, head:cold.head, say:cold.say});
     }
@@ -1519,8 +1545,6 @@ function buildBrief(t, cv, w, sky, now){
   // paperwork, so a gale leads rather than the advisory that describes it
   const concerns = raw.slice().sort((a, b) =>
     LEVELS.indexOf(a.level) - LEVELS.indexOf(b.level) || (a.rank || 1) - (b.rank || 1));
-  const lovely = w && (w.windMph == null || w.windMph < 8) && Math.abs(cv) < 0.4
-    && !(w.wx && w.wx.happening) && (w.airF == null || w.airF >= 60);
   const level = concerns.length ? concerns[0].level
     : (pleasantEnough(w) ? "good" : "fine");
 
@@ -1532,12 +1556,12 @@ function buildBrief(t, cv, w, sky, now){
     south: directionOutlook(180, cv, w, speeds.south)
   };
   if (!concerns.length){
-    const body = w ? quietDay(cv, w, future, level !== "good")
+    // described either way; "good" just gets to sound like a nice day
+    const head = level === "good" ? goodHead(cv, w) : plainHead(w);
+    // every headline but "Calm and glassy." already names the temperature, and
+    // "Hot and still. Hot and clear, with light wind..." is a stutter
+    const body = w ? quietDay(cv, w, future, head !== HEADLINE.good)
       : "There is no weather reading right now, so this is the tide and current alone.";
-    // "Beautiful" is for a still river as well as still air; otherwise just calm.
-    // Anything short of pleasant gets described rather than graded.
-    const head = level !== "good" ? plainHead(w)
-      : lovely ? HEADLINE.good : "Calm conditions.";
     return {level, head, body, ahead: riverAhead(t, cv, future),
       speeds, note, outlook, safety, facts: briefFacts(t, cv, w, sky)};
   }

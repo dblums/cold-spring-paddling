@@ -79,39 +79,64 @@ const SCENARIOS = [
     wind: 6, from: 180, cur: -0.5, air: 74, water: 71, wx: "rain",
     level: "fine",
     must: [/mild and wet/i],
-    mustNot: [/pleasant|beautiful|calm conditions/i] },
+    mustNot: [/pleasant|beautiful|glassy/i] },
 
   { name: "pleasant but for the cool air",
     wind: 6, from: 180, cur: -0.5, air: 61, water: 71, skyPct: 10,
     level: "fine",
-    mustNot: [/pleasant|beautiful|calm conditions/i] },
+    mustNot: [/pleasant|beautiful|glassy/i] },
 
-  { name: "pleasant but for the cool water",
+  { name: "pleasant but for the cold water",
     wind: 6, from: 180, cur: -0.5, air: 74, water: 57, skyPct: 10,
-    level: "fine",
-    must: [/cool water/i],
-    mustNot: [/pleasant|beautiful|calm conditions/i] },
+    // water under 60 is a concern now, so this is no longer a quiet day
+    level: "caution",
+    must: [/cold water/i],
+    mustNot: [/pleasant|beautiful|glassy/i] },
 
   { name: "pleasant but for the wind",
     wind: 12, from: 180, cur: -0.2, air: 74, water: 71, skyPct: 10,
     level: "fine",
-    mustNot: [/pleasant|beautiful|calm conditions/i] },
+    mustNot: [/pleasant|beautiful|glassy/i] },
 
   { name: "pleasant but for the thunder risk",
     wind: 6, from: 180, cur: -0.5, air: 80, water: 74, storm: 25, skyPct: 40,
     level: "caution",
-    mustNot: [/pleasant|beautiful|calm conditions/i] },
+    mustNot: [/pleasant|beautiful|glassy/i] },
 
   { name: "pleasant but for the chance of rain",
     wind: 6, from: 180, cur: -0.5, air: 74, water: 71, precipPct: 50, skyPct: 70,
     level: "fine",
     must: [/rain possible/i],
-    mustNot: [/pleasant|beautiful|calm conditions/i] },
+    mustNot: [/pleasant|beautiful|glassy/i] },
 
-  { name: "genuinely beautiful",
+  { name: "genuinely glassy",
     wind: 4, from: 180, cur: 0.1, air: 76, water: 70, skyPct: 5,
     level: "good",
-    must: [/beautiful conditions/i] },
+    must: [/calm and glassy/i] },
+
+  { name: "still air over a running river is not glassy",
+    wind: 3, from: 180, cur: -1.5, air: 76, water: 70, skyPct: 5,
+    level: "good",
+    must: [/warm and still/i],
+    mustNot: [/glassy/i] },
+
+  { name: "hot and still",
+    wind: 5, from: 190, cur: 0.3, air: 89, water: 78, skyPct: 10,
+    level: "good",
+    must: [/hot and still/i],
+    mustNot: [/glassy|beautiful/i] },
+
+  // the May trap: 72 + 52 = 124 clears the 120 rule, and 52F water does not care
+  { name: "warm May afternoon over cold water",
+    wind: 7, from: 200, cur: 0.4, air: 72, water: 52, skyPct: 15,
+    level: "caution",
+    must: [/cold water/i, /wet or drysuit/i, /only 52/i],
+    mustNot: [/cool water/i, /combined/i] },
+
+  { name: "cold water with cold air still cites the combined rule",
+    wind: 7, from: 320, cur: 0.8, air: 48, water: 58, skyPct: 5,
+    level: "caution",
+    must: [/cold water/i, /wet or drysuit/i] },
 
   { name: "one way much easier than the other",
     wind: 18, gust: 24, from: 0, cur: 0.2, air: 66, water: 68,
@@ -384,18 +409,31 @@ for (const s of SCENARIOS){
   // speaks for itself - never a lesser worry
   check(s.name, `headline must speak for a ${b.level} verdict`,
     heads.includes(b.head) || b.head === T.HEADLINE[b.level]
-      || (!heads.length && (b.head === T.plainHead(inp.w) || b.head === "Calm conditions.")),
+      || (!heads.length && b.head === (b.level === "good"
+            ? T.goodHead(inp.cv, inp.w) : T.plainHead(inp.w))),
     `"${b.head}" vs [${heads.join(" | ")}] or "${T.HEADLINE[b.level]}"`);
 
   // The one that matters: "pleasant" is a promise, and an absence of hazards is
   // not a nice day. Checked on every scenario and every sweep, not just the ones
   // I thought to write.
   check(s.name, "only a genuinely pleasant day may be called one",
-    !/\b(pleasant|beautiful|calm) conditions\b/i.test(b.head)
+    !/\b(pleasant|beautiful|glassy|calm and)\b/i.test(b.head)
       || T.pleasantEnough(inp.w), `"${b.head}" / ${JSON.stringify(inp.w)}`);
-  check(s.name, "a pleasant day is never called anything else",
-    !T.pleasantEnough(inp.w) || b.level !== "good"
-      || /\b(beautiful|calm) conditions\b/i.test(b.head), b.head);
+  // and the page never grades the day, in either direction
+  check(s.name, "the good-day headline describes rather than judges",
+    b.level !== "good" || !/\b(pleasant|beautiful|lovely|perfect|great|nice)\b/i.test(b.head),
+    b.head);
+  // "calm and glassy" is a claim about the river, not just the air
+  check(s.name, "glassy means the river is quiet too",
+    !/glassy/i.test(b.head) || Math.abs(inp.cv) < 0.4, `"${b.head}" cur=${inp.cv}`);
+
+  // cold water has its own floor: warm air must never mask it
+  if (inp.w && inp.w.waterF != null && inp.w.waterF < 60){
+    check(s.name, "water under 60F always raises the immersion advice",
+      /wet or drysuit/i.test(b.safety.html), b.safety.html);
+    check(s.name, "water under 60F is called cold water",
+      /cold water/i.test(text), text.slice(0, 160));
+  }
 
   // coherence: nothing at warn or worse may reassure, whatever raised it
   if (b.level === "stop" || b.level === "warn")
