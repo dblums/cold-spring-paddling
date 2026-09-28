@@ -120,6 +120,21 @@ group("Marsh access windows");
     if (!b && !m) open++;
   }
   eq("blocked and muddy never coincide (1 year)", both, 0);
+
+  /* The module reports clearance under a bridge, which the tide prediction
+     actually tells us. Whether a given paddler should go through it does not
+     follow from a tide table, so the page must not say so. */
+  // the copy lives in two places: the card markup and the render logic below it
+  const built = fs.readFileSync(pageFor(ALL.find(x => x.root)), "utf8");
+  const marshSrc = built.split("Constitution Marsh")[1].split("Sun &amp; Moon")[0]
+    + built.split('$("crossCell")')[1].split('$("summaryText")')[0];
+  ok("the marsh slice actually found the render logic",
+     marshSrc.includes("crossVerdict") && marshSrc.includes("summary ="));
+  ok("the trestle module never rules on safety",
+     !/\b(safe|unsafe|safely|dangerous)\b/i.test(marshSrc),
+     (marshSrc.match(/.{0,60}\b(safe|unsafe|safely|dangerous)\b.{0,60}/i) || [""])[0]);
+  ok("the trestle module speaks in clearance", /enough clearance/i.test(marshSrc));
+  ok("the trestle module hedges the positive case", /likely enough clearance/i.test(marshSrc));
   ok("access windows exist ~35% of the time", open/samples > 0.25 && open/samples < 0.45,
      `${(100*open/samples).toFixed(1)}%`);
 }

@@ -498,7 +498,7 @@ footer .label{margin-bottom:-2px}
         <p class="gate-when" id="marshWhen"></p>
       </div>
     </div>
-    <p class="card-note">Constitution Marsh is a 270-acre tidal wetland that you can access by paddling under the Metro-North train trestle just south of Cold Spring &mdash; but only when there is enough vertical clearance to do so safely.</p>
+    <p class="card-note">Constitution Marsh is a 270-acre tidal wetland that you can access by paddling under the Metro-North train trestle just south of Cold Spring &mdash; but only when there is enough vertical clearance to pass under it.</p>
   </section>
 <!--@endif-->
 
@@ -1759,10 +1759,10 @@ function render(){
   const marshFlip = marshOK ? (nextLo ? nextLo.t - MUD_MIN * MIN : null) : loT.t + MUD_MIN * MIN;
 
   $("crossCell").className = "gate-cell " + (crossOK ? "ok" : "no-cross");
-  $("crossVerdict").textContent = crossOK ? "Likely Safe*" : "Unsafe";
-  $("crossSub").innerHTML = "As a general rule, it&rsquo;s safe to paddle under the trestle when it&rsquo;s at least 2h before or after high tide. Storms and winds can change this calculus. Use your own judgment!";
+  $("crossVerdict").textContent = crossOK ? "Likely enough clearance" : "Not enough clearance";
+  $("crossSub").innerHTML = "As a general rule, there is enough clearance to paddle under the trestle when it&rsquo;s at least 2h before or after high tide. Storms and winds can change this calculus. Use your own judgment and paddle at your own risk.";
   $("crossWhen").innerHTML = crossFlip
-    ? (crossOK ? "Unsafe at <b>" : "Likely safe at <b>") + fmtT.format(crossFlip) + "</b> &middot; " + dur(Math.max(0, crossFlip - t))
+    ? (crossOK ? "Low clearance at <b>" : "Clearance returns at <b>") + fmtT.format(crossFlip) + "</b> &middot; " + dur(Math.max(0, crossFlip - t))
     : "";
 
   $("marshCell").className = "gate-cell " + (marshOK ? "ok" : "no-mud");
@@ -1775,28 +1775,31 @@ function render(){
     : "";
 
   /* --- plain-language summary: what bites first, and by when ---
-     Never promise safety. "Likely safe" is the strongest claim allowed, because
-     this page cannot see wind, waves or traffic. Warnings stay blunt, though:
-     overstating a hazard costs a paddler nothing, understating one costs plenty. */
+     This module reports CLEARANCE, not safety. Clearance under the trestle is
+     the physical thing the tide prediction actually tells us; whether a given
+     paddler should go through is not, and this page cannot see wind, waves or
+     traffic. So it says how much room there is and leaves the conclusion to the
+     reader. Warnings stay blunt, though: overstating a hazard costs a paddler
+     nothing, understating one costs plenty. */
   const nextExt = nextAfter(TIDE, t), risingNow = nextExt && nextExt.type === "H";
   $("summaryBox").className = "answer " + (!crossOK ? "closed" : !marshOK ? "mud" : "good");
   let summary;
   if (!crossOK){
     // inside the high-tide window: the marsh is at its deepest, the way out is shut
     const mudLo = nextAfter(LOWS, crossFlip);
-    summary = "It&rsquo;s not safe to paddle under the Metro-North trestle right now. If you&rsquo;re already in the marsh, "
+    summary = "There is likely not enough clearance to paddle under the Metro-North trestle right now. If you&rsquo;re already in the marsh, "
       + "keep paddling &mdash; the water in there is at its deepest &mdash; and plan to come back out after <b>"
       + fmtT.format(crossFlip) + "</b>"
       + (mudLo ? ", but before <b>" + fmtT.format(mudLo.t - MUD_MIN * MIN) + "</b> when the marsh starts turning to mud." : ".");
   } else if (!marshOK){
-    summary = "It&rsquo;s likely safe to paddle under the trestle right now, but most of the marsh is mud. "
+    summary = "There is likely enough clearance to paddle under the trestle, but most of the marsh is mud. "
       + "There should be enough water to paddle in again at <b>" + fmtT.format(marshFlip) + "</b>.";
   } else if (!risingNow){
-    summary = "It&rsquo;s likely safe to paddle under the trestle right now. The tide is going down, so be sure to exit before <b>"
+    summary = "There is likely enough clearance to paddle under the trestle. The tide is going down, so be sure to exit before <b>"
       + fmtT.format(marshFlip) + "</b> or you&rsquo;ll get stuck in the mud.";
   } else {
     const reopen = nextHi ? nextHi.t + TRESTLE_MIN * MIN : null;
-    summary = "It&rsquo;s likely safe to paddle under the trestle right now. The tide is rising, so be sure to exit before <b>"
+    summary = "There is likely enough clearance to paddle under the trestle. The tide is rising, so be sure to exit before <b>"
       + fmtT.format(crossFlip) + "</b>"
       + (reopen ? " or you&rsquo;ll have to stay in the marsh until the next possible exit at <b>" + fmtT.format(reopen) + "</b>." : ".");
   }
