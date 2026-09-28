@@ -375,10 +375,15 @@ footer .label{margin-bottom:-2px}
   background:var(--surface); transition:border-color .15s, color .15s;
 }
 .tip a:hover{border-color:var(--river); color:var(--river)}
-/* on a phone the photo and text share a row, and the button gets its own */
+/* On a phone there is not room for a photo and a 17rem text column side by
+   side, and flex answers that by dropping the text to its own line - which
+   strands the photo in a row of its own with nothing beside it. Float instead,
+   so the text wraps around the photo and fills the gap. */
 @media (max-width:560px){
-  .tip img{width:76px; height:76px}
-  .tip a{flex:1 1 100%; text-align:center}
+  .tip{display:block}
+  .tip img{float:left; width:72px; height:72px; margin:2px 14px 6px 0}
+  .tip p{margin:0}
+  .tip a{display:block; clear:both; margin-top:13px; text-align:center}
 }
 .important{
   background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--ebb);
