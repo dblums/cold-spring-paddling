@@ -147,6 +147,21 @@ img{{max-width:100%}}
           + ("" if "marsh" in site.get("features", []) else "   (no marsh card)"))
 
 
+def write_cname():
+    """GitHub Pages reads a file literally named CNAME at the root of what it
+    publishes, and serves the site at that name. Nothing to do with the CNAME
+    DNS record - same word, different job.
+
+    It lives in a directory that is otherwise all build output, so the build
+    owns it. Left to the web UI that first created it, it is the one file here
+    that no code knows about, and the day it goes missing the site quietly
+    stops answering at its own domain."""
+    path = os.path.join(L.ROOT, "CNAME")
+    with open(path, "w") as f:
+        f.write(L.DOMAIN + "\n")
+    print(f"  {'CNAME':14} -> {'/CNAME':28} {L.DOMAIN}")
+
+
 def main():
     wanted = set(sys.argv[1:])
     sites = L.load()
@@ -155,6 +170,8 @@ def main():
         raise SystemExit(f"no launch site matches {', '.join(wanted)}")
     for site in targets:
         render(site, sites)
+    if not wanted:
+        write_cname()
 
 
 if __name__ == "__main__":

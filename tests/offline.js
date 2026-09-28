@@ -288,6 +288,25 @@ for (const site of ALL){
     ok(`${site.name}: links to ${other.name}`, html.includes(">" + other.name + "</a>"));
 }
 ok("more than one launch site is configured", ALL.length > 1, `${ALL.length}`);
+
+/* The file GitHub Pages reads to know which name to serve the site at. It is
+   the whole reason hudsonconditions.com resolves to this repo, and it lives in
+   a directory that is otherwise all build output - so assert the build wrote
+   it, rather than trusting that nobody cleaned it away. */
+{
+  const path = require("path");
+  const cnamePath = path.join(__dirname, "..", "CNAME");
+  ok("the build writes a CNAME file", fs.existsSync(cnamePath));
+  if (fs.existsSync(cnamePath)){
+    const cname = fs.readFileSync(cnamePath, "utf8").trim();
+    ok("CNAME holds exactly one bare hostname",
+       /^[a-z0-9.-]+\.[a-z]{2,}$/.test(cname) && !cname.includes("/"), cname);
+    const declared = fs.readFileSync(path.join(__dirname, "..", "scripts", "locations.py"), "utf8")
+      .match(/^DOMAIN = "([^"]+)"/m);
+    ok("CNAME matches the domain declared in locations.py",
+       declared && declared[1] === cname, `${cname} vs ${declared && declared[1]}`);
+  }
+}
 ok("exactly one site is the root", ALL.filter(s => s.root).length === 1);
 
 console.log(`\n${pass} passed, ${fail} failed`);

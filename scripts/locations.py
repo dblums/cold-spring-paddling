@@ -6,6 +6,12 @@ import os
 ROOT = os.path.join(os.path.dirname(__file__), "..")
 DIR = os.path.join(ROOT, "locations")
 
+# The public home of the site, declared once because four things need it: the
+# CNAME file GitHub Pages reads to know which name to answer to, and the
+# canonical, og:url and sitemap entries on every page. Change it here only.
+DOMAIN = "hudsonconditions.com"
+SITE_URL = "https://" + DOMAIN
+
 
 def load():
     """Every launch site, root site first, then alphabetical by name."""
