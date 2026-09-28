@@ -60,10 +60,12 @@ def hero(site):
 
 def locnav(site, sites):
     others = [s for s in sites if s["slug"] != site["slug"]]
-    if not others:
-        return ""
-    links = " ".join(f'<a href="{L.href(s, site)}">{s["name"]}</a>' for s in others)
-    return f'  <nav class="locnav"><span class="label">Other launches</span> {links}</nav>\n'
+    links = [f'<a href="{L.href(s)}">{s["name"]}</a>' for s in others]
+    # the launches page carries the whole-river framing, so every page links it
+    links.append('<a href="launches.html">All launches</a>')
+    label = "Other launches" if others else "More"
+    return (f'  <nav class="locnav"><span class="label">{label}</span> '
+            + " ".join(links) + "</nav>\n")
 
 
 def render(site, sites):
@@ -129,6 +131,7 @@ def render(site, sites):
 <link rel="preconnect" href="https://api.weather.gov" crossorigin>
 <link rel="preconnect" href="https://api.tidesandcurrents.noaa.gov" crossorigin>
 <meta name="description" content="Hudson River tides, current and paddling conditions for {site['name']}, {site['state']}.">
+<link rel="canonical" href="{L.page_url(site)}">
 <meta name="theme-color" content="#eaeeee" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0c1518" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -153,6 +156,16 @@ img{{max-width:100%}}
     print(f"  {site['name']:14} -> {'/' + L.page_file(site):30} {kb} KB"
           + ("" if "marsh" in site.get("features", []) else "   (no marsh card)"))
 
+    # Someone typing the bare domain wants conditions, not a directory, so the
+    # primary launch answers there too. Both copies carry the same canonical
+    # tag, so the duplicate is declared rather than left for Google to guess at.
+    # A byte copy rather than a redirect: no blank flash, no second round trip,
+    # and the build makes drift impossible.
+    if site.get("primary"):
+        with open(os.path.join(L.ROOT, "index.html"), "w") as f:
+            f.write(page)
+        print(f"  {'':14} -> {'/ (same page)':30} canonical {L.page_file(site)}")
+
 
 def theme_css(template):
     """The colour variables, lifted from the page template so the index shares
@@ -162,12 +175,13 @@ def theme_css(template):
     return template[start:end].rstrip()
 
 
-def write_index(sites):
-    """The root is an index of the launches, not one of them.
+def write_launches(sites):
+    """The list of launches, with the static prose about what the site is.
 
-    It used to be Cold Spring, which meant the front door of a site called
-    hudsonconditions.com was a page about one village - and the root could never
-    rank for the river because it was busy competing with itself for the town."""
+    The bare domain goes straight to the primary launch, because someone typing
+    hudsonconditions.com wants to know what the river is doing, not to pick from
+    a menu of two. This page is where the whole-river framing lives instead, and
+    every launch links to it."""
     template = open(TEMPLATE).read()
     cards = "\n".join(f'''      <li class="launch">
         <a href="{L.href(s)}">
@@ -183,7 +197,7 @@ def write_index(sites):
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Hudson River Paddling Conditions</title>
 <meta name="description" content="Tide, current, wind and water temperature for paddlers on the tidal Hudson. Launch-by-launch conditions for {names}.">
-<link rel="canonical" href="{L.SITE_URL}/">
+<link rel="canonical" href="{L.SITE_URL}/launches.html">
 <meta name="theme-color" content="#eaeeee" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0c1518" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="{FAVICON}">
@@ -256,10 +270,10 @@ footer a{{color:var(--muted)}}
 </body>
 </html>
 '''
-    with open(os.path.join(L.ROOT, "index.html"), "w") as f:
+    with open(os.path.join(L.ROOT, "launches.html"), "w") as f:
         f.write(page)
     kb = len(page.encode()) // 1024
-    print(f"  {'Index':14} -> {'/index.html':30} {kb} KB")
+    print(f"  {'Launches':14} -> {'/launches.html':30} {kb} KB")
 
 
 def write_cname():
@@ -286,7 +300,7 @@ def main():
     for site in targets:
         render(site, sites)
     if not wanted:
-        write_index(sites)
+        write_launches(sites)
         write_cname()
 
 

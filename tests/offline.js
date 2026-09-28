@@ -303,14 +303,31 @@ group("URL structure");
     ok(`${site.name}: served at /${f}`, fs.existsSync(path.join(root, f)));
   }
 
-  // the index is the front door now, not one of the launches
+  // the bare domain serves the primary launch, byte for byte
+  const primary = ALL.find(s => s.primary);
   const idx = fs.readFileSync(path.join(root, "index.html"), "utf8");
-  ok("the index is its own page, not a launch", !/PREDICTIONS|briefSafety/.test(idx));
+  const own = fs.readFileSync(pageFor(primary), "utf8");
+  ok("the root serves the primary launch", idx === own, `${idx.length} vs ${own.length} bytes`);
+
+  // ...and both copies point at the same canonical, so the duplicate is declared
+  const canon = h => (h.match(/<link rel="canonical" href="([^"]+)"/) || [])[1];
+  eq("the root canonical is the launch's own URL",
+     canon(idx), `https://hudsonconditions.com/${pageSlug(primary)}.html`);
+  for (const site of ALL)
+    eq(`${site.name}: canonical is its own URL`, canon(fs.readFileSync(pageFor(site), "utf8")),
+       `https://hudsonconditions.com/${pageSlug(site)}.html`);
+
+  // the launches page carries the whole-river framing
+  const hub = fs.readFileSync(path.join(root, "launches.html"), "utf8");
+  ok("the launches page is its own page, not a launch", !/PREDICTIONS|briefSafety/.test(hub));
   for (const site of ALL){
-    ok(`the index links to ${site.name}`, idx.includes(`href="${pageSlug(site)}.html"`));
-    ok(`the index describes ${site.name}`, idx.includes(site.blurb));
+    ok(`the launches page links to ${site.name}`, hub.includes(`href="${pageSlug(site)}.html"`));
+    ok(`the launches page describes ${site.name}`, hub.includes(site.blurb));
   }
-  ok("the index declares a canonical URL", /<link rel="canonical" href="https:\/\//.test(idx));
+  eq("the launches page canonical", canon(hub), "https://hudsonconditions.com/launches.html");
+  for (const site of ALL)
+    ok(`${site.name}: links to the launches page`,
+       fs.readFileSync(pageFor(site), "utf8").includes('href="launches.html"'));
 
   // flat files share one directory, so these cannot collide
   const banners = ALL.filter(s => s.banner).map(s => pageSlug(s) + ".jpg");
