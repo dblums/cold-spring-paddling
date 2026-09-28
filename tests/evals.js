@@ -47,6 +47,7 @@ function run(s){
   };
   if (w && s.skyPct != null){ w.skyPct = s.skyPct; w.skyText = T.skyWord(s.skyPct); }
   if (w && s.wx) w.wx = T.precipWord([{weather:s.wx, coverage:s.wxCoverage || "likely"}]);
+  if (w && s.precipPct != null) w.precipPct = s.precipPct;
   const t = s.at || NOON;
   // a fixed present, so "is it a forecast?" does not depend on the wall clock
   const now = s.now != null ? s.now : t + DAY;
@@ -68,9 +69,49 @@ const SCENARIOS = [
     mustNot: [/wetsuit|drysuit/i, /advisory/i, /chop/i] },
 
   { name: "ordinary day, ebb running",
+    // dry, 8 mph, 74F air over 71F water: this one does clear the pleasant bar
     wind: 8, from: 180, cur: -0.5, air: 74, water: 71,
-    level: "fine",
+    level: "good",
     mustNot: [/wetsuit/i, /windy/i] },
+
+  // ---- the pleasant bar, one failing ingredient at a time ----
+  { name: "pleasant but for the rain",
+    wind: 6, from: 180, cur: -0.5, air: 74, water: 71, wx: "rain",
+    level: "fine",
+    must: [/mild and wet/i],
+    mustNot: [/pleasant|beautiful|calm conditions/i] },
+
+  { name: "pleasant but for the cool air",
+    wind: 6, from: 180, cur: -0.5, air: 61, water: 71, skyPct: 10,
+    level: "fine",
+    mustNot: [/pleasant|beautiful|calm conditions/i] },
+
+  { name: "pleasant but for the cool water",
+    wind: 6, from: 180, cur: -0.5, air: 74, water: 57, skyPct: 10,
+    level: "fine",
+    must: [/cool water/i],
+    mustNot: [/pleasant|beautiful|calm conditions/i] },
+
+  { name: "pleasant but for the wind",
+    wind: 12, from: 180, cur: -0.2, air: 74, water: 71, skyPct: 10,
+    level: "fine",
+    mustNot: [/pleasant|beautiful|calm conditions/i] },
+
+  { name: "pleasant but for the thunder risk",
+    wind: 6, from: 180, cur: -0.5, air: 80, water: 74, storm: 25, skyPct: 40,
+    level: "caution",
+    mustNot: [/pleasant|beautiful|calm conditions/i] },
+
+  { name: "pleasant but for the chance of rain",
+    wind: 6, from: 180, cur: -0.5, air: 74, water: 71, precipPct: 50, skyPct: 70,
+    level: "fine",
+    must: [/rain possible/i],
+    mustNot: [/pleasant|beautiful|calm conditions/i] },
+
+  { name: "genuinely beautiful",
+    wind: 4, from: 180, cur: 0.1, air: 76, water: 70, skyPct: 5,
+    level: "good",
+    must: [/beautiful conditions/i] },
 
   { name: "one way much easier than the other",
     wind: 18, gust: 24, from: 0, cur: 0.2, air: 66, water: 68,
@@ -342,8 +383,19 @@ for (const s of SCENARIOS){
   // either a concern at the verdict's own level speaks for it, or the verdict
   // speaks for itself - never a lesser worry
   check(s.name, `headline must speak for a ${b.level} verdict`,
-    heads.includes(b.head) || b.head === T.HEADLINE[b.level],
+    heads.includes(b.head) || b.head === T.HEADLINE[b.level]
+      || (!heads.length && (b.head === T.plainHead(inp.w) || b.head === "Calm conditions.")),
     `"${b.head}" vs [${heads.join(" | ")}] or "${T.HEADLINE[b.level]}"`);
+
+  // The one that matters: "pleasant" is a promise, and an absence of hazards is
+  // not a nice day. Checked on every scenario and every sweep, not just the ones
+  // I thought to write.
+  check(s.name, "only a genuinely pleasant day may be called one",
+    !/\b(pleasant|beautiful|calm) conditions\b/i.test(b.head)
+      || T.pleasantEnough(inp.w), `"${b.head}" / ${JSON.stringify(inp.w)}`);
+  check(s.name, "a pleasant day is never called anything else",
+    !T.pleasantEnough(inp.w) || b.level !== "good"
+      || /\b(beautiful|calm) conditions\b/i.test(b.head), b.head);
 
   // coherence: nothing at warn or worse may reassure, whatever raised it
   if (b.level === "stop" || b.level === "warn")

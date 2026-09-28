@@ -752,11 +752,15 @@ function precipWord(series){
   // as a verb when it is happening, as a noun when it is only a chance
   const DOING = {rain:"raining", drizzle:"drizzling", snow:"snowing", sleet:"sleeting",
                  fog:"foggy", haze:"hazy", thunderstorms:"thunderstorms about"};
+  const ADJ = {rain:"wet", drizzle:"wet", snow:"snowy", sleet:"icy",
+               fog:"foggy", haze:"hazy", thunderstorms:"stormy"};
   return {happening, heavy, text: happening
     ? (heavy ? "heavy " + raw : (DOING[raw] || raw))
     : "a chance of " + raw,
     // "It is raining" needs a verb; "The forecast calls for rain" needs a noun.
-    noun: happening ? (heavy ? "heavy " + raw : raw) : "a chance of " + raw};
+    noun: happening ? (heavy ? "heavy " + raw : raw) : "a chance of " + raw,
+    // and "Cool and wet." needs an adjective, which reads the same in any tense
+    adj: ADJ[raw] || raw};
 }
 
 const SKY_WORDS = [[12,"Clear"],[37,"Mostly clear"],[62,"Partly cloudy"],[87,"Mostly cloudy"],[101,"Overcast"]];
@@ -1126,9 +1130,43 @@ const HEADLINE = {
   stop:    "Severe conditions.",
   warn:    "Very challenging conditions.",
   caution: "A few things to be aware of.",
-  fine:    "Pleasant conditions.",
+  // "fine" only means nothing fired, which is not a compliment - plainHead()
+  // describes the day instead. This is a backstop for having no weather at all.
+  fine:    "Conditions below.",
   good:    "Beautiful conditions."
 };
+
+/* "Pleasant" is a promise, and the page may only make it when every part of the
+   day is actually pleasant: dry, light air, warm enough to sit still in, water
+   warm enough that a swim is an inconvenience rather than an emergency, and no
+   thunder about. None of those is a hazard on its own, which is exactly the
+   trap - an absence of concerns is not a nice day, and "Pleasant conditions."
+   over cold rain is how a page loses its reader for everything below it too. */
+function pleasantEnough(w){
+  if (!w) return false;
+  if (w.wx && w.wx.happening) return false;                   // dry
+  if (w.precipPct != null && w.precipPct >= 30) return false;
+  if ((w.stormPct || 0) >= 20) return false;                  // low thunder risk
+  if (w.windMph == null || w.windMph >= 10) return false;     // light wind
+  if (w.airF == null || w.airF < 65 || feelsLike(w) < 65) return false;
+  if (w.waterF == null || w.waterF < 60) return false;
+  return true;
+}
+
+/* When nothing is wrong but nothing is lovely either, describe the day rather
+   than grade it. Adjective fragments, so they read the same about Thursday as
+   about this afternoon. */
+function plainHead(w){
+  if (!w) return HEADLINE.fine;
+  const temp = tempWord(feelsLike(w));
+  if (w.wx && w.wx.happening) return temp + " and " + w.wx.adj + ".";
+  if (w.precipPct != null && w.precipPct >= 30) return temp + ", rain possible.";
+  if (w.waterF != null && w.waterF < 60 && w.airF != null && w.airF >= 65)
+    return temp + " air, cool water.";
+  if (w.windMph != null && w.windMph >= 10) return temp + " and breezy.";
+  if (w.skyText) return temp + " and " + w.skyText.toLowerCase() + ".";
+  return temp + " out there.";
+}
 
 const tempWord = f => f == null ? null
   : f < 40 ? "Cold" : f < 56 ? "Cool" : f < 72 ? "Mild" : f < 84 ? "Warm" : "Hot";
@@ -1174,7 +1212,7 @@ function sceneTail(w, includeWind, sunsetSoon, future){
 
 /* When there is nothing to flag, the prose is just what the day is like. Still
    no figures - those are in the module - but enough to be worth reading. */
-function quietDay(cv, w, future){
+function quietDay(cv, w, future, skipScene){
   if (!w) return "";
   const bits = [];
   const temp = tempWord(feelsLike(w));
@@ -1185,12 +1223,12 @@ function quietDay(cv, w, future){
   if (w.windMph != null) extras.push(windWord(w.windMph).toLowerCase());
   extras.push(Math.abs(cv) < 0.15 ? "the river nearly slack"
     : "the current running " + (cv > 0 ? "north" : "south"));
-  let out = bits.join(" and ");
+  let out = skipScene ? "" : bits.join(" and ");
   out += (out ? ", with " : "") + extras.join(" and ");
   out = future ? "The forecast calls for " + out + "."
       : out.charAt(0).toUpperCase() + out.slice(1) + ".";
   // a genuinely lovely day is worth saying out loud, without telling anyone to go
-  const lovely = (w.windMph == null || w.windMph < 8) && Math.abs(cv) < 0.4
+  const lovely = !skipScene && (w.windMph == null || w.windMph < 8) && Math.abs(cv) < 0.4
     && !(w.wx && w.wx.happening) && (w.airF == null || w.airF >= 60);
   return lovely ? "About as easy as this river gets. " + out : out;
 }
@@ -1456,7 +1494,7 @@ function buildBrief(t, cv, w, sky, now){
   const lovely = w && (w.windMph == null || w.windMph < 8) && Math.abs(cv) < 0.4
     && !(w.wx && w.wx.happening) && (w.airF == null || w.airF >= 60);
   const level = concerns.length ? concerns[0].level
-    : (w && w.windMph != null && w.windMph < 8 ? "good" : "fine");
+    : (pleasantEnough(w) ? "good" : "fine");
 
   // Speeds have their own module now, so the prose stays prose.
   // no trip planning on a day we have just said not to go out
@@ -1466,10 +1504,12 @@ function buildBrief(t, cv, w, sky, now){
     south: directionOutlook(180, cv, w, speeds.south)
   };
   if (!concerns.length){
-    const body = w ? quietDay(cv, w, future)
+    const body = w ? quietDay(cv, w, future, level !== "good")
       : "There is no weather reading right now, so this is the tide and current alone.";
-    // "Beautiful" is for a still river as well as still air; otherwise just calm
-    const head = level === "good" && !lovely ? "Calm conditions." : HEADLINE[level];
+    // "Beautiful" is for a still river as well as still air; otherwise just calm.
+    // Anything short of pleasant gets described rather than graded.
+    const head = level !== "good" ? plainHead(w)
+      : lovely ? HEADLINE.good : "Calm conditions.";
     return {level, head, body, ahead: riverAhead(t, cv, future),
       speeds, note, outlook, safety, facts: briefFacts(t, cv, w, sky)};
   }
