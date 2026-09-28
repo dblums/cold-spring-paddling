@@ -359,12 +359,11 @@ group("URL structure");
     const th = fs.readFileSync(thanksPath, "utf8");
     // a post-payment page has nothing to offer a search result
     ok("the thank-you page is noindex", /<meta name="robots" content="noindex">/.test(th));
-    for (const site of ALL)
-      ok(`the thank-you page links back to ${site.name}`,
-         th.includes(`href="${pageSlug(site)}.html"`));
+    // one link home rather than a list that grows with every launch
+    ok("the thank-you page links home", th.includes('href="/"'));
+    ok("the thank-you page does not list launches",
+       !ALL.some(x => th.includes(`href="${pageSlug(x)}.html"`)));
     ok("the thank-you page shares the site's colours", th.includes("--river:"));
-    ok("the thank-you page asks for corrections, not just money",
-       /something wrong|know something/i.test(th));
   } else {
     ok("no thank-you page without a tip link", !fs.existsSync(thanksPath));
   }

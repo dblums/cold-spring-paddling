@@ -209,7 +209,7 @@ def theme_css(template):
     return template[template.index(":root{"):template.index("*{box-sizing:border-box}")].rstrip()
 
 
-def write_thanks(sites):
+def write_thanks():
     """Where Stripe sends someone after they pay.
 
     Left to itself it drops them on a generic receipt, which is a cold end to
@@ -222,7 +222,6 @@ def write_thanks(sites):
             os.remove(path)
         return
     template = open(TEMPLATE).read()
-    links = " &middot; ".join(f'<a href="{L.href(s)}">{s["name"]}</a>' for s in sites)
     photo = (f'<img src="{L.TIP_PHOTO}" alt="{L.TIP_PHOTO_ALT}" width="224" height="224">'
              if L.TIP_PHOTO else "")
     page = ("""<!doctype html>
@@ -261,20 +260,17 @@ p{margin:0 0 14px; color:var(--ink-2); font-size:16px}
 <body>
   <div class="wrap">
     __PHOTO__
-    <h1>Thank you.</h1>
-    <p>That is a genuine kindness. It keeps the domain paid, and more to the point it
-      tells me somebody out there is actually checking this before they get on the water.</p>
-    <p>If you ever find something wrong, or you know something about a stretch of this
-      river that the page does not, I would rather hear about that than have the coffee.</p>
-    <p class="sig">See you out there. &mdash; Dan</p>
-    <p class="back">Back to conditions: __LINKS__</p>
+    <h1>Thank you!</h1>
+    <p>It&rsquo;s very kind of you to support this site.</p>
+    <p>See you on the river!</p>
+    <p class="sig">~ Dan</p>
+    <p class="back"><a href="/">Back to home</a></p>
   </div>
 </body>
 </html>
 """.replace("__FAVICON__", FAVICON)
         .replace("__THEME__", theme_css(template))
-        .replace("__PHOTO__", photo)
-        .replace("__LINKS__", links))
+        .replace("__PHOTO__", photo))
     with open(path, "w") as f:
         f.write(page)
     print(f"  {'Thanks':14} -> {'/thanks.html':30} {max(1, len(page.encode()) // 1024)} KB")
@@ -304,7 +300,7 @@ def main():
     for site in targets:
         render(site, sites)
     if not wanted:
-        write_thanks(sites)
+        write_thanks()
         write_cname()
 
 
