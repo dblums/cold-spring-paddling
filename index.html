@@ -166,6 +166,7 @@ button.on{background:var(--river); border-color:var(--river); color:var(--surfac
 .gate-cell.no-cross .gate-verdict{color:var(--closed)}
 .gate-cell.no-mud .gate-verdict{color:var(--mud)}
 .gate-sub{font-size:13.5px; color:var(--ink-2); margin:5px 0 0; line-height:1.45}
+.gate-sub .fn{display:block; margin-top:6px; font-size:12.5px; color:var(--muted)}
 .gate-when{
   font-family:"IBM Plex Mono",monospace; font-size:13px; color:var(--ink);
   margin:9px 0 0; padding-top:9px; border-top:1px solid var(--line-2);
@@ -1777,10 +1778,15 @@ function render(){
   const marshFlip = marshOK ? (nextLo ? nextLo.t - MUD_MIN * MIN : null) : loT.t + MUD_MIN * MIN;
 
   $("crossCell").className = "gate-cell " + (crossOK ? "ok" : "no-cross");
-  $("crossVerdict").textContent = crossOK ? "Likely enough clearance" : "Not enough clearance";
-  $("crossSub").innerHTML = "As a general rule, there is enough clearance to paddle under the trestle when it&rsquo;s at least 2h before or after high tide. Storms and winds can change this calculus. Use your own judgment and paddle at your own risk.";
+  // "Likely" hedges the clear case, because 2h before or after high tide is a
+  // rule of thumb over an interpolated prediction. The blocked case needs no
+  // hedge: at high water there is simply no room, and overstating that costs a
+  // paddler nothing.
+  $("crossVerdict").textContent = crossOK ? "Likely enough clearance*" : "No clearance";
+  $("crossSub").innerHTML = "As a general rule, there is enough clearance to paddle under the trestle when it&rsquo;s at least 2h before or after high tide. Storms and winds can change this calculus."
+    + "<span class=\"fn\">*Use your own judgment and paddle at your own risk.</span>";
   $("crossWhen").innerHTML = crossFlip
-    ? (crossOK ? "Low clearance at <b>" : "Clearance returns at <b>") + fmtT.format(crossFlip) + "</b> &middot; " + dur(Math.max(0, crossFlip - t))
+    ? (crossOK ? "No clearance at <b>" : "Clearance returns at <b>") + fmtT.format(crossFlip) + "</b> &middot; " + dur(Math.max(0, crossFlip - t))
     : "";
 
   $("marshCell").className = "gate-cell " + (marshOK ? "ok" : "no-mud");
@@ -1805,7 +1811,7 @@ function render(){
   if (!crossOK){
     // inside the high-tide window: the marsh is at its deepest, the way out is shut
     const mudLo = nextAfter(LOWS, crossFlip);
-    summary = "There is likely not enough clearance to paddle under the Metro-North trestle right now. If you&rsquo;re already in the marsh, "
+    summary = "There is not enough clearance to paddle under the Metro-North trestle right now. If you&rsquo;re already in the marsh, "
       + "keep paddling &mdash; the water in there is at its deepest &mdash; and plan to come back out after <b>"
       + fmtT.format(crossFlip) + "</b>"
       + (mudLo ? ", but before <b>" + fmtT.format(mudLo.t - MUD_MIN * MIN) + "</b> when the marsh starts turning to mud." : ".");
