@@ -93,6 +93,8 @@ body{
   color:var(--river); text-underline-offset:3px; font-weight:500;
 }
 .locnav a + a{margin-left:4px}
+.locnav .soon{color:var(--muted)}
+.locnav .soon::before{content:"|"; margin-right:8px; color:var(--line)}
 
 .hero h1{
   position:absolute; z-index:1; left:clamp(16px,3.4vw,26px); right:clamp(16px,3.4vw,26px);
@@ -427,7 +429,7 @@ img{max-width:100%}
     <img src="cold-spring-new-york.jpg" alt="The Hudson River seen from a kayak at Cold Spring, looking downriver between Storm King and Breakneck Ridge on a calm morning" width="1600" height="1201" fetchpriority="high">
     <h1>Hudson River Paddling Conditions Near Cold Spring, NY</h1>
   </header>
-  <nav class="locnav"><span class="label">Other launches</span> <a href="beacon-new-york.html">Beacon</a></nav>
+  <nav class="locnav"><span class="label">Other launches</span> <a href="beacon-new-york.html">Beacon</a> <span class="soon">More locations coming soon</span></nav>
 
 
   <div class="timebar">

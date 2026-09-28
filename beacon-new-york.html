@@ -93,6 +93,8 @@ body{
   color:var(--river); text-underline-offset:3px; font-weight:500;
 }
 .locnav a + a{margin-left:4px}
+.locnav .soon{color:var(--muted)}
+.locnav .soon::before{content:"|"; margin-right:8px; color:var(--line)}
 
 .hero h1{
   position:absolute; z-index:1; left:clamp(16px,3.4vw,26px); right:clamp(16px,3.4vw,26px);
@@ -426,7 +428,7 @@ img{max-width:100%}
   <header class="hero hero-plain">
     <h1>Hudson River Paddling Conditions Near Beacon, NY</h1>
   </header>
-  <nav class="locnav"><span class="label">Other launches</span> <a href="cold-spring-new-york.html">Cold Spring</a></nav>
+  <nav class="locnav"><span class="label">Other launches</span> <a href="cold-spring-new-york.html">Cold Spring</a> <span class="soon">More locations coming soon</span></nav>
 
 
   <div class="timebar">

@@ -93,7 +93,11 @@ def locnav(site, sites):
     if not others:
         return ""
     links = " ".join(f'<a href="{L.href(s)}">{s["name"]}</a>' for s in others)
-    return f'  <nav class="locnav"><span class="label">Other launches</span> {links}</nav>\n'
+    # says the registry is going to grow, which is the whole premise of the
+    # build - two launches on their own read like the site is finished
+    soon = '<span class="soon">More locations coming soon</span>'
+    return (f'  <nav class="locnav"><span class="label">Other launches</span> '
+            f'{links} {soon}</nav>\n')
 
 
 def render(site, sites):
