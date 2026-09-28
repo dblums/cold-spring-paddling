@@ -1581,7 +1581,7 @@ function buildBrief(t, cv, w, sky, now){
   // A concern's reassuring half only survives when that concern is the whole
   // story - never under an advisory, and never under "not a day for paddling".
   const said = [];
-  let windNamed = false, lastNamedWind = false;
+  let windNamed = false, lastNamedWind = false, lastNamedWater = false;
   for (const c of shown){
     // "That wind ..." only reads right directly after the sentence about the wind
     let line = (c.alt && lastNamedWind) ? c.alt : c.say;
@@ -1589,10 +1589,13 @@ function buildBrief(t, cv, w, sky, now){
       line += (c.soft || "");
     said.push(line);
     lastNamedWind = c.key === "wind" || c.key === "noprogress";
+    lastNamedWater = c.key === "cold";
     windNamed = windNamed || lastNamedWind;
   }
   const sunsetSoon = sky && sky.sunset != null && sky.sunset > t && sky.sunset - t < 90 * MIN;
-  const tail = sceneTail(w, false, sunsetSoon, future);
+  // After "Dress for the water.", an "It is warm and clear." reads as the water
+  // being warm - the exact opposite of what was just said. Stop instead.
+  const tail = lastNamedWater ? "" : sceneTail(w, false, sunsetSoon, future);
 
   return {level, head: lead.head || HEADLINE[level],
     body:[...said, tail].filter(Boolean).join(" "),

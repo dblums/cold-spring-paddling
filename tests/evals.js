@@ -394,6 +394,10 @@ for (const s of SCENARIOS){
   check(s.name, "no sentence starts with an unanchored It",
     !/(?:^|[.!?]\s)It is running/.test(b.body)
       || /wind|blowing/i.test(b.body.split(/It is running/)[0]), b.body);
+  // and nothing may follow "Dress for the water." with a sentence whose subject
+  // is a bare "It" - the reader takes it for the water, and it says the opposite
+  check(s.name, "nothing dangles after the water sentence",
+    !/Dress for the water\.\s+It\b/.test(b.body), b.body);
 
   // tidal jargon needs a plain-language gloss, or it should not appear at all
   check(s.name, "no unexplained tide jargon in the summary",
