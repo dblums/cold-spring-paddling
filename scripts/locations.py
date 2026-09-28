@@ -23,10 +23,10 @@ FEEDBACK_USER = "hello"
 # A Stripe Payment Link in "customers choose what to pay" mode. Empty means the
 # nudge is not rendered at all, so the page never shows a dead button.
 TIP_URL = ""
-TIP_LINE = ("Hi, I&rsquo;m Dan! I built this site because I paddle here with my family "
-            "(that&rsquo;s my 10-year-old son I&rsquo;m towing through a rainstorm). "
-            "The site is free. If you find it helpful and want to support it, you can "
-            "buy me a coffee.")
+TIP_LINE = ("Hi, I&rsquo;m Dan! I built this site because I paddle on the Hudson with my "
+            "family (that&rsquo;s my 10-year-old son I&rsquo;m towing through a rainstorm "
+            "on our way from Cold Spring to Beacon). The site is free. If you find it "
+            "helpful and want to support it, you can buy me a coffee.")
 TIP_CTA = "Buy me a coffee"
 TIP_PHOTO = "dan-blumberg.jpg"
 TIP_PHOTO_ALT = ("Dan Blumberg in a life jacket and cap, grinning in the rain on the Hudson, "
