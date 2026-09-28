@@ -13,9 +13,10 @@ for anything the page needs to render, so it works with no signal once loaded:
 
 Every launch is a flat file at the root named for its town and state -
 cold-spring-new-york.html - so each page can compete for its own searches and
-the slugs stay unique once the registry crosses a state line. The root itself
-is an index of the launches. Adding a stretch of river means adding a JSON file
-to locations/ and running the fetch script - nothing here changes.
+the slugs stay unique once the registry crosses a state line. The primary
+launch is also written to index.html, so the bare domain serves conditions
+rather than a menu. Adding a stretch of river means adding a JSON file to
+locations/ and running the fetch script - nothing here changes.
 
 Artifacts are written to artifacts/, which is kept out of the deployed site.
 """
@@ -60,12 +61,10 @@ def hero(site):
 
 def locnav(site, sites):
     others = [s for s in sites if s["slug"] != site["slug"]]
-    links = [f'<a href="{L.href(s)}">{s["name"]}</a>' for s in others]
-    # the launches page carries the whole-river framing, so every page links it
-    links.append('<a href="launches.html">All launches</a>')
-    label = "Other launches" if others else "More"
-    return (f'  <nav class="locnav"><span class="label">{label}</span> '
-            + " ".join(links) + "</nav>\n")
+    if not others:
+        return ""
+    links = " ".join(f'<a href="{L.href(s)}">{s["name"]}</a>' for s in others)
+    return f'  <nav class="locnav"><span class="label">Other launches</span> {links}</nav>\n'
 
 
 def render(site, sites):
@@ -167,115 +166,6 @@ img{{max-width:100%}}
         print(f"  {'':14} -> {'/ (same page)':30} canonical {L.page_file(site)}")
 
 
-def theme_css(template):
-    """The colour variables, lifted from the page template so the index shares
-    them rather than keeping a second copy that drifts."""
-    start = template.index(":root{")
-    end = template.index("*{box-sizing:border-box}")
-    return template[start:end].rstrip()
-
-
-def write_launches(sites):
-    """The list of launches, with the static prose about what the site is.
-
-    The bare domain goes straight to the primary launch, because someone typing
-    hudsonconditions.com wants to know what the river is doing, not to pick from
-    a menu of two. This page is where the whole-river framing lives instead, and
-    every launch links to it."""
-    template = open(TEMPLATE).read()
-    cards = "\n".join(f'''      <li class="launch">
-        <a href="{L.href(s)}">
-          <h2>{s["name"]}<span>{s["state"]}</span></h2>
-          <p>{s["blurb"]}</p>
-        </a>
-      </li>''' for s in sites)
-    names = ", ".join(s["name"] for s in sites)
-    page = f'''<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Hudson River Paddling Conditions</title>
-<meta name="description" content="Tide, current, wind and water temperature for paddlers on the tidal Hudson. Launch-by-launch conditions for {names}.">
-<link rel="canonical" href="{L.SITE_URL}/launches.html">
-<meta name="theme-color" content="#eaeeee" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0c1518" media="(prefers-color-scheme: dark)">
-<link rel="icon" href="{FAVICON}">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap">
-<style>
-{theme_css(template)}
-*{{box-sizing:border-box}}
-html{{-webkit-text-size-adjust:100%}}
-body{{margin:0; background:var(--ground); color:var(--ink);
-  font-family:"Barlow","Helvetica Neue",Helvetica,Arial,sans-serif; font-size:16px; line-height:1.55}}
-.wrap{{max-width:720px; margin:0 auto; padding:56px 16px 64px}}
-h1{{font-family:"Barlow Semi Condensed",sans-serif; font-weight:700; font-size:40px;
-  line-height:1.1; margin:0 0 10px; letter-spacing:-.01em}}
-.lede{{font-size:18px; color:var(--ink-2); margin:0 0 36px; max-width:54ch}}
-ul.launches{{list-style:none; margin:0 0 40px; padding:0; display:grid; gap:14px}}
-.launch a{{display:block; padding:20px 22px; background:var(--surface); border:1px solid var(--line);
-  border-radius:12px; text-decoration:none; color:inherit; box-shadow:var(--shadow);
-  transition:border-color .15s, transform .15s}}
-.launch a:hover{{border-color:var(--river); transform:translateY(-1px)}}
-.launch h2{{font-family:"Barlow Semi Condensed",sans-serif; font-size:25px; font-weight:600;
-  margin:0 0 6px; display:flex; align-items:baseline; gap:10px}}
-.launch h2 span{{font-family:"Barlow",sans-serif; font-size:13px; font-weight:500;
-  text-transform:uppercase; letter-spacing:.08em; color:var(--muted)}}
-.launch p{{margin:0; color:var(--ink-2); font-size:15px}}
-.about h3{{font-family:"Barlow Semi Condensed",sans-serif; font-size:20px; margin:0 0 8px}}
-.about p{{margin:0 0 14px; color:var(--ink-2); font-size:15.5px}}
-footer{{margin-top:40px; padding-top:20px; border-top:1px solid var(--line);
-  font-size:13.5px; color:var(--muted)}}
-footer a{{color:var(--muted)}}
-@media (max-width:520px){{ .wrap{{padding:36px 16px 48px}} h1{{font-size:32px}} }}
-</style>
-</head>
-<body>
-  <div class="wrap">
-    <h1>Hudson River Paddling Conditions</h1>
-    <p class="lede">What the river is doing right now, and what it will be doing when you
-      want to go. Tide, current, wind, water temperature and daylight for one launch at a
-      time &mdash; written for paddlers rather than for mariners.</p>
-
-    <ul class="launches">
-{cards}
-    </ul>
-
-    <section class="about">
-      <h3>What this is</h3>
-      <p>The tidal Hudson runs 153 miles from the Battery to the federal dam at Troy, and
-        for all of it the river goes both ways. The current can run well over a knot at
-        Cold Spring, which is faster than a lot of people paddle, so whether you go north
-        or south first is usually the difference between a pleasant afternoon and a long
-        one.</p>
-      <p>Tide and current predictions are astronomical, so they are computed years ahead
-        and built into each page &mdash; they work with no signal once the page has loaded.
-        Weather, alerts and water temperature come live from the National Weather Service
-        and NOAA when there is a connection, and the page still works when there is not.</p>
-      <h3>Picking a time</h3>
-      <p>Every page takes a date and time, so you can look at Saturday afternoon before you
-        commit to it. Tide and current for a future date are as good as they are for right
-        now. Weather is a forecast, and the pages say so.</p>
-    </section>
-
-    <footer>
-      Predictions and forecasts, not observations. Conditions on the water can differ from
-      anything shown here, and your decisions are your own.
-      Tide and current predictions from <a href="https://tidesandcurrents.noaa.gov/">NOAA CO-OPS</a>;
-      weather from the <a href="https://www.weather.gov/">National Weather Service</a>.
-    </footer>
-  </div>
-</body>
-</html>
-'''
-    with open(os.path.join(L.ROOT, "launches.html"), "w") as f:
-        f.write(page)
-    kb = len(page.encode()) // 1024
-    print(f"  {'Launches':14} -> {'/launches.html':30} {kb} KB")
-
-
 def write_cname():
     """GitHub Pages reads a file literally named CNAME at the root of what it
     publishes, and serves the site at that name. Nothing to do with the CNAME
@@ -300,7 +190,6 @@ def main():
     for site in targets:
         render(site, sites)
     if not wanted:
-        write_launches(sites)
         write_cname()
 
 

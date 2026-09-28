@@ -317,17 +317,7 @@ group("URL structure");
     eq(`${site.name}: canonical is its own URL`, canon(fs.readFileSync(pageFor(site), "utf8")),
        `https://hudsonconditions.com/${pageSlug(site)}.html`);
 
-  // the launches page carries the whole-river framing
-  const hub = fs.readFileSync(path.join(root, "launches.html"), "utf8");
-  ok("the launches page is its own page, not a launch", !/PREDICTIONS|briefSafety/.test(hub));
-  for (const site of ALL){
-    ok(`the launches page links to ${site.name}`, hub.includes(`href="${pageSlug(site)}.html"`));
-    ok(`the launches page describes ${site.name}`, hub.includes(site.blurb));
-  }
-  eq("the launches page canonical", canon(hub), "https://hudsonconditions.com/launches.html");
-  for (const site of ALL)
-    ok(`${site.name}: links to the launches page`,
-       fs.readFileSync(pageFor(site), "utf8").includes('href="launches.html"'));
+  ok("no launches page is deployed", !fs.existsSync(path.join(root, "launches.html")));
 
   // flat files share one directory, so these cannot collide
   const banners = ALL.filter(s => s.banner).map(s => pageSlug(s) + ".jpg");
