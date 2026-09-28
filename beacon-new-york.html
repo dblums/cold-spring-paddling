@@ -1,3 +1,16 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://api.weather.gov" crossorigin>
+<link rel="preconnect" href="https://api.tidesandcurrents.noaa.gov" crossorigin>
+<meta name="description" content="Hudson River tides, current and paddling conditions for Beacon, New York.">
+<meta name="theme-color" content="#eaeeee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0c1518" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Beacon Tides">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9B%B6%3C/text%3E%3C/svg%3E">
 <title>Hudson River Paddling Conditions Near Beacon, NY</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -371,12 +384,18 @@ footer .label{margin-bottom:-2px}
   ol.timeline .amt{grid-column:3; text-align:left}
 }
 </style>
-
+<style>
+html{-webkit-text-size-adjust:100%}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
 <div class="wrap">
   <header class="hero hero-plain">
     <h1>Hudson River Paddling Conditions Near Beacon, NY</h1>
   </header>
-  <nav class="locnav"><span class="label">Other launches</span> <a href="../">Cold Spring</a></nav>
+  <nav class="locnav"><span class="label">Other launches</span> <a href="cold-spring-new-york.html">Cold Spring</a></nav>
 
 
   <div class="timebar">
@@ -1801,3 +1820,5 @@ render();
 loadConditions();
 setInterval(loadConditions, 10 * 60 * 1000);
 </script>
+</body>
+</html>

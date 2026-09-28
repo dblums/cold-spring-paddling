@@ -1,5 +1,5 @@
 /* Pure-logic tests. No network. Run: node tests/offline.js */
-const {load, sites, pageFor} = require("./harness.js");
+const {load, sites, pageFor, pageSlug} = require("./harness.js");
 const fs = require("fs");
 const ALL = sites();
 const {T} = load();          // the root site, for the bulk of the assertions
@@ -125,7 +125,7 @@ group("Marsh access windows");
      actually tells us. Whether a given paddler should go through it does not
      follow from a tide table, so the page must not say so. */
   // the copy lives in two places: the card markup and the render logic below it
-  const built = fs.readFileSync(pageFor(ALL.find(x => x.root)), "utf8");
+  const built = fs.readFileSync(pageFor(ALL.find(x => x.primary)), "utf8");
   const marshSrc = built.split("Constitution Marsh")[1].split("Sun &amp; Moon")[0]
     + built.split('$("crossCell")')[1].split('$("summaryText")')[0];
   ok("the marsh slice actually found the render logic",
@@ -289,6 +289,49 @@ for (const site of ALL){
 }
 ok("more than one launch site is configured", ALL.length > 1, `${ALL.length}`);
 
+/* ---------- URL structure ---------- */
+group("URL structure");
+{
+  const path = require("path");
+  const root = path.join(__dirname, "..");
+  const slugs = ALL.map(pageSlug);
+
+  ok("every launch slug carries its state", slugs.every(s => /-[a-z-]+$/.test(s)), slugs.join(" "));
+  eq("launch slugs are unique", new Set(slugs).size, slugs.length);
+  for (const site of ALL){
+    const f = pageSlug(site) + ".html";
+    ok(`${site.name}: served at /${f}`, fs.existsSync(path.join(root, f)));
+  }
+
+  // the index is the front door now, not one of the launches
+  const idx = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  ok("the index is its own page, not a launch", !/PREDICTIONS|briefSafety/.test(idx));
+  for (const site of ALL){
+    ok(`the index links to ${site.name}`, idx.includes(`href="${pageSlug(site)}.html"`));
+    ok(`the index describes ${site.name}`, idx.includes(site.blurb));
+  }
+  ok("the index declares a canonical URL", /<link rel="canonical" href="https:\/\//.test(idx));
+
+  // flat files share one directory, so these cannot collide
+  const banners = ALL.filter(s => s.banner).map(s => pageSlug(s) + ".jpg");
+  eq("banner filenames are unique", new Set(banners).size, banners.length);
+  for (const b of banners) ok(`${b} was written`, fs.existsSync(path.join(root, b)));
+
+  // build byproducts must not be served
+  ok("no stray banner.jpg at the root", !fs.existsSync(path.join(root, "banner.jpg")));
+  ok("no artifact.html in the deployed root", !fs.existsSync(path.join(root, "artifact.html")));
+  ok("artifacts live outside the site", fs.existsSync(path.join(root, "artifacts")));
+  for (const site of ALL)
+    ok(`${site.name}: artifact written to artifacts/`,
+       fs.existsSync(path.join(root, "artifacts", site.slug + ".html")));
+
+  // each page points at its own photo, not a shared name
+  for (const site of ALL.filter(s => s.banner)){
+    const html = fs.readFileSync(pageFor(site), "utf8");
+    ok(`${site.name}: links its own banner`, html.includes(`src="${pageSlug(site)}.jpg"`));
+  }
+}
+
 /* The file GitHub Pages reads to know which name to serve the site at. It is
    the whole reason hudsonconditions.com resolves to this repo, and it lives in
    a directory that is otherwise all build output - so assert the build wrote
@@ -307,7 +350,7 @@ ok("more than one launch site is configured", ALL.length > 1, `${ALL.length}`);
        declared && declared[1] === cname, `${cname} vs ${declared && declared[1]}`);
   }
 }
-ok("exactly one site is the root", ALL.filter(s => s.root).length === 1);
+ok("exactly one site is primary", ALL.filter(s => s.primary).length === 1);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

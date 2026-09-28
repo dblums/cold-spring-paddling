@@ -1,8 +1,10 @@
 {
   "slug": "cold-spring",
-  "root": true,
+  "primary": true,
   "name": "Cold Spring",
+  "state": "New York",
   "title": "Hudson River Paddling Conditions Near Cold Spring, NY",
+  "blurb": "The Hudson Highlands launch most paddlers know: a short carry from the village, Constitution Marsh under the Metro-North trestle just to the south, and Storm King and Breakneck Ridge framing the river.",
   "lat": 41.4204,
   "lon": -73.9568,
   "riverMile": 54,

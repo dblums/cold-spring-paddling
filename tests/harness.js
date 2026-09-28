@@ -26,15 +26,16 @@ function stubEl(){
 function sites(){
   const dir = path.join(__dirname, "..", "locations");
   return fs.readdirSync(dir).map(f => JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")))
-           .sort((a,b) => (b.root?1:0) - (a.root?1:0));
+           .sort((a,b) => (b.primary?1:0) - (a.primary?1:0));
 }
+const slugify = s => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+const pageSlug = site => slugify(site.slug) + "-" + slugify(site.state);
 function pageFor(site){
-  return site.root ? path.join(__dirname, "..", "index.html")
-                   : path.join(__dirname, "..", site.slug, "index.html");
+  return path.join(__dirname, "..", pageSlug(site) + ".html");
 }
 
 function load(site){
-  const file = site ? pageFor(site) : path.join(__dirname, "..", "index.html");
+  const file = pageFor(site || sites()[0]);
   const html = fs.readFileSync(file, "utf8");
   const m = /<script>\n([\s\S]*?)<\/script>/.exec(html);
   if (!m) throw new Error("no <script> found in index.html");
@@ -57,4 +58,4 @@ function load(site){
   vm.runInContext(m[1] + grab, ctx, {filename:"index.html<script>"});
   return {T: ctx.__T, els};
 }
-module.exports = {load, sites, pageFor};
+module.exports = {load, sites, pageFor, pageSlug};
