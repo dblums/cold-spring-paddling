@@ -319,6 +319,28 @@ group("URL structure");
 
   ok("no launches page is deployed", !fs.existsSync(path.join(root, "launches.html")));
 
+  /* The feedback address is a forwarding alias, but it should still not sit in
+     the page source in one piece for a harvester to lift. */
+  for (const site of ALL){
+    const html = fs.readFileSync(pageFor(site), "utf8");
+    ok(`${site.name}: no plain address in the source`,
+       !/[a-z0-9._-]+@[a-z0-9.-]+\.[a-z]{2,}/i.test(html),
+       (html.match(/[a-z0-9._-]+@[a-z0-9.-]+\.[a-z]{2,}/i) || [""])[0]);
+    ok(`${site.name}: no mailto in the source`, !/mailto:[a-z]/i.test(html));
+    ok(`${site.name}: the feedback link carries its parts`,
+       /data-u="[a-z]+" data-d="[a-z.]+"/.test(html));
+    ok(`${site.name}: credits the owner`, html.includes("Modern Product Minds LLC"));
+    ok(`${site.name}: carries a copyright year`, /&copy; 20\d\d/.test(html));
+  }
+  for (const site of ALL.filter(s => s.photoCredit)){
+    const html = fs.readFileSync(pageFor(site), "utf8");
+    ok(`${site.name}: credits the photographer`, html.includes("Photo by " + site.photoCredit));
+  }
+  for (const site of ALL.filter(s => !s.banner)){
+    const html = fs.readFileSync(pageFor(site), "utf8");
+    ok(`${site.name}: no photo credit without a photo`, !html.includes("Photo by"));
+  }
+
   // flat files share one directory, so these cannot collide
   const banners = ALL.filter(s => s.banner).map(s => pageSlug(s) + ".jpg");
   eq("banner filenames are unique", new Set(banners).size, banners.length);

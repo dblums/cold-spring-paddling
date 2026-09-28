@@ -12,7 +12,7 @@ const EXPORTS = ["SITE","WX","sunTimes","moonTimes","moonIllumination","moonAlti
 
 function stubEl(){
   const el = {
-    textContent:"", innerHTML:"", className:"", value:"", style:{},
+    textContent:"", innerHTML:"", className:"", value:"", style:{}, dataset:{}, href:"",
     classList:{add(){}, remove(){}, contains(){return false}},
     addEventListener(){}, appendChild(){}, setAttribute(){}, setPointerCapture(){},
     getBoundingClientRect:() => ({left:0, width:720}),

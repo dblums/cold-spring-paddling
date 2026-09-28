@@ -22,6 +22,7 @@ Artifacts are written to artifacts/, which is kept out of the deployed site.
 """
 
 import base64
+import datetime
 import json
 import os
 import re
@@ -96,6 +97,13 @@ def render(site, sites):
         "CURRENT_LINK": cur["link"],
         "NWS_LINK": f'https://forecast.weather.gov/MapClick.php?lat={site["lat"]}&amp;lon={site["lon"]}',
         "LOCNAV": locnav(site, sites),
+        "PHOTO_CREDIT": (f'Photo by {site["photoCredit"]}. ' if site.get("photoCredit") else ""),
+        "FEEDBACK_USER": L.FEEDBACK_USER,
+        "SITE_DOMAIN": L.DOMAIN,
+        # the visible fallback, unharvestable, for before the script runs
+        "SITE_DOMAIN_WORDS": L.DOMAIN.replace(".", " dot "),
+        "OWNER": L.OWNER,
+        "YEAR": datetime.date.today().year,
         **hero(site),
     }
     for token, value in fields.items():

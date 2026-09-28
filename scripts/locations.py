@@ -13,6 +13,13 @@ DIR = os.path.join(ROOT, "locations")
 DOMAIN = "hudsonconditions.com"
 SITE_URL = "https://" + DOMAIN
 
+OWNER = "Modern Product Minds LLC"
+# A forwarding alias on our own domain, not a personal address. If it ever gets
+# harvested and buried in spam, delete it and make another - nothing downstream
+# has to change, and no real inbox was ever published. Set it up under
+# Dynadot -> Email Settings; ten of them come free with the domain.
+FEEDBACK_USER = "hello"
+
 
 def load():
     """Every launch site, the primary one first, then alphabetical by name."""

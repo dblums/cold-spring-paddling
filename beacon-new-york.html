@@ -368,6 +368,10 @@ footer{border-top:1px solid var(--line); padding-top:14px; display:flex; flex-di
 footer p{margin:0; font-size:13px; color:var(--muted); line-height:1.55}
 footer a{color:var(--river)}
 footer .label{margin-bottom:-2px}
+.colophon{border-top:1px solid var(--line-2); margin-top:5px; padding-top:11px;
+  display:flex; flex-wrap:wrap; gap:4px 14px; align-items:baseline}
+.colophon p{flex:1 1 auto; min-width:min(100%, 24rem)}
+.colophon .owner{color:var(--muted); white-space:nowrap}
 .important{
   background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--ebb);
   border-radius:0 9px 9px 0; padding:12px 15px 13px;
@@ -538,6 +542,12 @@ img{max-width:100%}
     </div>
     <p>Current from NOAA station HUR0506_7 (Newburgh Beacon Bridge), less than a mile from the launch, at the 4 ft bin nearest the surface. Tide from NOAA station 8518934, which is Beacon itself, so it is used unshifted. Both are predictions, baked into this page and good through 31&nbsp;Dec&nbsp;2028; values between NOAA&rsquo;s published points are interpolated. Weather and alerts come live from the National Weather Service grid covering Beacon. Water temperature has no nearby sensor &mdash; it is estimated between NOAA Turkey Point, upriver, and The Battery, down. Sun and moon are computed rather than fetched, and agree with the US Naval Observatory to within a couple of minutes.</p>
     <p><a href="https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=HUR0506_7">NOAA currents &#8599;</a> &nbsp; <a href="https://tidesandcurrents.noaa.gov/stationhome.html?id=8518934">NOAA tides &#8599;</a></p>
+    <div class="colophon">
+      <p>Something wrong, or something you know about this stretch that
+        the page does not? <a id="feedbackLink" data-u="hello" data-d="hudsonconditions.com"
+        >hello at hudsonconditions dot com</a>.</p>
+      <p class="owner">&copy; 2026 Modern Product Minds LLC</p>
+    </div>
   </footer>
 </div>
 
@@ -1576,6 +1586,17 @@ function buildBrief(t, cv, w, sky, now){
     ahead: riverAhead(t, cv, future),
     speeds, note, outlook, safety, facts: briefFacts(t, cv, w, sky)};
 }
+
+/* The address is split across two attributes and joined here. Every harvester
+   reads HTML; few of them run scripts. The page needs JavaScript anyway, and
+   the fallback text in the element is readable by a person either way. */
+(function mailLink(){
+  const a = $("feedbackLink");
+  if (!a || !a.dataset || !a.dataset.u) return;
+  const addr = a.dataset.u + String.fromCharCode(64) + a.dataset.d;
+  a.href = "mailto:" + addr + "?subject=" + encodeURIComponent(SITE.name + " conditions");
+  a.textContent = addr;
+})();
 
 /* ---------- weather, alerts, water ---------- */
 function drawAlerts(t){
