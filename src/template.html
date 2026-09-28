@@ -355,9 +355,8 @@ footer p{margin:0; font-size:13px; color:var(--muted); line-height:1.55}
 footer a{color:var(--river)}
 footer .label{margin-bottom:-2px}
 .colophon{border-top:1px solid var(--line-2); margin-top:5px; padding-top:11px;
-  display:flex; flex-wrap:wrap; gap:4px 14px; align-items:baseline}
-.colophon p{flex:1 1 auto; min-width:min(100%, 24rem)}
-.colophon .owner{color:var(--muted); white-space:nowrap}
+  display:flex; flex-direction:column; gap:5px}
+.colophon .owner{color:var(--muted)}
 .tip{
   display:flex; align-items:center; flex-wrap:wrap;
   gap:12px 16px; margin:0 0 18px; padding:15px 18px;
@@ -575,9 +574,9 @@ footer .label{margin-bottom:-2px}
     <p>{{CURRENT_NOTE}} {{TIDE_NOTE}} Both are predictions, baked into this page and good through 31&nbsp;Dec&nbsp;2028; values between NOAA&rsquo;s published points are interpolated. Weather and alerts come live from the National Weather Service grid covering {{NAME}}. Water temperature has no nearby sensor &mdash; it is estimated between NOAA Turkey Point, upriver, and The Battery, down. Sun and moon are computed rather than fetched, and agree with the US Naval Observatory to within a couple of minutes.{{MARSH_NOTE}}</p>
     <p><a href="{{CURRENT_LINK}}">NOAA currents &#8599;</a> &nbsp; <a href="https://tidesandcurrents.noaa.gov/stationhome.html?id=8518934">NOAA tides &#8599;</a></p>
     <div class="colophon">
-      <p>{{PHOTO_CREDIT}}Something wrong, or something you know about this stretch that
-        the page does not? <a id="feedbackLink" data-u="{{FEEDBACK_USER}}" data-d="{{SITE_DOMAIN}}"
-        >{{FEEDBACK_USER}} at {{SITE_DOMAIN_WORDS}}</a>.</p>
+      <p>{{CREDIT}}</p>
+      <p>{{FEEDBACK_LINE}} <a id="feedbackLink" data-u="{{FEEDBACK_USER}}"
+        data-d="{{SITE_DOMAIN}}">{{FEEDBACK_USER}} at {{SITE_DOMAIN_WORDS}}</a></p>
       <p class="owner">&copy; {{YEAR}} {{OWNER}}</p>
     </div>
   </footer>

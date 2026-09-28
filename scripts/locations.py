@@ -14,6 +14,8 @@ DOMAIN = "hudsonconditions.com"
 SITE_URL = "https://" + DOMAIN
 
 OWNER = "Modern Product Minds LLC"
+CREDIT = "Site and photos by Dan Blumberg."
+FEEDBACK_LINE = ("Feedback? Something you wish this site had? Want to paddle? Email me:")
 # A forwarding alias on our own domain, not a personal address. If it ever gets
 # harvested and buried in spam, delete it and make another - nothing downstream
 # has to change, and no real inbox was ever published. Set it up under

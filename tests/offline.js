@@ -377,17 +377,16 @@ group("URL structure");
        (html.match(/[a-z0-9._-]+@[a-z0-9.-]+\.[a-z]{2,}/i) || [""])[0]);
     ok(`${site.name}: no mailto in the source`, !/mailto:[a-z]/i.test(html));
     ok(`${site.name}: the feedback link carries its parts`,
-       /data-u="[a-z]+" data-d="[a-z.]+"/.test(html));
+       /data-u="[a-z]+"\s+data-d="[a-z.]+"/.test(html));
     ok(`${site.name}: credits the owner`, html.includes("Modern Product Minds LLC"));
     ok(`${site.name}: carries a copyright year`, /&copy; 20\d\d/.test(html));
   }
-  for (const site of ALL.filter(s => s.photoCredit)){
+  // the credit is about the site, so every launch carries it, banner or not
+  for (const site of ALL){
     const html = fs.readFileSync(pageFor(site), "utf8");
-    ok(`${site.name}: credits the photographer`, html.includes("Photo by " + site.photoCredit));
-  }
-  for (const site of ALL.filter(s => !s.banner)){
-    const html = fs.readFileSync(pageFor(site), "utf8");
-    ok(`${site.name}: no photo credit without a photo`, !html.includes("Photo by"));
+    ok(`${site.name}: credits Dan for the site and photos`,
+       html.includes("Site and photos by Dan Blumberg."));
+    ok(`${site.name}: invites mail`, /Feedback\? .*Email me:/.test(html));
   }
 
   // flat files share one directory, so these cannot collide
