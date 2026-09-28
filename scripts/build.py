@@ -203,6 +203,83 @@ img{{max-width:100%}}
         print(f"  {'':14} -> {'/ (same page)':30} canonical {L.page_file(site)}")
 
 
+def theme_css(template):
+    """The colour variables, lifted from the page template so the small pages
+    share them rather than keeping a second copy that drifts."""
+    return template[template.index(":root{"):template.index("*{box-sizing:border-box}")].rstrip()
+
+
+def write_thanks(sites):
+    """Where Stripe sends someone after they pay.
+
+    Left to itself it drops them on a generic receipt, which is a cold end to
+    the one moment somebody feels warmly about the site. noindex, because a
+    post-payment page has nothing to offer a search result and has no business
+    being findable without paying."""
+    path = os.path.join(L.ROOT, "thanks.html")
+    if not L.TIP_URL:
+        if os.path.exists(path):
+            os.remove(path)
+        return
+    template = open(TEMPLATE).read()
+    links = " &middot; ".join(f'<a href="{L.href(s)}">{s["name"]}</a>' for s in sites)
+    photo = (f'<img src="{L.TIP_PHOTO}" alt="{L.TIP_PHOTO_ALT}" width="224" height="224">'
+             if L.TIP_PHOTO else "")
+    page = ("""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Thank you &mdash; Hudson River Paddling Conditions</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#eaeeee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0c1518" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="__FAVICON__">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap">
+<style>
+__THEME__
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0; background:var(--ground); color:var(--ink);
+  font-family:"Barlow","Helvetica Neue",Helvetica,Arial,sans-serif; font-size:16px; line-height:1.55;
+  display:flex; align-items:center; justify-content:center; min-height:100vh; min-height:100dvh}
+.wrap{max-width:440px; padding:32px 20px 48px; text-align:center}
+img{width:104px; height:104px; border-radius:50%; object-fit:cover;
+  border:1px solid var(--line); margin-bottom:20px}
+h1{font-family:"Barlow Semi Condensed",sans-serif; font-weight:700; font-size:36px;
+  line-height:1.1; margin:0 0 14px; letter-spacing:-.01em}
+p{margin:0 0 14px; color:var(--ink-2); font-size:16px}
+.sig{color:var(--muted); font-size:15px}
+.back{margin-top:26px; padding-top:18px; border-top:1px solid var(--line);
+  font-size:14px; color:var(--muted)}
+.back a{color:var(--river); text-decoration:none; font-weight:500}
+.back a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    __PHOTO__
+    <h1>Thank you.</h1>
+    <p>That is a genuine kindness. It keeps the domain paid, and more to the point it
+      tells me somebody out there is actually checking this before they get on the water.</p>
+    <p>If you ever find something wrong, or you know something about a stretch of this
+      river that the page does not, I would rather hear about that than have the coffee.</p>
+    <p class="sig">See you out there. &mdash; Dan</p>
+    <p class="back">Back to conditions: __LINKS__</p>
+  </div>
+</body>
+</html>
+""".replace("__FAVICON__", FAVICON)
+        .replace("__THEME__", theme_css(template))
+        .replace("__PHOTO__", photo)
+        .replace("__LINKS__", links))
+    with open(path, "w") as f:
+        f.write(page)
+    print(f"  {'Thanks':14} -> {'/thanks.html':30} {max(1, len(page.encode()) // 1024)} KB")
+
+
 def write_cname():
     """GitHub Pages reads a file literally named CNAME at the root of what it
     publishes, and serves the site at that name. Nothing to do with the CNAME
@@ -227,6 +304,7 @@ def main():
     for site in targets:
         render(site, sites)
     if not wanted:
+        write_thanks(sites)
         write_cname()
 
 

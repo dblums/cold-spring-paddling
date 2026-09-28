@@ -352,6 +352,23 @@ group("URL structure");
   if (!tipUrl && photo)
     ok("no orphan tip photo is deployed", !fs.existsSync(path.join(root, photo)));
 
+  /* Where Stripe returns people after they pay. */
+  const thanksPath = path.join(root, "thanks.html");
+  if (tipUrl){
+    ok("a thank-you page is built", fs.existsSync(thanksPath));
+    const th = fs.readFileSync(thanksPath, "utf8");
+    // a post-payment page has nothing to offer a search result
+    ok("the thank-you page is noindex", /<meta name="robots" content="noindex">/.test(th));
+    for (const site of ALL)
+      ok(`the thank-you page links back to ${site.name}`,
+         th.includes(`href="${pageSlug(site)}.html"`));
+    ok("the thank-you page shares the site's colours", th.includes("--river:"));
+    ok("the thank-you page asks for corrections, not just money",
+       /something wrong|know something/i.test(th));
+  } else {
+    ok("no thank-you page without a tip link", !fs.existsSync(thanksPath));
+  }
+
   /* The feedback address is a forwarding alias, but it should still not sit in
      the page source in one piece for a harvester to lift. */
   for (const site of ALL){
