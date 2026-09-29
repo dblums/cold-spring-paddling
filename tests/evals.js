@@ -463,10 +463,10 @@ for (const s of SCENARIOS){
   // and when it does speak, it must name a real direction
   if (b.note)
     check(s.name, "the speed note names a direction or says it is slow both ways",
-      /north|south|whichever way/.test(b.note), b.note);
+      /north|south|east|west|whichever way/.test(b.note), b.note);
 
   // the two-direction outlook: always both, always in the same shape
-  for (const dir of ["north", "south"]){
+  for (const dir of ["up", "down"]){
     const o = b.outlook[dir];
     check(s.name, `${dir} outlook exists with wind and current`, o && o.lines.length >= 1,
       JSON.stringify(o && o.lines));
@@ -475,7 +475,7 @@ for (const s of SCENARIOS){
       o.lines.every(l => l.length > 8 && !/undefined|NaN|null/.test(l)), JSON.stringify(o.lines));
   }
   {
-    const n = b.outlook.north.lines.join(" | "), so = b.outlook.south.lines.join(" | ");
+    const n = b.outlook.up.lines.join(" | "), so = b.outlook.down.lines.join(" | ");
     // a headwind one way is a tailwind the other - never both faces, never both backs
     check(s.name, "wind cannot be in your face both ways",
       !(/in your face/.test(n) && /in your face/.test(so)), n + " // " + so);
@@ -491,10 +491,10 @@ for (const s of SCENARIOS){
 
   // speeds live in their own module now, always present and always numbers
   check(s.name, "speeds are finite numbers",
-    Number.isFinite(b.speeds.north) && Number.isFinite(b.speeds.south),
+    Number.isFinite(b.speeds.up) && Number.isFinite(b.speeds.down),
     JSON.stringify(b.speeds));
   check(s.name, "speeds are plausible for a kayak",
-    b.speeds.north < 9 && b.speeds.south < 9 && b.speeds.north > -3 && b.speeds.south > -3,
+    b.speeds.up < 9 && b.speeds.down < 9 && b.speeds.up > -3 && b.speeds.down > -3,
     JSON.stringify(b.speeds));
 }
 

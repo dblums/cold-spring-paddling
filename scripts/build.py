@@ -36,6 +36,16 @@ FAVICON = ("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox
            "%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9B%B6%3C/text%3E%3C/svg%3E")
 
 
+DIRWORDS = ["north", "northeast", "east", "southeast",
+            "south", "southwest", "west", "northwest"]
+
+
+def dir_word(deg):
+    """Eight-point compass word. Mirrors dirWord() in the template, because the
+    column headings are static markup and the prose below them is not."""
+    return DIRWORDS[round((deg % 360) / 45) % 8]
+
+
 def strip_features(html, features):
     """Remove <!--@if name--> and /*@if name*/ blocks the site does not have."""
     for style in (r"<!--@if (\w+)-->(.*?)<!--@endif-->\n?", r"/\*@if (\w+)\*/(.*?)/\*@endif\*/\n?"):
@@ -123,6 +133,8 @@ def render(site, sites):
         "TIDE_LABEL": tide["label"], "CURRENT_LABEL": cur["label"],
         "COORD_LABEL": f'computed for {site["lat"]:.2f}°N {abs(site["lon"]):.2f}°W',
         "UPRIVER": cur["upriverTo"], "DOWNRIVER": cur["downriverTo"],
+        # the same eight-point words the script uses, for the static markup
+        "UP_DIR": dir_word(cur["floodToward"]), "DOWN_DIR": dir_word(cur["ebbToward"]),
         "CURRENT_NOTE": cur["note"], "TIDE_NOTE": tide["note"], "MARSH_NOTE": marsh_note,
         "TIDE_CARD_NOTE": tide["cardNote"],
         "NWS_LABEL": "NWS " + site["nws"]["grid"].split("/")[0],

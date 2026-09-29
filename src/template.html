@@ -427,14 +427,14 @@ footer .label{margin-bottom:-2px}
       <span class="label">What to expect <em>speeds assume a 3 mph base pace</em></span>
       <div class="dirs">
         <div class="dir">
-          <span class="dirhd">Heading north</span>
-          <ul id="expNorth"></ul>
-          <div class="spd"><b id="spNorth">&mdash;</b> <em>expected speed</em></div>
+          <span class="dirhd">Heading {{UP_DIR}}</span>
+          <ul id="expUp"></ul>
+          <div class="spd"><b id="spUp">&mdash;</b> <em>expected speed</em></div>
         </div>
         <div class="dir">
-          <span class="dirhd">Heading south</span>
-          <ul id="expSouth"></ul>
-          <div class="spd"><b id="spSouth">&mdash;</b> <em>expected speed</em></div>
+          <span class="dirhd">Heading {{DOWN_DIR}}</span>
+          <ul id="expDown"></ul>
+          <div class="spd"><b id="spDown">&mdash;</b> <em>expected speed</em></div>
         </div>
       </div>
     </div>
@@ -487,8 +487,8 @@ footer .label{margin-bottom:-2px}
     <div class="next" id="curNext"></div>
     <svg class="chart" id="curChart" viewBox="0 0 720 150" preserveAspectRatio="none" role="img" aria-label="Current speed through the day"></svg>
     <div class="chart-note">
-      <span class="key"><i style="background:var(--flood)"></i>Flood &mdash; north, upriver</span>
-      <span class="key"><i style="background:var(--ebb)"></i>Ebb &mdash; south, downriver</span>
+      <span class="key"><i style="background:var(--flood)"></i>Flood &mdash; {{UP_DIR}}, upriver</span>
+      <span class="key"><i style="background:var(--ebb)"></i>Ebb &mdash; {{DOWN_DIR}}, downriver</span>
     </div>
   </section>
 
@@ -863,7 +863,7 @@ async function loadConditions(){
   const n = readWater(north), sth = readWater(south);
   // linear by river mile: 0 at the Battery, 1 at Turkey Point
   WX.water = (n != null && sth != null)
-      ? {f:sth + (n - sth) * (SITE_RIVER_MILE / WATER_N.mile), from:"both"}
+      ? {f:sth + (n - sth) * Math.min(1, SITE_RIVER_MILE / WATER_N.mile), from:"both"}
     : n != null ? {f:n, from:WATER_N.name}
     : sth != null ? {f:sth, from:WATER_S.name}
     : null;
@@ -874,6 +874,12 @@ async function loadConditions(){
 
 const COMPASS = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
 const compass = deg => COMPASS[Math.round(((deg % 360) + 360) % 360 / 22.5) % 16];
+/* The river is not north-south everywhere. At Cold Spring the flood runs 10 deg
+   and at Beacon 350, so "north" was fine; at Hudson it runs 61 and "north" is
+   both wrong and a worse description than "northeast". Eight points is enough
+   for prose - nobody says "the current is running north-northeast". */
+const DIRWORDS = ["north","northeast","east","southeast","south","southwest","west","northwest"];
+const dirWord = deg => DIRWORDS[Math.round(((deg % 360) + 360) % 360 / 45) % 8];
 
 // Mean flood and ebb headings at the current station, in degrees the water
 // travels toward. The river runs roughly north-south here, so an east or west
@@ -1175,14 +1181,20 @@ function groundSpeedMph(currentMph, headMph){
   return (lo + c) / MPS;              // over the ground, so it can go negative
 }
 
-// Speeds north and south for the moment, using wind when we have it.
+/* Speeds upriver and downriver, using wind when we have it.
+
+   These used to project the wind onto bearings 0 and 180, which quietly assumed
+   the river runs north-south. It does at Cold Spring and Beacon; it does not at
+   Hudson, where the flood runs 61 degrees. A north wind there is 29 degrees off
+   the axis, not dead on it, and the old code would have overstated the headwind
+   by a sixth. Project onto the river's own heading instead. */
 function speedsFor(cv, w){
-  const curNorth = cv * 1.15078;      // signed: positive is flowing north
+  const curKt = cv * 1.15078;         // signed: positive is flooding, upriver
   const wind = (w && w.windMph != null && w.windFromDeg != null) ? w : null;
   const head = b => wind ? headwindMph(wind.windFromDeg, wind.windMph, b) : 0;
   return {
-    north: groundSpeedMph(curNorth, head(0)),
-    south: groundSpeedMph(-curNorth, head(180)),
+    up: groundSpeedMph(curKt, head(FLOOD_TOWARD)),
+    down: groundSpeedMph(-curKt, head(EBB_TOWARD)),
     hasWind: !!wind
   };
 }
@@ -1314,7 +1326,7 @@ function quietDay(cv, w, future, skipScene){
   const extras = [];
   if (w.windMph != null) extras.push(windWord(w.windMph).toLowerCase());
   extras.push(Math.abs(cv) < 0.15 ? "the river nearly slack"
-    : "the current running " + (cv > 0 ? "north" : "south"));
+    : "the current running " + dirWord(cv > 0 ? FLOOD_TOWARD : EBB_TOWARD));
   let out = skipScene ? "" : bits.join(" and ");
   out += (out ? ", with " : "") + extras.join(" and ");
   out = future ? "The forecast calls for " + out + "."
@@ -1393,7 +1405,7 @@ function briefConcerns(t, cv, w, sky, now){
        : "There is a " + alerts[0].properties.event + " out for this stretch, too."});
 
   if (wind != null){
-    const hard = Math.max(sp.north, sp.south) < 1.2;
+    const hard = Math.max(sp.up, sp.down) < 1.2;
     if (wind >= 25 || (gust != null && gust >= 35)) out.push({level:"stop", key:"wind", rank:1,
       say: future ? "The forecast has it really blowing."
                   : "It is really blowing out there today."});
@@ -1483,11 +1495,12 @@ function briefConcerns(t, cv, w, sky, now){
 /* The columns already show which way is easier, so the only thing left worth
    saying is the trap: riding wind and current out, then having to come back. */
 function speedNote(cv, w, sp, future){
-  const n = sp.north, s = sp.south;
+  const n = sp.up, s = sp.down;
   if (n < 1.5 && s < 1.5) return (future ? "It would be" : "It is")
     + " slow going whichever way you turn.";
   if (Math.abs(n - s) >= 1){
-    const easy = n > s ? "north" : "south", hard = n > s ? "south" : "north";
+    const up = dirWord(FLOOD_TOWARD), down = dirWord(EBB_TOWARD);
+    const easy = n > s ? up : down, hard = n > s ? down : up;
     return "Heading " + easy + " is the easy half. The paddle back " + hard
       + " is the one to leave time for.";
   }
@@ -1502,7 +1515,7 @@ const windWord = mph => mph == null ? null
   : mph < 5 ? "Very light wind" : mph < 10 ? "Light wind"
   : mph < 15 ? "Moderate wind" : mph < 25 ? "Strong wind" : "Very strong wind";
 
-function directionOutlook(bearing, cv, w, speed){
+function directionOutlook(bearing, curFor, w, speed){
   const lines = [];
   const wind = w && w.windMph != null && w.windFromDeg != null ? w : null;
   let head = 0;
@@ -1514,16 +1527,15 @@ function directionOutlook(bearing, cv, w, speed){
       : word + (sideways ? " across you" : head > 0 ? " in your face" : " at your back"));
   }
 
-  // positive means the river is carrying you the way you are going
-  const curFor = (bearing === 0 ? cv : -cv);
+  // curFor is positive when the river is carrying you the way you are going
   const kt = Math.abs(curFor);
   lines.push(kt < 0.15 ? "Current slack, no help either way"
     : kt < 0.6 ? (curFor > 0 ? "Current helping you a little" : "Current holding you back a little")
     : (curFor > 0 ? "Current giving you a real push" : "Current pushing against you"));
 
   // wind against current is what raises chop, and the waves travel with the wind
-  if (wind && wind.windMph >= 12 && Math.abs(cv) >= 0.5
-      && windVsCurrent(wind.windFromDeg, cv) === "opposed"){
+  if (wind && wind.windMph >= 12 && Math.abs(curFor) >= 0.5
+      && windVsCurrent(wind.windFromDeg, curFor * (bearing === FLOOD_TOWARD ? 1 : -1)) === "opposed"){
     const sideways = Math.abs(head) / wind.windMph < 0.4;
     lines.push(sideways
       ? "Choppy water hitting you side-on, which is the tippy direction"
@@ -1557,7 +1569,7 @@ function riverAhead(t, cv, future){
   const slack = nextAfter(CUR, t, p => p.type === "slack");
   if (!slack) return "";
   const after = nextAfter(CUR, slack.t, p => p.type !== "slack");
-  const turnsTo = after ? (after.v > 0 ? "north" : "south") : null;
+  const turnsTo = after ? dirWord(after.v > 0 ? FLOOD_TOWARD : EBB_TOWARD) : null;
 
   if (Math.abs(cv) < 0.15)
     return after
@@ -1567,7 +1579,7 @@ function riverAhead(t, cv, future){
         + " hard by " + fmtT.format(after.t) + "."
       : "The river " + (future ? "will be slack then." : "is slack right now.");
 
-  const running = cv > 0 ? "north" : "south";
+  const running = dirWord(cv > 0 ? FLOOD_TOWARD : EBB_TOWARD);
   return "The " + (cv > 0 ? "flood" : "ebb")
     + (future ? " will have about " : " has about ") + dur(slack.t - t)
     + (future ? " left in it, going slack around " : " left in it and goes slack around ")
@@ -1591,8 +1603,8 @@ function buildBrief(t, cv, w, sky, now){
   // no trip planning on a day we have just said not to go out
   const note = level === "stop" ? "" : speedNote(cv, w, speeds, future);
   const outlook = {
-    north: directionOutlook(0, cv, w, speeds.north),
-    south: directionOutlook(180, cv, w, speeds.south)
+    up: directionOutlook(FLOOD_TOWARD, cv, w, speeds.up),
+    down: directionOutlook(EBB_TOWARD, -cv, w, speeds.down)
   };
   if (!concerns.length){
     // described either way; "good" just gets to sound like a nice day
@@ -1774,7 +1786,7 @@ function drawBrief(t, cv){
   $("briefBody").innerHTML = b.body;
 
   const mph = v => v <= 0.05 ? "none" : v.toFixed(1) + " mph";
-  for (const dir of ["north", "south"]){
+  for (const dir of ["up", "down"]){
     const o = b.outlook[dir];
     $("exp" + dir.charAt(0).toUpperCase() + dir.slice(1)).innerHTML =
       o.lines.map(l => "<li>" + l + "</li>").join("");
@@ -1874,8 +1886,8 @@ function render(){
   $("curCaption").innerHTML = cls === "slack"
     ? '<b class="state-slack">Slack water</b>'
     : cls === "flood"
-      ? '<b class="state-flood">Flooding</b> &mdash; running north, upriver toward {{UPRIVER}}.'
-      : '<b class="state-ebb">Ebbing</b> &mdash; running south, downriver toward {{DOWNRIVER}}.';
+      ? '<b class="state-flood">Flooding</b> &mdash; running ' + dirWord(FLOOD_TOWARD) + ', upriver toward {{UPRIVER}}.'
+      : '<b class="state-ebb">Ebbing</b> &mdash; running ' + dirWord(EBB_TOWARD) + ', downriver toward {{DOWNRIVER}}.';
   drawDial(cv);
   const cn = nextAfter(CUR, t);
   $("curNext").innerHTML = cn

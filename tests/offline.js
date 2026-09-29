@@ -160,12 +160,12 @@ group("Wind relative to current");
     {windMph:wind.mph, windGustMph:wind.mph + 6, windFromDeg:wind.from, airF:72, waterF:70, stormPct:0},
     T.skyFor(T.fromNY(2026, 6, 15, 12, 0)));
   const bf = brief(1, {mph:12, from:10});
-  ok("flood: faster north than south", bf.speeds.north > bf.speeds.south,
-     `${bf.speeds.north.toFixed(2)} vs ${bf.speeds.south.toFixed(2)}`);
+  ok("flood: faster north than south", bf.speeds.up > bf.speeds.down,
+     `${bf.speeds.up.toFixed(2)} vs ${bf.speeds.down.toFixed(2)}`);
   ok("the summary never buries the speeds in prose", !/mph going (north|south)/.test(bf.body), bf.body);
   const be = brief(-1, {mph:12, from:10});
-  ok("ebb: faster south than north", be.speeds.south > be.speeds.north,
-     `${be.speeds.south.toFixed(2)} vs ${be.speeds.north.toFixed(2)}`);
+  ok("ebb: faster south than north", be.speeds.down > be.speeds.up,
+     `${be.speeds.down.toFixed(2)} vs ${be.speeds.up.toFixed(2)}`);
 
   // the model itself, which those sentences are reporting
   eq("still air, slack water is the baseline", +T.groundSpeedMph(0, 0).toFixed(2), 3);
@@ -180,7 +180,7 @@ group("Wind relative to current");
   const noWx = T.buildBrief(T.fromNY(2026, 6, 15, 12, 0), 1, null,
     T.skyFor(T.fromNY(2026, 6, 15, 12, 0)));
   ok("no wind data still gives speeds",
-     Number.isFinite(noWx.speeds.north) && Number.isFinite(noWx.speeds.south), JSON.stringify(noWx.speeds));
+     Number.isFinite(noWx.speeds.up) && Number.isFinite(noWx.speeds.down), JSON.stringify(noWx.speeds));
   ok("no wind data invents no weather", !/wind|rain|cloud/i.test(noWx.body), noWx.body);
   eq("paddling pace", T.PADDLE_MPH, 3);
 }
@@ -253,9 +253,15 @@ for (const site of ALL){
   // a launch's own identity must never show another launch's name
   const heading = (/<h1[^>]*>([^<]*)<\/h1>/.exec(html) || [])[1] || "";
   ok(`${site.name}: headline names this launch`, heading.includes(site.name), heading);
+  /* A launch must not wear another launch's name - but one of them is called
+     Hudson, and every title begins "Hudson River Paddling Conditions". Check
+     the part that actually identifies the page rather than the whole string. */
+  const named = t => (/Near ([^,]+),/.exec(t || "") || [])[1] || "";
+  eq(`${site.name}: headline names this launch`, named(heading), site.name);
+  eq(`${site.name}: title names this launch`, named(title), site.name);
   for (const other of ALL) if (other.slug !== site.slug){
-    ok(`${site.name}: headline does not say ${other.name}`, !heading.includes(other.name), heading);
-    ok(`${site.name}: title does not say ${other.name}`, !(title||"").includes(other.name));
+    ok(`${site.name}: headline does not say ${other.name}`, named(heading) !== other.name, heading);
+    ok(`${site.name}: title does not say ${other.name}`, named(title) !== other.name);
   }
   ok(`${site.name}: site config matches locations/`,
      S.SITE.slug === site.slug && S.SITE.lat === site.lat && S.SITE.riverMile === site.riverMile);
