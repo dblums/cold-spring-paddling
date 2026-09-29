@@ -574,7 +574,7 @@ img{max-width:100%}
       <span class="label">Important note</span>
       <p>Tides and currents are predictions, not observations. Wind, waves, runoff, storm surge and other factors can affect actual conditions. Weather is sourced from the National Weather Service. Use your own judgment and paddle at your own risk.</p>
     </div>
-    <p>Current from NOAA station HUR0614_9 (Hudson), about a mile and a half from the launch, at the 14 ft bin nearest the surface. Tide from NOAA station 8518974, which is Hudson itself, so it is used unshifted. Both are predictions, baked into this page and good through 31&nbsp;Dec&nbsp;2028; values between NOAA&rsquo;s published points are interpolated. Weather and alerts come live from the National Weather Service grid covering Hudson. Water temperature comes from NOAA Coxsackie, 9 miles upriver. Sun and moon are computed rather than fetched, and agree with the US Naval Observatory to within a couple of minutes.</p>
+    <p>Current from NOAA station HUR0614_9 (Hudson), about a mile and a half from the launch, at the 14 ft bin nearest the surface. Tide from NOAA station 8518974, which is Hudson itself. Both are predictions, baked into this page and good through 31&nbsp;Dec&nbsp;2028; values between NOAA&rsquo;s published points are interpolated. Weather and alerts come live from the National Weather Service grid covering Hudson. Water temperature comes from NOAA Coxsackie, 9 miles upriver. Sun and moon are computed rather than fetched, and agree with the US Naval Observatory to within a couple of minutes.</p>
     <p><a href="https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=HUR0614_9" target="_blank" rel="noopener">NOAA currents &#8599;</a> &nbsp; <a href="https://tidesandcurrents.noaa.gov/stationhome.html?id=8518974" target="_blank" rel="noopener">NOAA tides &#8599;</a></p>
     <div class="colophon">
       <p>Site and photos by Dan Blumberg.</p>
@@ -842,14 +842,31 @@ async function getJSON(url){
   if (!r.ok) throw new Error("HTTP " + r.status);
   return r.json();
 }
+/* A day of hourly readings rather than date=latest.
+
+   date=latest returns an error unless the station reported in the last few
+   minutes, so a sensor that is merely late reads as dead - and the page then
+   falls back to the other end of the bracket, which for Cold Spring is The
+   Battery, 54 river miles off and about 3F out in spring. The day of readings
+   costs 1.2 KB and covers every transient gap.
+
+   A day is the right window, measured at Turkey Point: water moves 0.60F in
+   24 hours on average and 1.7F at its fastest, against 1.01F and 3.2F over 48.
+   So a reading a day old beats a live one from 54 miles away, and one a week
+   old - 4F or more in spring - does not. */
 const waterURL = id => COOPS + "?product=water_temperature&application=coldspringpaddling"
-  + "&date=latest&station=" + id + "&time_zone=lst_ldt&units=english&format=json";
+  + "&range=24&interval=h&station=" + id + "&time_zone=lst_ldt&units=english&format=json";
 
 function readWater(res){
   if (res.status !== "fulfilled") return null;
-  const d = res.value && res.value.data && res.value.data[0];
-  const f = d && parseFloat(d.v);
-  return (f || f === 0) && isFinite(f) ? f : null;
+  const rows = res.value && res.value.data;
+  if (!Array.isArray(rows)) return null;
+  // newest usable reading, working back from the end
+  for (let i = rows.length - 1; i >= 0; i--){
+    const f = parseFloat(rows[i].v);
+    if (isFinite(f) && f > 20 && f < 95) return {f, t: rows[i].t};
+  }
+  return null;
 }
 
 async function loadConditions(){
@@ -861,7 +878,8 @@ async function loadConditions(){
   WX.grid = grid.status === "fulfilled" ? grid.value.properties : null;
   WX.alerts = alerts.status === "fulfilled" ? (alerts.value.features || []) : null;
 
-  const n = readWater(north), sth = readWater(south);
+  const rn = readWater(north), rs = readWater(south);
+  const n = rn ? rn.f : null, sth = rs ? rs.f : null;
   // linear by river mile between whichever two stations bracket this launch
   const span = (WATER_N && WATER_S) ? WATER_N.mile - WATER_S.mile : 0;
   const f = span > 0

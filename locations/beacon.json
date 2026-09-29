@@ -14,7 +14,7 @@
     "station": "8518934",
     "label": "NOAA 8518934 Beacon",
     "shiftMin": 0,
-    "note": "Tide from NOAA station 8518934, which is Beacon itself, so it is used unshifted.",
+    "note": "Tide from NOAA station 8518934, which is Beacon itself.",
     "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
   },
   "current": {

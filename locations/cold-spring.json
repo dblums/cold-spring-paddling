@@ -26,7 +26,7 @@
     "ebbToward": 159,
     "upriverTo": "Beacon",
     "downriverTo": "Bear Mountain",
-    "note": "Current from NOAA station ACT3726_1 (West Point, off Duck Island) \u2014 about a mile and a half downriver, so it is used unshifted. Flood and ebb headings are the river\u2019s own axis at Cold Spring rather than the station\u2019s, which sits past the bend toward World\u2019s End.",
+    "note": "Current from NOAA station ACT3726_1 (West Point, off Duck Island), about a mile and a half downriver. Flood and ebb headings are the river\u2019s own axis at Cold Spring.",
     "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=ACT3726_1"
   },
   "nws": {

@@ -600,7 +600,7 @@ img{max-width:100%}
       <span class="label">Important note</span>
       <p>Tides and currents are predictions, not observations. Wind, waves, runoff, storm surge and other factors can affect actual conditions. Weather is sourced from the National Weather Service. Use your own judgment and paddle at your own risk.</p>
     </div>
-    <p>Current from NOAA station ACT3726_1 (West Point, off Duck Island) — about a mile and a half downriver, so it is used unshifted. Flood and ebb headings are the river’s own axis at Cold Spring rather than the station’s, which sits past the bend toward World’s End. Tide from NOAA station 8518934 (Beacon), shifted 30 minutes earlier to approximate Cold Spring. Both are predictions, baked into this page and good through 31&nbsp;Dec&nbsp;2028; values between NOAA&rsquo;s published points are interpolated. Weather and alerts come live from the National Weather Service grid covering Cold Spring. Water temperature has no nearby sensor &mdash; it is estimated between NOAA The Battery, downriver, and Turkey Point, up. Sun and moon are computed rather than fetched, and agree with the US Naval Observatory to within a couple of minutes. The &plusmn;2h trestle and mud rules are local rules of thumb &mdash; look at the clearance yourself before you commit, and remember the tide inside the marsh lags the river.</p>
+    <p>Current from NOAA station ACT3726_1 (West Point, off Duck Island), about a mile and a half downriver. Flood and ebb headings are the river’s own axis at Cold Spring. Tide from NOAA station 8518934 (Beacon), shifted 30 minutes earlier to approximate Cold Spring. Both are predictions, baked into this page and good through 31&nbsp;Dec&nbsp;2028; values between NOAA&rsquo;s published points are interpolated. Weather and alerts come live from the National Weather Service grid covering Cold Spring. Water temperature has no nearby sensor &mdash; it is estimated between NOAA The Battery, downriver, and Turkey Point, up. Sun and moon are computed rather than fetched, and agree with the US Naval Observatory to within a couple of minutes. The &plusmn;2h trestle and mud rules are local rules of thumb &mdash; look at the clearance yourself before you commit, and remember the tide inside the marsh lags the river.</p>
     <p><a href="https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=ACT3726_1" target="_blank" rel="noopener">NOAA currents &#8599;</a> &nbsp; <a href="https://tidesandcurrents.noaa.gov/stationhome.html?id=8518934" target="_blank" rel="noopener">NOAA tides &#8599;</a></p>
     <div class="colophon">
       <p>Site and photos by Dan Blumberg.</p>
@@ -871,14 +871,31 @@ async function getJSON(url){
   if (!r.ok) throw new Error("HTTP " + r.status);
   return r.json();
 }
+/* A day of hourly readings rather than date=latest.
+
+   date=latest returns an error unless the station reported in the last few
+   minutes, so a sensor that is merely late reads as dead - and the page then
+   falls back to the other end of the bracket, which for Cold Spring is The
+   Battery, 54 river miles off and about 3F out in spring. The day of readings
+   costs 1.2 KB and covers every transient gap.
+
+   A day is the right window, measured at Turkey Point: water moves 0.60F in
+   24 hours on average and 1.7F at its fastest, against 1.01F and 3.2F over 48.
+   So a reading a day old beats a live one from 54 miles away, and one a week
+   old - 4F or more in spring - does not. */
 const waterURL = id => COOPS + "?product=water_temperature&application=coldspringpaddling"
-  + "&date=latest&station=" + id + "&time_zone=lst_ldt&units=english&format=json";
+  + "&range=24&interval=h&station=" + id + "&time_zone=lst_ldt&units=english&format=json";
 
 function readWater(res){
   if (res.status !== "fulfilled") return null;
-  const d = res.value && res.value.data && res.value.data[0];
-  const f = d && parseFloat(d.v);
-  return (f || f === 0) && isFinite(f) ? f : null;
+  const rows = res.value && res.value.data;
+  if (!Array.isArray(rows)) return null;
+  // newest usable reading, working back from the end
+  for (let i = rows.length - 1; i >= 0; i--){
+    const f = parseFloat(rows[i].v);
+    if (isFinite(f) && f > 20 && f < 95) return {f, t: rows[i].t};
+  }
+  return null;
 }
 
 async function loadConditions(){
@@ -890,7 +907,8 @@ async function loadConditions(){
   WX.grid = grid.status === "fulfilled" ? grid.value.properties : null;
   WX.alerts = alerts.status === "fulfilled" ? (alerts.value.features || []) : null;
 
-  const n = readWater(north), sth = readWater(south);
+  const rn = readWater(north), rs = readWater(south);
+  const n = rn ? rn.f : null, sth = rs ? rs.f : null;
   // linear by river mile between whichever two stations bracket this launch
   const span = (WATER_N && WATER_S) ? WATER_N.mile - WATER_S.mile : 0;
   const f = span > 0

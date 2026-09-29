@@ -14,7 +14,7 @@
     "station": "8518750",
     "label": "NOAA 8518750 The Battery",
     "shiftMin": 0,
-    "note": "Tide from NOAA station 8518750 at The Battery, two miles downriver, used unshifted — the tide takes about three minutes a mile to travel up the Hudson, so the difference here is under ten minutes.",
+    "note": "Tide from NOAA station 8518750 at The Battery, two miles downriver.",
     "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
   },
   "current": {

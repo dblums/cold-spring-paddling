@@ -413,6 +413,20 @@ group("URL structure");
 
   ok("no launches page is deployed", !fs.existsSync(path.join(root, "launches.html")));
 
+  /* date=latest errors out unless a station reported in the last few minutes,
+     which made a merely-late sensor look dead and dropped the page back to a
+     station 54 river miles away. Ask for a day of hourly readings instead. */
+  for (const site of ALL){
+    const html = fs.readFileSync(pageFor(site), "utf8");
+    // in a query string, not in the comment that explains why we stopped
+    ok(`${site.name}: water temp is not fetched with date=latest`,
+       !/[?&]date=latest/.test(html));
+    ok(`${site.name}: water temp asks for a day of readings`,
+       html.includes("range=24&interval=h"));
+    ok(`${site.name}: water temp reads the newest row, not the first`,
+       /for \(let i = rows\.length - 1; i >= 0; i--\)/.test(html));
+  }
+
   /* The tip module is all-or-nothing: a configured link means a complete
      module, and no link means no module at all rather than a dead button. */
   const cfg = fs.readFileSync(path.join(__dirname, "..", "scripts", "locations.py"), "utf8");

@@ -169,9 +169,11 @@ const get = async u => (await fetch(u, {headers:{"User-Agent":"cold-spring-paddl
        only if none of them answer. */
     const dark = [];
     for (const [id,name] of stations){
+      // the same query the page makes: a day of hourly readings, newest usable
       const w = await get("https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=water_temperature"
-        + "&application=tests&date=latest&station=" + id + "&time_zone=lst_ldt&units=english&format=json");
-      const v = w.data && w.data[0] && parseFloat(w.data[0].v);
+        + "&application=tests&range=24&interval=h&station=" + id + "&time_zone=lst_ldt&units=english&format=json");
+      const rows = (w.data || []).filter(r => isFinite(parseFloat(r.v)));
+      const v = rows.length ? parseFloat(rows[rows.length - 1].v) : NaN;
       if (isFinite(v) && v > 20 && v < 95) ok(`${name} water temp is reporting`, true);
       else { dark.push(name); console.log(`  note  ${name} is not reporting right now (${v}F)`); }
     }
