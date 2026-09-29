@@ -574,7 +574,7 @@ img{max-width:100%}
       <span class="label">Important note</span>
       <p>Tides and currents are predictions, not observations. Wind, waves, runoff, storm surge and other factors can affect actual conditions. Weather is sourced from the National Weather Service. Use your own judgment and paddle at your own risk.</p>
     </div>
-    <p>Current from NOAA station HUR0614_9 (Hudson), about a mile and a half from the launch, at the 14 ft bin nearest the surface. Tide from NOAA station 8518974, which is Hudson itself, so it is used unshifted. Both are predictions, baked into this page and good through 31&nbsp;Dec&nbsp;2028; values between NOAA&rsquo;s published points are interpolated. Weather and alerts come live from the National Weather Service grid covering Hudson. Water temperature has no nearby sensor &mdash; it is estimated between NOAA Turkey Point, downriver, and Coxsackie, up. Sun and moon are computed rather than fetched, and agree with the US Naval Observatory to within a couple of minutes.</p>
+    <p>Current from NOAA station HUR0614_9 (Hudson), about a mile and a half from the launch, at the 14 ft bin nearest the surface. Tide from NOAA station 8518974, which is Hudson itself, so it is used unshifted. Both are predictions, baked into this page and good through 31&nbsp;Dec&nbsp;2028; values between NOAA&rsquo;s published points are interpolated. Weather and alerts come live from the National Weather Service grid covering Hudson. Water temperature comes from NOAA Coxsackie, 9 miles upriver &mdash; the nearest sensor, and close enough that averaging it against a second one further off would add arithmetic rather than accuracy. Sun and moon are computed rather than fetched, and agree with the US Naval Observatory to within a couple of minutes.</p>
     <p><a href="https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=HUR0614_9" target="_blank" rel="noopener">NOAA currents &#8599;</a> &nbsp; <a href="https://tidesandcurrents.noaa.gov/stationhome.html?id=8518974" target="_blank" rel="noopener">NOAA tides &#8599;</a></p>
     <div class="colophon">
       <p>Site and photos by Dan Blumberg.</p>
@@ -649,7 +649,7 @@ const COOPS = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter";
    launch it was chosen for. Either end can be null at the ends of the river,
    and then the one reading we have is used as-is rather than extrapolating a
    gradient past the last measurement. */
-const WATER_S = {"id":"8518962","name":"Turkey Point","mile":100};   // downriver of this launch
+const WATER_S = null;   // downriver of this launch
 const WATER_N = {"id":"8518979","name":"Coxsackie","mile":126};   // upriver of it
 const SITE_RIVER_MILE = SITE.riverMile;
 
@@ -907,7 +907,13 @@ function windVsCurrent(windFromDeg, cv){
    afternoon: warm enough to go out in shorts, cold enough that a capsize is an
    emergency. Warm air is what does the deceiving, so cold water gets an
    independent floor and the sum is only one of the ways in. */
-const COLD_WATER_F = 60;
+/* 60F is the usual line for cold-water shock, but no launch here has a sensor
+   in the water - every reading is from a station miles away, and the spread
+   between bracketing stations runs to several degrees. Carry the uncertainty
+   in the threshold rather than in the number: the page shows what the sensor
+   says and trips the warning two degrees early. Biasing the reading itself
+   would be quietly telling people the river is colder than it is measured. */
+const COLD_WATER_F = 62;
 function immersionLede(airF, waterF){
   const base = "<b>Be safe! Always wear a life jacket and dress for immersion.</b>";
   if (airF == null || waterF == null) return {urgent:false, html:base};

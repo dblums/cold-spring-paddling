@@ -910,7 +910,13 @@ function windVsCurrent(windFromDeg, cv){
    afternoon: warm enough to go out in shorts, cold enough that a capsize is an
    emergency. Warm air is what does the deceiving, so cold water gets an
    independent floor and the sum is only one of the ways in. */
-const COLD_WATER_F = 60;
+/* 60F is the usual line for cold-water shock, but no launch here has a sensor
+   in the water - every reading is from a station miles away, and the spread
+   between bracketing stations runs to several degrees. Carry the uncertainty
+   in the threshold rather than in the number: the page shows what the sensor
+   says and trips the warning two degrees early. Biasing the reading itself
+   would be quietly telling people the river is colder than it is measured. */
+const COLD_WATER_F = 62;
 function immersionLede(airF, waterF){
   const base = "<b>Be safe! Always wear a life jacket and dress for immersion.</b>";
   if (airF == null || waterF == null) return {urgent:false, html:base};

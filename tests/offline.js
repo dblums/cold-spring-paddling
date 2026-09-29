@@ -198,15 +198,21 @@ group("Wind relative to current");
 group("Immersion advice");
 {
   const u = (a,w) => T.immersionLede(a,w).urgent;
-  ok("135 total over 60F water: no warning", !u(75,60));
-  ok("121 total over 60F water: no warning", !u(61,60));
+  const CW = T.COLD_WATER_F;
+  ok("warm air over warm-enough water: no warning", !u(75, CW));
+  ok("high total over warm-enough water: no warning", !u(61, CW));
   ok("120 total: warns",      u(70,50));
   ok("water 45 despite 125 total: warns", u(80,45));
   ok("air 45 despite 125 total: warns",   u(45,80));
   // the floor: warm air must never mask cold water, whatever the sum says
-  ok("59F water warns even at 130 total",  u(71,59));
+  ok("just under the floor warns even at a high total", u(71, CW - 1));
   ok("52F water warns at 124 total",       u(72,52));   // the May trap
-  ok("60F water is the boundary, not warm side", !u(75,60) && u(75,59));
+  ok("the floor is exclusive, not inclusive", !u(75, CW) && u(75, CW - 1));
+  /* The floor sits two degrees above the usual 60F line for cold-water shock,
+     because no launch has a sensor in its own water and every reading comes
+     from miles away. The margin lives here rather than in the displayed
+     number. */
+  ok("the cold-water floor carries a margin over 60F", CW >= 62 && CW <= 64, `${CW}`);
   ok("missing readings: no warning",      !u(null,60) && !u(70,null));
   ok("always says life jacket and immersion", T.immersionLede(80,75).html.includes("life jacket") && T.immersionLede(80,75).html.includes("dress for immersion"));
   ok("no wetsuit line on a warm day",     !T.immersionLede(80,75).html.includes("drysuit"));
@@ -345,6 +351,22 @@ for (const site of ALL){
        new RegExp(wNorth.name + ", up").test(note), note.slice(0, 130));
     ok(`${site.name}: the note names no other station`,
        !ALL_WATER.some(w => w !== wSouth.name && w !== wNorth.name && note.includes(w)), note.slice(0, 130));
+  } else if (wSouth || wNorth){
+    /* One station means it was close enough that a second would add arithmetic
+       rather than accuracy. Say which one, how far, and which way. */
+    const one = wNorth || wSouth;
+    const away = Math.abs(one.mile - site.riverMile);
+    const note = (/Water temperature[^<]*/.exec(html) || [""])[0];
+    ok(`${site.name}: a lone station is genuinely nearby`, away <= 12, `${away} mi`);
+    ok(`${site.name}: the note names the station`, note.includes(one.name), note.slice(0, 130));
+    ok(`${site.name}: the note gives the distance`, note.includes(`${away} miles`), note.slice(0, 130));
+    ok(`${site.name}: the note gives the direction`,
+       note.includes(wNorth ? "upriver" : "downriver"), note.slice(0, 130));
+    ok(`${site.name}: the note names no other station`,
+       !ALL_WATER.some(w => w !== one.name && note.includes(w)), note.slice(0, 130));
+    // interpolating needs two; with one, the page must not claim a range
+    ok(`${site.name}: the note claims no interpolation`,
+       !/estimated between/.test(note), note.slice(0, 130));
   }
 
   // cross-links to the other launches

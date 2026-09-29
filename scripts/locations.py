@@ -47,17 +47,37 @@ WATER_STATIONS = [
 ]
 
 
-def water_pair(site):
-    """The stations bracketing a launch, downriver first.
+# Interpolating only earns its keep across a real gradient. Measured over
+# spring 2026: The Battery to Turkey Point is +3.1F mean over 100 river miles
+# (range -0.5 to +6.6), so Cold Spring at mile 54 genuinely sits between two
+# different temperatures. Turkey Point to Coxsackie is under 1F over 26 miles,
+# so interpolating for Hudson moves the answer 0.3F - far less than the
+# difference between mid-channel and the shallows at the launch itself. Past
+# this distance, use the nearest station and say which one it is.
+NEAR_MILES = 12
 
-    Returns (south, north). Either may be None when the launch sits beyond the
-    end of the sensors, and the page then uses the single reading it has rather
-    than extrapolating a gradient past the last measurement."""
+
+def water_pair(site):
+    """The stations a launch's temperature comes from, downriver first.
+
+    Returns (south, north). Either may be None: at the ends of the river there
+    is nothing to bracket against, and when a station is within NEAR_MILES the
+    other is dropped deliberately rather than averaged into false precision.
+
+    The near-station tiebreak favours the upriver one. In spring - the season
+    where water temperature actually decides what you wear - Coxsackie ran a
+    mean 0.76F colder than Turkey Point and was the colder of the two on 70% of
+    days, so when the two are equally close, upriver is the safer read."""
     mile = site["riverMile"]
     below = [s for s in WATER_STATIONS if s["mile"] <= mile]
     above = [s for s in WATER_STATIONS if s["mile"] > mile]
-    return (max(below, key=lambda s: s["mile"]) if below else None,
-            min(above, key=lambda s: s["mile"]) if above else None)
+    south = max(below, key=lambda s: s["mile"]) if below else None
+    north = min(above, key=lambda s: s["mile"]) if above else None
+    near = [s for s in (north, south) if s and abs(s["mile"] - mile) <= NEAR_MILES]
+    if near:
+        pick = near[0]          # north first in the list, so upriver wins a tie
+        return (None, pick) if pick is north else (pick, None)
+    return south, north
 
 
 def load():
