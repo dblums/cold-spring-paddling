@@ -142,24 +142,32 @@ group("Marsh access windows");
 /* ---------- wind vs current ---------- */
 group("Wind relative to current");
 {
-  // flood runs toward 10 deg, ebb toward 190
-  eq("flood + wind from S = aligned",  T.windVsCurrent(190, 1), "aligned");
-  eq("flood + wind from N = opposed",  T.windVsCurrent(10, 1),  "opposed");
-  eq("flood + wind from E = across",   T.windVsCurrent(100, 1), "across");
-  eq("flood + wind from W = across",   T.windVsCurrent(280, 1), "across");
-  eq("ebb + wind from N = aligned",    T.windVsCurrent(10, -1), "aligned");
-  eq("ebb + wind from S = opposed",    T.windVsCurrent(190, -1),"opposed");
-  eq("slack water reported as slack",  T.windVsCurrent(10, 0.05), "slack");
+  /* Relative to the river's own axis, not a hardcoded 10/190. These used to
+     assume the Hudson runs north-south, which it does not at every launch -
+     and they failed honestly the moment Cold Spring's axis was corrected. */
+  const FLOOD = T.SITE.floodToward, EBB = T.SITE.ebbToward;
+  const deg = d => ((d % 360) + 360) % 360;
+  // a wind blows FROM one way and TOWARD the other, so "from EBB" pushes with a flood
+  eq("flood + wind with it = aligned",   T.windVsCurrent(deg(EBB), 1), "aligned");
+  eq("flood + wind against it = opposed", T.windVsCurrent(deg(FLOOD), 1), "opposed");
+  eq("flood + wind off one beam = across",  T.windVsCurrent(deg(FLOOD + 90), 1), "across");
+  eq("flood + wind off the other = across", T.windVsCurrent(deg(FLOOD - 90), 1), "across");
+  eq("ebb + wind with it = aligned",     T.windVsCurrent(deg(FLOOD), -1), "aligned");
+  eq("ebb + wind against it = opposed",  T.windVsCurrent(deg(EBB), -1), "opposed");
+  eq("slack water reported as slack",    T.windVsCurrent(deg(FLOOD), 0.05), "slack");
   // boundaries are 60 and 120 degrees from the current's heading
-  eq("59 deg off = aligned", T.windVsCurrent((190 + 59) % 360, 1), "aligned");
-  eq("61 deg off = across",  T.windVsCurrent((190 + 61) % 360, 1), "across");
-  eq("121 deg off = opposed", T.windVsCurrent((190 + 121) % 360, 1), "opposed");
+  eq("59 deg off = aligned",  T.windVsCurrent(deg(EBB + 59), 1), "aligned");
+  eq("61 deg off = across",   T.windVsCurrent(deg(EBB + 61), 1), "across");
+  eq("121 deg off = opposed", T.windVsCurrent(deg(EBB + 121), 1), "opposed");
+  // and the pair must actually be a pair
+  ok("flood and ebb are opposite within 30 deg",
+     Math.abs(((FLOOD - EBB) % 360 + 360) % 360 - 180) < 30, `${FLOOD} vs ${EBB}`);
 
   // the speed sentence now lives in the summary at the top of the page
   const brief = (cv, wind) => T.buildBrief(T.fromNY(2026, 6, 15, 12, 0), cv,
     {windMph:wind.mph, windGustMph:wind.mph + 6, windFromDeg:wind.from, airF:72, waterF:70, stormPct:0},
     T.skyFor(T.fromNY(2026, 6, 15, 12, 0)));
-  const bf = brief(1, {mph:12, from:10});
+  const bf = brief(1, {mph:12, from:T.SITE.floodToward});
   ok("flood: faster north than south", bf.speeds.up > bf.speeds.down,
      `${bf.speeds.up.toFixed(2)} vs ${bf.speeds.down.toFixed(2)}`);
   ok("the summary never buries the speeds in prose", !/mph going (north|south)/.test(bf.body), bf.body);
