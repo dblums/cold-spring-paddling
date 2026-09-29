@@ -139,6 +139,10 @@ def render(site, sites):
         "TIDE_CARD_NOTE": tide["cardNote"],
         "NWS_LABEL": "NWS " + site["nws"]["grid"].split("/")[0],
         "CURRENT_LINK": cur["link"],
+        # built from the station this launch actually uses, rather than the one
+        # the first launch happened to use
+        "TIDE_LINK": ("https://tidesandcurrents.noaa.gov/stationhome.html?id="
+                      + tide["station"]),
         "NWS_LINK": f'https://forecast.weather.gov/MapClick.php?lat={site["lat"]}&amp;lon={site["lon"]}',
         "LOCNAV": locnav(site, sites),
         "TIP": tip(),

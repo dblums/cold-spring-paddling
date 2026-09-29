@@ -297,6 +297,29 @@ for (const site of ALL){
      /Constitution Marsh/.test(html), hasMarsh);
   eq(`${site.name}: marsh helpers ${hasMarsh ? "present" : "absent"}`, S.blockedAt !== undefined, hasMarsh);
   eq(`${site.name}: trestle constant ${hasMarsh ? "present" : "absent"}`, S.TRESTLE_MIN !== undefined, hasMarsh);
+  /* Every station reference on a page must be THIS launch's station. The tide
+     link was hardcoded to 8518934 and so pointed Hudson readers at Beacon. */
+  const tideLink = (/stationhome\.html\?id=(\d+)/.exec(html) || [])[1];
+  const curLink = (/noaacurrents\/predictions\.html\?id=([A-Z0-9_]+)/.exec(html) || [])[1];
+  eq(`${site.name}: tide link points at its own station`, tideLink, site.tide.station);
+  eq(`${site.name}: current link points at its own station`, curLink,
+     `${site.current.station}_${site.current.bin}`);
+  ok(`${site.name}: no other launch's tide station appears`,
+     !ALL.some(o => o.slug !== site.slug && o.tide.station !== site.tide.station
+                    && html.includes(o.tide.station)));
+
+  /* Anything leaving the site opens in a new tab, so a reader checking a NOAA
+     station does not lose the conditions they were reading. */
+  const ext = [...html.matchAll(/<a\s[^>]*href="(https?:\/\/[^"]+)"[^>]*>/g)];
+  ok(`${site.name}: has external links to check`, ext.length >= 3, `${ext.length}`);
+  for (const m of ext){
+    const tag = m[0];
+    ok(`${site.name}: ${m[1].slice(0, 46)} opens in a new tab`,
+       /target="_blank"/.test(tag), tag.slice(0, 120));
+    ok(`${site.name}: ${m[1].slice(0, 46)} is noopener`,
+       /rel="noopener"/.test(tag), tag.slice(0, 120));
+  }
+
   // cross-links to the other launches
   for (const other of ALL) if (other.slug !== site.slug)
     ok(`${site.name}: links to ${other.name}`, html.includes(">" + other.name + "</a>"));
