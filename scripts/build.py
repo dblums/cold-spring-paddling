@@ -131,7 +131,7 @@ def locnav(site, sites):
     # says the registry is going to grow, which is the whole premise of the
     # build - two launches on their own read like the site is finished
     soon = '<span class="soon">More locations coming soon</span>'
-    return (f'  <nav class="locnav"><span class="label">Other launches</span> '
+    return (f'  <nav class="locnav"><span class="label">Other Locations</span> '
             f'{links} {soon}</nav>\n')
 
 
