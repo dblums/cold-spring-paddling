@@ -1,0 +1,36 @@
+{
+  "slug": "albany",
+  "primary": false,
+  "name": "Albany",
+  "state": "New York",
+  "title": "Hudson River Paddling Conditions Near Albany, NY",
+  "blurb": "The Corning Preserve launch, seven miles below the federal dam at Troy where the tide finally stops. The river is narrow here and runoff has as much say as the tide does.",
+  "lat": 42.6569,
+  "lon": -73.7417,
+  "riverMile": 146,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "8518995",
+    "label": "NOAA 8518995 Albany",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station 8518995 at Albany, half a mile from the launch.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "HUR0618",
+    "bin": 8,
+    "label": "NOAA HUR0618_8 Port of Albany",
+    "shiftMin": 0,
+    "floodToward": 21,
+    "ebbToward": 198,
+    "upriverTo": "Troy",
+    "downriverTo": "Castleton",
+    "note": "Current from NOAA station HUR0618_8 (Port of Albany), about two miles downriver, at the 7 ft bin nearest the surface.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=HUR0618_8"
+  },
+  "nws": {
+    "grid": "ALY/72,63"
+  },
+  "features": []
+}

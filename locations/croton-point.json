@@ -1,0 +1,36 @@
+{
+  "slug": "croton-point",
+  "primary": false,
+  "name": "Croton Point",
+  "state": "New York",
+  "title": "Hudson River Paddling Conditions Near Croton Point, NY",
+  "blurb": "A long peninsula reaching into Haverstraw Bay, where the Hudson is at its widest \u2014 more than three miles across. More exposed to wind than anywhere in the Highlands, with camping and a beach in the county park.",
+  "lat": 41.1869,
+  "lon": -73.8936,
+  "riverMile": 36,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "8518924",
+    "label": "NOAA 8518924 Haverstraw",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station 8518924 at Haverstraw, about four miles upriver.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "HUR0401",
+    "bin": 11,
+    "label": "NOAA HUR0401_11 Haverstraw",
+    "shiftMin": 0,
+    "floodToward": 334,
+    "ebbToward": 154,
+    "upriverTo": "Stony Point",
+    "downriverTo": "Ossining",
+    "note": "Current from NOAA station HUR0401_11 (Haverstraw), about three miles upriver, at the 4 ft bin nearest the surface. Flood and ebb headings are the river\u2019s own axis at Croton Point.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=HUR0401_11"
+  },
+  "nws": {
+    "grid": "OKX/34,64"
+  },
+  "features": []
+}

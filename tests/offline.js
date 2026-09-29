@@ -3,6 +3,7 @@ const {load, sites, pageFor, pageSlug} = require("./harness.js");
 const fs = require("fs");
 const ALL = sites();
 const ALL_WATER = ["The Battery", "Turkey Point", "Coxsackie"];
+const ALL_WATER_MILES = [0, 100, 126];
 const {T} = load();          // the root site, for the bulk of the assertions
 const MIN = 60000, HOUR = 3600000;
 
@@ -365,7 +366,14 @@ for (const site of ALL){
     const one = wNorth || wSouth;
     const away = Math.abs(one.mile - site.riverMile);
     const note = (/Water temperature[^<]*/.exec(html) || [""])[0];
-    ok(`${site.name}: a lone station is genuinely nearby`, away <= 12, `${away} mi`);
+    /* One station has two causes: it was close enough to drop the other, or
+       the launch is past the end of the sensors and there is no other. Albany
+       is the second - Coxsackie is the northernmost sensor on the river. */
+    const onlyOne = !ALL_WATER_MILES.some(m => (m > site.riverMile) !== (one.mile > site.riverMile));
+    ok(`${site.name}: a lone station is nearby, or is the last one on the river`,
+       away <= 12 || onlyOne, `${away} mi, onlyOne=${onlyOne}`);
+    ok(`${site.name}: a distant lone station says so`,
+       away <= 12 || /nearest sensor on the river/.test(note), note.slice(0, 130));
     ok(`${site.name}: the note names the station`, note.includes(one.name), note.slice(0, 130));
     ok(`${site.name}: the note gives the distance`, note.includes(`${away} miles`), note.slice(0, 130));
     ok(`${site.name}: the note gives the direction`,

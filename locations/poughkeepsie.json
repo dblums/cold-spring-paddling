@@ -1,0 +1,36 @@
+{
+  "slug": "poughkeepsie",
+  "primary": false,
+  "name": "Poughkeepsie",
+  "state": "New York",
+  "title": "Hudson River Paddling Conditions Near Poughkeepsie, NY",
+  "blurb": "Waryas Park, under the Mid-Hudson Bridge and the Walkway Over the Hudson. Midway between the Highlands and Kingston, on a straight and comparatively narrow reach of river.",
+  "lat": 41.7069,
+  "lon": -73.9403,
+  "riverMile": 76,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "8518945",
+    "label": "NOAA 8518945 Poughkeepsie",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station 8518945 at Poughkeepsie, half a mile from the launch.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "HUR0620",
+    "bin": 11,
+    "label": "NOAA HUR0620_11 Mid-Hudson Bridge",
+    "shiftMin": 0,
+    "floodToward": 5,
+    "ebbToward": 188,
+    "upriverTo": "Hyde Park",
+    "downriverTo": "Milton",
+    "note": "Current from NOAA station HUR0620_11 (Mid-Hudson Suspension Bridge), half a mile from the launch. The shallowest bin published there is 16 ft.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=HUR0620_11"
+  },
+  "nws": {
+    "grid": "ALY/72,19"
+  },
+  "features": []
+}

@@ -1,0 +1,36 @@
+{
+  "slug": "midtown-manhattan",
+  "primary": false,
+  "name": "Midtown Manhattan",
+  "state": "New York",
+  "title": "Hudson River Paddling Conditions Near Midtown Manhattan, NY",
+  "blurb": "The Hudson River Park piers between 44th and 56th Streets, where most of Manhattan\u2019s boathouses and outfitters are based. Busy with ferries, and the current runs hard on a big tide.",
+  "lat": 40.7678,
+  "lon": -73.9988,
+  "riverMile": 4,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "8530645",
+    "label": "NOAA 8530645 Weehawken",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station 8530645 at Weehawken, a mile across the river.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "NYH1928",
+    "bin": 12,
+    "label": "NOAA NYH1928_12 Pier 92",
+    "shiftMin": 0,
+    "floodToward": 26,
+    "ebbToward": 212,
+    "upriverTo": "the George Washington Bridge",
+    "downriverTo": "Chelsea",
+    "note": "Current from NOAA station NYH1928_12 (Hudson River, Pier 92), a third of a mile from the piers, at the 6 ft bin nearest the surface.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=NYH1928_12"
+  },
+  "nws": {
+    "grid": "OKX/33,44"
+  },
+  "features": []
+}

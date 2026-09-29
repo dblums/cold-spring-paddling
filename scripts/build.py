@@ -112,8 +112,12 @@ def water_fields(site):
         one = north or south
         way = "upriver" if north else "downriver"
         miles = abs(one["mile"] - site["riverMile"])
+        # Two different reasons for one station. Near: the second was dropped
+        # deliberately. Far: there is no second, because the launch is past the
+        # end of the sensors - and then the distance deserves saying out loud.
+        tail = "." if miles <= L.NEAR_MILES else " \u2014 the nearest sensor on the river."
         note = ("Water temperature comes from NOAA "
-                f"{one['name']}, {miles} miles {way}.")
+                f"{one['name']}, {miles} miles {way}{tail}")
     else:
         note = "Water temperature has no nearby sensor."
     return {
