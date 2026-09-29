@@ -949,9 +949,12 @@ function immersionLede(airF, waterF){
   const combined = airF + waterF;
   const cold = waterF < COLD_WATER_F;
   const trips = cold || combined <= 120 || airF < 50;
-  // say the reason that actually applies - "the combined temp is only 124F" is
-  // not why a 52F river is dangerous
+  /* Say the reason that actually applies. Three triggers, three reasons: the
+     sum is only quoted when the sum is what tripped it, and then it is the
+     real sum, never rounded toward the rule. A 124F total is not why a 52F
+     river is dangerous, and it is not why a 49F morning is either. */
   const why = cold ? "the water is only " + waterF + "\u00B0F"
+            : airF < 50 && combined > 120 ? "the air is only " + airF + "\u00B0F"
             : "the combined water + air temp is only " + combined + "\u00B0F";
   return {urgent:trips, cold, html: base
     + (trips ? " Consider wearing a wet or drysuit today, since " + why + "." : "")};
@@ -1460,21 +1463,29 @@ function briefConcerns(t, cv, w, sky, now){
     if (imm.urgent){
       // Three different stories, and the old copy told the spring one all year.
       const gap = w.airF - w.waterF;
-      const cold = gap >= 15
+      /* The immersion advice trips on cold AIR too, and a late-autumn morning
+         can be 49F over a river still holding 70. Saying "Cold water." there
+         is simply false - the hazard is real but it is the wrong one. */
+      const cold = (w.airF < 50 && w.waterF >= COLD_WATER_F)
+        ? {head:"Cold air.",
+           say: future
+             ? "Be careful: the air is forecast to be cold enough that getting wet "
+               + "will chill you fast, even though the river is not."
+             : "Be careful: the air is cold enough that getting wet will chill you "
+               + "fast, even though the river is not."}
+        : gap >= 15
         ? {head:"Warm air, cold water.",
            say: future
              ? "Be careful: the water is cold today and will not have warmed much by then, "
-               + "whatever the air does. Dress for the water."
-             : "Be careful: the water is still cold, despite the warm air. Dress for the water."}
+               + "whatever the air does."
+             : "Be careful: the water is still cold, despite the warm air."}
         : w.waterF < 55
-          ? {head:"Cold water.",   // NOTE: both non-gap branches say cold now
-
+          ? {head:"Cold water.",
              say: future
-               ? "Be careful: the water is cold, and the air is not forecast to be much warmer. "
-                 + "Dress for the water."
-               : "Be careful: the water is cold, and the air is not much warmer. Dress for the water."}
+               ? "Be careful: the water is cold, and the air is not forecast to be much warmer."
+               : "Be careful: the water is cold, and the air is not much warmer."}
           : {head:"Cold water.",
-             say:"Be careful: the water is cold enough to matter if you end up in it. Dress for the water."};
+             say:"Be careful: the water is cold enough to matter if you end up in it."};
       out.push({level:"caution", key:"cold", rank:1, head:cold.head, say:cold.say});
     }
   }

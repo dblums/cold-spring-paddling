@@ -131,7 +131,21 @@ const SCENARIOS = [
     wind: 7, from: 200, cur: 0.4, air: 72, water: 52, skyPct: 15,
     level: "caution",
     must: [/cold water/i, /wet or drysuit/i, /only 52/i],
-    mustNot: [/cool water/i, /combined/i] },
+    // "dress for the water" was being said three times on one screen
+    mustNot: [/cool water/i, /combined/i, /dress for the water/i] },
+
+  // the immersion advice trips on cold air too, and then the water is fine
+  { name: "cold air over a river that is not cold",
+    wind: 7, from: 200, cur: 0.4, air: 49, water: 72, skyPct: 20,
+    level: "caution",
+    must: [/cold air/i, /only 49/i],
+    mustNot: [/cold water/i, /the water is cold/i] },
+
+  { name: "cold air and cold water is a water story",
+    wind: 7, from: 200, cur: 0.4, air: 49, water: 56, skyPct: 20,
+    level: "caution",
+    must: [/cold water/i, /only 56/i],
+    mustNot: [/even though the river is not/i] },
 
   { name: "cold water with cold air still cites the combined rule",
     wind: 7, from: 320, cur: 0.8, air: 48, water: 58, skyPct: 5,
@@ -173,14 +187,14 @@ const SCENARIOS = [
   { name: "warm April afternoon, cold river",
     wind: 6, from: 225, cur: 0.2, air: 70, water: 46,
     level: "caution",
-    must: [/wet or drysuit|wetsuit/i, /be careful/i, /dress for the water/i],
+    must: [/wet or drysuit|wetsuit/i, /be careful/i, /dress for immersion/i],
     factsMust: [/46/, /70/],
     mustNot: [/good day/i] },
 
   { name: "freezing water, calm air",
     wind: 5, from: 0, cur: 0.1, air: 44, water: 38,
     level: "caution",
-    must: [/dress for the water/i, /wet or drysuit|wetsuit|drysuit/i],
+    must: [/dress for immersion/i, /wet or drysuit|wetsuit|drysuit/i],
     mustNot: [/good day/i] },
 
   { name: "advisory plus chop - the reassurance must not survive",
@@ -307,7 +321,7 @@ const SCENARIOS = [
     wind: 7, from: 200, cur: 0.2, air: 66, water: 48, skyPct: 20,
     at: NOON, now: NOON - 2 * DAY,
     level: "caution",
-    must: [/water is cold today/i, /dress for the water/i],
+    must: [/water is cold today/i],
     mustNot: [/water is still cold, despite/i] },
 
   // the river is the one thing we can promise; it just should not be phrased
@@ -394,10 +408,19 @@ for (const s of SCENARIOS){
   check(s.name, "no sentence starts with an unanchored It",
     !/(?:^|[.!?]\s)It is running/.test(b.body)
       || /wind|blowing/i.test(b.body.split(/It is running/)[0]), b.body);
-  // and nothing may follow "Dress for the water." with a sentence whose subject
-  // is a bare "It" - the reader takes it for the water, and it says the opposite
+  /* The summary must not repeat the instruction the safety line already
+     carries, and carries again in the wetsuit sentence. Say it once. */
+  /* Never describe the water as cold when it is not. The immersion advice
+     trips on three different things and only one of them is the river. */
+  if (b.__in.w && b.__in.w.waterF != null && b.__in.w.waterF >= 65)
+    check(s.name, "warm water is never called cold",
+      !/cold water|water is cold/i.test(text), `${b.__in.w.waterF}F / ${text.slice(0,90)}`);
+
+  check(s.name, "the body does not repeat the immersion instruction",
+    !/dress for the (water|immersion)/i.test(b.body), b.body);
+  // and no sentence about the water may be followed by a bare "It"
   check(s.name, "nothing dangles after the water sentence",
-    !/Dress for the water\.\s+It\b/.test(b.body), b.body);
+    !/end up in it\.\s+It\b|whatever the air does\.\s+It\b/.test(b.body), b.body);
 
   // tidal jargon needs a plain-language gloss, or it should not appear at all
   check(s.name, "no unexplained tide jargon in the summary",
