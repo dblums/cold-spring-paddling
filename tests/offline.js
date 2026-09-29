@@ -311,9 +311,17 @@ for (const site of ALL){
   eq(`${site.name}: tide link points at its own station`, tideLink, site.tide.station);
   eq(`${site.name}: current link points at its own station`, curLink,
      `${site.current.station}_${site.current.bin}`);
-  ok(`${site.name}: no other launch's tide station appears`,
-     !ALL.some(o => o.slug !== site.slug && o.tide.station !== site.tide.station
-                    && html.includes(o.tide.station)));
+  /* Scoped to the card labels, not the whole page: a station id can appear for
+     a different job. The Battery is Lower Manhattan's TIDE station and also the
+     downriver WATER-TEMPERATURE sensor for the Highlands launches, which is
+     correct in both places. */
+  const stationLabels = [...html.matchAll(/<span class="station">([\s\S]*?)<\/span>/g)]
+    .map(m => m[1]).join(" | ");
+  ok(`${site.name}: the card labels name its own tide station`,
+     stationLabels.includes(site.tide.station), stationLabels);
+  ok(`${site.name}: the card labels name no other launch's tide station`,
+     !ALL.some(o => o.tide.station !== site.tide.station
+                    && stationLabels.includes(o.tide.station)), stationLabels);
 
   /* Anything leaving the site opens in a new tab, so a reader checking a NOAA
      station does not lose the conditions they were reading. */

@@ -1,0 +1,36 @@
+{
+  "slug": "lower-manhattan",
+  "primary": false,
+  "name": "Lower Manhattan",
+  "state": "New York",
+  "title": "Hudson River Paddling Conditions Near Lower Manhattan, NY",
+  "blurb": "Hudson River Park, where the river is at its widest and its fastest. Busy with ferries and commercial traffic, and the current runs harder here than anywhere upriver.",
+  "lat": 40.7295,
+  "lon": -74.0119,
+  "riverMile": 2,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "8518750",
+    "label": "NOAA 8518750 The Battery",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station 8518750 at The Battery, two miles downriver, used unshifted — the tide takes about three minutes a mile to travel up the Hudson, so the difference here is under ten minutes.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "NYH1927",
+    "bin": 13,
+    "label": "NOAA NYH1927_13 Hudson River Entrance",
+    "shiftMin": 0,
+    "floodToward": 11,
+    "ebbToward": 183,
+    "upriverTo": "Midtown",
+    "downriverTo": "the Battery",
+    "note": "Current from NOAA station NYH1927_13 (Hudson River Entrance), about a mile and a half downriver, at the 7 ft bin nearest the surface.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=NYH1927_13"
+  },
+  "nws": {
+    "grid": "OKX/33,43"
+  },
+  "features": []
+}

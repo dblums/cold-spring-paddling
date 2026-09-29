@@ -162,12 +162,23 @@ const get = async u => (await fetch(u, {headers:{"User-Agent":"cold-spring-paddl
     }
     ok("more than one bracketing pair is in use", stations.size >= 3,
        [...stations.values()].join(", "));
+    /* A single station dropping out is normal operations - NOAA sensors go down
+       for maintenance and the page already falls back to the other end of the
+       bracket. What would actually break the feature is the endpoint changing
+       shape, or every station being dark at once. So: report the outages, fail
+       only if none of them answer. */
+    const dark = [];
     for (const [id,name] of stations){
       const w = await get("https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=water_temperature"
         + "&application=tests&date=latest&station=" + id + "&time_zone=lst_ldt&units=english&format=json");
       const v = w.data && w.data[0] && parseFloat(w.data[0].v);
-      ok(`${name} water temp is reporting`, isFinite(v) && v > 20 && v < 95, `${v}F`);
+      if (isFinite(v) && v > 20 && v < 95) ok(`${name} water temp is reporting`, true);
+      else { dark.push(name); console.log(`  note  ${name} is not reporting right now (${v}F)`); }
     }
+    ok("at least one water station is reporting", dark.length < stations.size,
+       `dark: ${dark.join(", ") || "none"}`);
+    ok("no more than half the water stations are dark", dark.length * 2 <= stations.size,
+       `${dark.length} of ${stations.size} dark: ${dark.join(", ")}`);
   }
 
   console.log(`\n${pass} passed, ${fail} failed`);
