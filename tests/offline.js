@@ -354,10 +354,11 @@ for (const site of ALL){
        `${wSouth.mile} <= ${site.riverMile} <= ${wNorth.mile}`);
     // the footer must name the stations it actually uses, on the correct sides
     const note = (/Water temperature[^<]*/.exec(html) || [""])[0];
+    const who = w => (w.source === "usgs" ? "USGS " : "NOAA ") + w.name;
     ok(`${site.name}: the note names its downriver station`,
-       new RegExp(wSouth.name + ", downriver").test(note), note.slice(0, 130));
+       note.includes(who(wSouth) + ", downriver"), note.slice(0, 130));
     ok(`${site.name}: the note names its upriver station`,
-       new RegExp(wNorth.name + ", up").test(note), note.slice(0, 130));
+       note.includes(who(wNorth) + ", up"), note.slice(0, 130));
     ok(`${site.name}: the note names no other station`,
        !ALL_WATER.some(w => w !== wSouth.name && w !== wNorth.name && note.includes(w)), note.slice(0, 130));
   } else if (wSouth || wNorth){
@@ -375,7 +376,11 @@ for (const site of ALL){
     ok(`${site.name}: a distant lone station says so`,
        away <= 12 || /nearest sensor on the river/.test(note), note.slice(0, 130));
     ok(`${site.name}: the note names the station`, note.includes(one.name), note.slice(0, 130));
-    ok(`${site.name}: the note gives the distance`, note.includes(`${away} miles`), note.slice(0, 130));
+    ok(`${site.name}: the note gives the distance`,
+       note.includes(`${away} ${away === 1 ? "mile" : "miles"}`), note.slice(0, 130));
+    // the gauges are not all NOAA's
+    ok(`${site.name}: the note names the right agency`,
+       note.includes((one.source === "usgs" ? "USGS " : "NOAA ") + one.name), note.slice(0, 130));
     ok(`${site.name}: the note gives the direction`,
        note.includes(wNorth ? "upriver" : "downriver"), note.slice(0, 130));
     ok(`${site.name}: the note names no other station`,

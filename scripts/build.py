@@ -36,14 +36,11 @@ FAVICON = ("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox
            "%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9B%B6%3C/text%3E%3C/svg%3E")
 
 
-DIRWORDS = ["north", "northeast", "east", "southeast",
-            "south", "southwest", "west", "northwest"]
-
-
 def dir_word(deg):
-    """Eight-point compass word. Mirrors dirWord() in the template, because the
+    """North or south, always. Mirrors dirWord() in the template, because the
     column headings are static markup and the prose below them is not."""
-    return DIRWORDS[round((deg % 360) / 45) % 8]
+    d = deg % 360
+    return "north" if (d <= 90 or d >= 270) else "south"
 
 
 def strip_features(html, features):
@@ -105,19 +102,22 @@ def water_fields(site):
     - which was true only for the Highlands. At Hudson, Turkey Point is
     DOWNriver, so the page was telling readers the opposite of the fact."""
     south, north = L.water_pair(site)
+    # the gauges are not all NOAA's - the one at Albany is USGS - so name the
+    # agency per station rather than assuming
+    who = lambda st: ("USGS " if st.get("source") == "usgs" else "NOAA ") + st["name"]
     if south and north:
         note = ("Water temperature has no nearby sensor &mdash; it is estimated between "
-                f"NOAA {south['name']}, downriver, and {north['name']}, up.")
+                f"{who(south)}, downriver, and {who(north)}, up.")
     elif north or south:
         one = north or south
         way = "upriver" if north else "downriver"
         miles = abs(one["mile"] - site["riverMile"])
+        unit = "mile" if miles == 1 else "miles"
         # Two different reasons for one station. Near: the second was dropped
         # deliberately. Far: there is no second, because the launch is past the
         # end of the sensors - and then the distance deserves saying out loud.
         tail = "." if miles <= L.NEAR_MILES else " \u2014 the nearest sensor on the river."
-        note = ("Water temperature comes from NOAA "
-                f"{one['name']}, {miles} miles {way}{tail}")
+        note = (f"Water temperature comes from {who(one)}, {miles} {unit} {way}{tail}")
     else:
         note = "Water temperature has no nearby sensor."
     return {
@@ -217,6 +217,7 @@ def render(site, sites):
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="preconnect" href="https://api.weather.gov" crossorigin>
 <link rel="preconnect" href="https://api.tidesandcurrents.noaa.gov" crossorigin>
+<link rel="preconnect" href="https://waterservices.usgs.gov" crossorigin>
 <meta name="description" content="Hudson River tides, current and paddling conditions for {site['name']}, {site['state']}.">
 <link rel="canonical" href="{L.page_url(site)}">
 <meta name="theme-color" content="#eaeeee" media="(prefers-color-scheme: light)">

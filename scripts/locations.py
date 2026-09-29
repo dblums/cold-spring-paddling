@@ -41,9 +41,13 @@ TIP_PHOTO_ALT = ("Dan Blumberg in a life jacket and cap, grinning in the rain on
 # without it, anything north of Turkey Point has nothing upriver to bracket
 # against. Check for new stations when adding a launch outside this range.
 WATER_STATIONS = [
-    {"id": "8518750", "name": "The Battery",  "mile": 0},
-    {"id": "8518962", "name": "Turkey Point", "mile": 100},
-    {"id": "8518979", "name": "Coxsackie",    "mile": 126},
+    {"id": "8518750",  "name": "The Battery",  "mile": 0,   "source": "noaa"},
+    {"id": "8518962",  "name": "Turkey Point", "mile": 100, "source": "noaa"},
+    {"id": "8518979",  "name": "Coxsackie",    "mile": 126, "source": "noaa"},
+    # USGS, not CO-OPS. The only live USGS temperature gauge left on the tidal
+    # Hudson - West Point stopped in 2014, Poughkeepsie in 2021 - and it happens
+    # to sit where NOAA has nothing, twenty miles above its northernmost sensor.
+    {"id": "01359139", "name": "Albany",       "mile": 145, "source": "usgs"},
 ]
 
 

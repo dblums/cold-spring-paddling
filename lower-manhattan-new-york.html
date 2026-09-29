@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="preconnect" href="https://api.weather.gov" crossorigin>
 <link rel="preconnect" href="https://api.tidesandcurrents.noaa.gov" crossorigin>
+<link rel="preconnect" href="https://waterservices.usgs.gov" crossorigin>
 <meta name="description" content="Hudson River tides, current and paddling conditions for Lower Manhattan, New York.">
 <link rel="canonical" href="https://hudsonconditions.com/lower-manhattan-new-york.html">
 <meta name="theme-color" content="#eaeeee" media="(prefers-color-scheme: light)">
@@ -649,7 +650,7 @@ const COOPS = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter";
    launch it was chosen for. Either end can be null at the ends of the river,
    and then the one reading we have is used as-is rather than extrapolating a
    gradient past the last measurement. */
-const WATER_S = {"id":"8518750","name":"The Battery","mile":0};   // downriver of this launch
+const WATER_S = {"id":"8518750","name":"The Battery","mile":0,"source":"noaa"};   // downriver of this launch
 const WATER_N = null;   // upriver of it
 const SITE_RIVER_MILE = SITE.riverMile;
 
@@ -854,16 +855,32 @@ async function getJSON(url){
    24 hours on average and 1.7F at its fastest, against 1.01F and 3.2F over 48.
    So a reading a day old beats a live one from 54 miles away, and one a week
    old - 4F or more in spring - does not. */
-const waterURL = id => COOPS + "?product=water_temperature&application=coldspringpaddling"
-  + "&range=24&interval=h&station=" + id + "&time_zone=lst_ldt&units=english&format=json";
+const USGS = "https://waterservices.usgs.gov/nwis/iv/";
+const waterURL = st => st.source === "usgs"
+  ? USGS + "?format=json&sites=" + st.id + "&parameterCd=00010&period=P1D"
+  : COOPS + "?product=water_temperature&application=coldspringpaddling"
+    + "&range=24&interval=h&station=" + st.id + "&time_zone=lst_ldt&units=english&format=json";
 
+/* Two shapes, because the only live gauge above Coxsackie belongs to USGS
+   rather than NOAA: CO-OPS gives {data:[{t,v}]} in Fahrenheit, USGS gives a
+   nest of timeSeries in Celsius with -999999 standing in for no reading. */
 function readWater(res){
   if (res.status !== "fulfilled") return null;
-  const rows = res.value && res.value.data;
-  if (!Array.isArray(rows)) return null;
+  const body = res.value;
+  let rows = null, toF = f => f;
+  if (body && Array.isArray(body.data)){
+    rows = body.data.map(r => ({v: r.v, t: r.t}));
+  } else if (body && body.value && Array.isArray(body.value.timeSeries)){
+    const ts = body.value.timeSeries[0];
+    const vs = ts && ts.values && ts.values[0] && ts.values[0].value;
+    if (!Array.isArray(vs)) return null;
+    rows = vs.map(r => ({v: r.value, t: r.dateTime}));
+    toF = c => c * 9 / 5 + 32;
+  }
+  if (!rows) return null;
   // newest usable reading, working back from the end
   for (let i = rows.length - 1; i >= 0; i--){
-    const f = parseFloat(rows[i].v);
+    const f = toF(parseFloat(rows[i].v));
     if (isFinite(f) && f > 20 && f < 95) return {f, t: rows[i].t};
   }
   return null;
@@ -872,8 +889,8 @@ function readWater(res){
 async function loadConditions(){
   const [grid, alerts, north, south] = await Promise.allSettled([
     getJSON(NWS_GRID), getJSON(NWS_ALERT),
-    WATER_N ? getJSON(waterURL(WATER_N.id)) : Promise.reject(),
-    WATER_S ? getJSON(waterURL(WATER_S.id)) : Promise.reject()
+    WATER_N ? getJSON(waterURL(WATER_N)) : Promise.reject(),
+    WATER_S ? getJSON(waterURL(WATER_S)) : Promise.reject()
   ]);
   WX.grid = grid.status === "fulfilled" ? grid.value.properties : null;
   WX.alerts = alerts.status === "fulfilled" ? (alerts.value.features || []) : null;
@@ -896,12 +913,18 @@ async function loadConditions(){
 
 const COMPASS = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
 const compass = deg => COMPASS[Math.round(((deg % 360) + 360) % 360 / 22.5) % 16];
-/* The river is not north-south everywhere. At Cold Spring the flood runs 10 deg
-   and at Beacon 350, so "north" was fine; at Hudson it runs 61 and "north" is
-   both wrong and a worse description than "northeast". Eight points is enough
-   for prose - nobody says "the current is running north-northeast". */
-const DIRWORDS = ["north","northeast","east","southeast","south","southwest","west","northwest"];
-const dirWord = deg => DIRWORDS[Math.round(((deg % 360) + 360) % 360 / 45) % 8];
+/* North or south, always. The Hudson bends - the flood runs 10 degrees at Cold
+   Spring, 61 at Hudson, 334 at Croton Point - and an eight-point compass
+   reported that faithfully as "northeast" on one page and "northwest" on the
+   next. Nobody thinks of this river that way. It runs north and south, and
+   "upriver/downriver" is jargon that loses people.
+
+   Only the WORD is simplified. Every projection - headwind, ground speed, wind
+   against current - still uses the real bearing from the registry. */
+const dirWord = deg => {
+  const d = ((deg % 360) + 360) % 360;
+  return (d <= 90 || d >= 270) ? "north" : "south";
+};
 
 // Mean flood and ebb headings at the current station, in degrees the water
 // travels toward. The river runs roughly north-south here, so an east or west
