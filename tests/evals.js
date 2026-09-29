@@ -117,14 +117,15 @@ const SCENARIOS = [
   { name: "still air over a running river is not glassy",
     wind: 3, from: 180, cur: -1.5, air: 76, water: 70, skyPct: 5,
     level: "good",
-    must: [/warm and still/i],
-    mustNot: [/glassy/i] },
+    must: [/warm and clear/i],
+    mustNot: [/glassy/i, /still/i] },
 
-  { name: "hot and still",
+  { name: "hot, light air, current running",
     wind: 5, from: 190, cur: 0.3, air: 89, water: 78, skyPct: 10,
     level: "good",
-    must: [/hot and still/i],
-    mustNot: [/glassy|beautiful/i] },
+    must: [/hot and clear/i],
+    // "still" is a lie with a knot under you, and off Manhattan it never is
+    mustNot: [/glassy|beautiful|still/i] },
 
   // the May trap: 72 + 52 = 124 clears the 120 rule, and 52F water does not care
   { name: "warm May afternoon over cold water",

@@ -85,7 +85,12 @@ def water_pair(site):
 
 
 def load():
-    """Every launch site, the primary one first, then alphabetical by name."""
+    """Every launch site, ordered downriver to up.
+
+    River order, not alphabetical: the nav reads as a trip up the Hudson, and
+    a reader who knows roughly where they are can find themselves in it. Which
+    site is primary no longer affects the order - build.py asks for that flag
+    directly."""
     sites = [json.load(open(f)) for f in sorted(glob.glob(os.path.join(DIR, "*.json")))]
     if not sites:
         raise SystemExit("no locations found in locations/")
@@ -93,7 +98,7 @@ def load():
     if len(primary) != 1:
         raise SystemExit(
             f'exactly one location must set "primary": true, found {len(primary)}')
-    sites.sort(key=lambda s: (not s.get("primary"), s["name"]))
+    sites.sort(key=lambda s: (s["riverMile"], s["name"]))
     return sites
 
 

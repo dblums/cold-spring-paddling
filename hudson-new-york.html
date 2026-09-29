@@ -429,7 +429,7 @@ img{max-width:100%}
   <header class="hero hero-plain">
     <h1>Hudson River Paddling Conditions Near Hudson, NY</h1>
   </header>
-  <nav class="locnav"><span class="label">Other Locations</span> <a href="cold-spring-new-york.html">Cold Spring</a> <a href="albany-new-york.html">Albany</a> <a href="beacon-new-york.html">Beacon</a> <a href="croton-point-new-york.html">Croton Point</a> <a href="kingston-new-york.html">Kingston</a> <a href="lower-manhattan-new-york.html">Lower Manhattan</a> <a href="midtown-manhattan-new-york.html">Midtown Manhattan</a> <a href="poughkeepsie-new-york.html">Poughkeepsie</a> <span class="soon">More locations coming soon</span></nav>
+  <nav class="locnav"><span class="label">Other Locations</span> <a href="lower-manhattan-new-york.html">Lower Manhattan</a> <a href="midtown-manhattan-new-york.html">Midtown Manhattan</a> <a href="croton-point-new-york.html">Croton Point</a> <a href="cold-spring-new-york.html">Cold Spring</a> <a href="beacon-new-york.html">Beacon</a> <a href="poughkeepsie-new-york.html">Poughkeepsie</a> <a href="kingston-new-york.html">Kingston</a> <a href="albany-new-york.html">Albany</a> <span class="soon">More locations coming soon</span></nav>
 
 
   <div class="timebar">
@@ -1267,11 +1267,12 @@ const HEADLINE = {
 /* A pleasant day still gets described rather than graded. "Calm and glassy" is
    a claim about the river, so it needs the air still AND the water quiet; a
    3 mph morning over a 1.5 kt ebb is not glassy. Everything else says what it
-   is - "Hot and still.", "Warm and clear." */
+   is - "Warm and clear.", "Cool and overcast." */
 function goodHead(cv, w){
   const temp = tempWord(feelsLike(w));
   if (w.windMph != null && w.windMph < 5 && Math.abs(cv) < 0.4) return HEADLINE.good;
-  if (w.windMph != null && w.windMph < 8) return temp + " and still.";
+  // no "and still": light air is not stillness when a knot of current is
+  // running under you, and off Manhattan nothing is ever still
   if (w.skyText) return temp + " and " + w.skyText.toLowerCase() + ".";
   return temp + " out there.";
 }
@@ -1653,7 +1654,7 @@ function buildBrief(t, cv, w, sky, now){
     // described either way; "good" just gets to sound like a nice day
     const head = level === "good" ? goodHead(cv, w) : plainHead(w);
     // every headline but "Calm and glassy." already names the temperature, and
-    // "Hot and still. Hot and clear, with light wind..." is a stutter
+    // "Warm and clear. Warm and clear, with light wind..." is a stutter
     const body = w ? quietDay(cv, w, future, head !== HEADLINE.good)
       : "There is no weather reading right now, so this is the tide and current alone.";
     return {level, head, body, ahead: riverAhead(t, cv, future),
