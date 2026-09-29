@@ -145,7 +145,7 @@ const SCENARIOS = [
     wind: 7, from: 200, cur: 0.4, air: 49, water: 56, skyPct: 20,
     level: "caution",
     must: [/cold water/i, /only 56/i],
-    mustNot: [/even though the river is not/i] },
+    mustNot: [/chill you fast/i] },
 
   { name: "cold water with cold air still cites the combined rule",
     wind: 7, from: 320, cur: 0.8, air: 48, water: 58, skyPct: 5,

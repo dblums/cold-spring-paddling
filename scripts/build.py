@@ -113,9 +113,7 @@ def water_fields(site):
         way = "upriver" if north else "downriver"
         miles = abs(one["mile"] - site["riverMile"])
         note = ("Water temperature comes from NOAA "
-                f"{one['name']}, {miles} miles {way} &mdash; the nearest sensor, and "
-                "close enough that averaging it against a second one further off "
-                "would add arithmetic rather than accuracy.")
+                f"{one['name']}, {miles} miles {way}.")
     else:
         note = "Water temperature has no nearby sensor."
     return {
