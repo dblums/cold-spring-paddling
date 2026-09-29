@@ -1,0 +1,36 @@
+{
+  "slug": "kingston",
+  "primary": false,
+  "name": "Kingston",
+  "state": "New York",
+  "title": "Hudson River Paddling Conditions Near Kingston, NY",
+  "blurb": "Where Rondout Creek meets the Hudson, with the Maritime Museum and the Rondout Lighthouse at its mouth. The creek is sheltered water when the river is not, and the Esopus Meadows Lighthouse stands off the west bank a few miles downriver.",
+  "lat": 41.9272,
+  "lon": -73.9633,
+  "riverMile": 92,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "8518993",
+    "label": "NOAA 8518993 Kingston",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station 8518993 at Kingston, just over a mile from the launch.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "HUR0509",
+    "bin": 9,
+    "label": "NOAA HUR0509_9 Kingston Point",
+    "shiftMin": 0,
+    "floodToward": 9,
+    "ebbToward": 177,
+    "upriverTo": "Saugerties",
+    "downriverTo": "Esopus Meadows",
+    "note": "Current from NOAA station HUR0509_9 (Kingston Point), less than a mile from the launch, at the 4 ft bin nearest the surface.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=HUR0509_9"
+  },
+  "nws": {
+    "grid": "ALY/70,29"
+  },
+  "features": []
+}
