@@ -35,6 +35,31 @@ TIP_PHOTO_ALT = ("Dan Blumberg in a life jacket and cap, grinning in the rain on
                  "towing a second kayak behind his own")
 
 
+# Every NOAA CO-OPS station on the tidal Hudson that reports water temperature,
+# with its river mile. There is no sensor at any of our launches, so each page
+# takes the nearest one above and below it and interpolates. Coxsackie matters:
+# without it, anything north of Turkey Point has nothing upriver to bracket
+# against. Check for new stations when adding a launch outside this range.
+WATER_STATIONS = [
+    {"id": "8518750", "name": "The Battery",  "mile": 0},
+    {"id": "8518962", "name": "Turkey Point", "mile": 100},
+    {"id": "8518979", "name": "Coxsackie",    "mile": 126},
+]
+
+
+def water_pair(site):
+    """The stations bracketing a launch, downriver first.
+
+    Returns (south, north). Either may be None when the launch sits beyond the
+    end of the sensors, and the page then uses the single reading it has rather
+    than extrapolating a gradient past the last measurement."""
+    mile = site["riverMile"]
+    below = [s for s in WATER_STATIONS if s["mile"] <= mile]
+    above = [s for s in WATER_STATIONS if s["mile"] > mile]
+    return (max(below, key=lambda s: s["mile"]) if below else None,
+            min(above, key=lambda s: s["mile"]) if above else None)
+
+
 def load():
     """Every launch site, the primary one first, then alphabetical by name."""
     sites = [json.load(open(f)) for f in sorted(glob.glob(os.path.join(DIR, "*.json")))]

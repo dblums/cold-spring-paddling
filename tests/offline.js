@@ -2,6 +2,7 @@
 const {load, sites, pageFor, pageSlug} = require("./harness.js");
 const fs = require("fs");
 const ALL = sites();
+const ALL_WATER = ["The Battery", "Turkey Point", "Coxsackie"];
 const {T} = load();          // the root site, for the bulk of the assertions
 const MIN = 60000, HOUR = 3600000;
 
@@ -318,6 +319,32 @@ for (const site of ALL){
        /target="_blank"/.test(tag), tag.slice(0, 120));
     ok(`${site.name}: ${m[1].slice(0, 46)} is noopener`,
        /rel="noopener"/.test(tag), tag.slice(0, 120));
+  }
+
+  /* Water temperature is interpolated between the two NOAA stations bracketing
+     the launch. Those used to be global constants picked for Cold Spring, so
+     Hudson - north of Turkey Point - clamped to a single reading while the
+     footer told readers Turkey Point was UPriver of them. It is downriver. */
+  const ws = /const WATER_S = ({[^}]*}|null)/.exec(html)[1];
+  const wn = /const WATER_N = ({[^}]*}|null)/.exec(html)[1];
+  const wSouth = ws === "null" ? null : JSON.parse(ws);
+  const wNorth = wn === "null" ? null : JSON.parse(wn);
+  ok(`${site.name}: has a water station downriver or is at the mouth`,
+     wSouth === null || wSouth.mile <= site.riverMile, `${wSouth && wSouth.mile} vs ${site.riverMile}`);
+  ok(`${site.name}: has a water station upriver or is at the head`,
+     wNorth === null || wNorth.mile > site.riverMile, `${wNorth && wNorth.mile} vs ${site.riverMile}`);
+  if (wSouth && wNorth){
+    ok(`${site.name}: the launch sits between its two water stations`,
+       wSouth.mile <= site.riverMile && site.riverMile <= wNorth.mile,
+       `${wSouth.mile} <= ${site.riverMile} <= ${wNorth.mile}`);
+    // the footer must name the stations it actually uses, on the correct sides
+    const note = (/Water temperature[^<]*/.exec(html) || [""])[0];
+    ok(`${site.name}: the note names its downriver station`,
+       new RegExp(wSouth.name + ", downriver").test(note), note.slice(0, 130));
+    ok(`${site.name}: the note names its upriver station`,
+       new RegExp(wNorth.name + ", up").test(note), note.slice(0, 130));
+    ok(`${site.name}: the note names no other station`,
+       !ALL_WATER.some(w => w !== wSouth.name && w !== wNorth.name && note.includes(w)), note.slice(0, 130));
   }
 
   // cross-links to the other launches

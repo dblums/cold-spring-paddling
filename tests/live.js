@@ -1,6 +1,6 @@
 /* Checks the baked-in predictions and the computed astronomy against the
    authorities they claim to come from. Needs network. Run: node tests/live.js */
-const {load} = require("./harness.js");
+const {load, sites, pageFor} = require("./harness.js");
 const {T} = load();
 const MIN = 60000;
 
@@ -149,7 +149,20 @@ const get = async u => (await fetch(u, {headers:{"User-Agent":"cold-spring-paddl
     const al = await get("https://api.weather.gov/alerts/active?point=41.4204,-73.9568");
     ok("NWS alerts endpoint responds", Array.isArray(al.features), `${(al.features||[]).length} active`);
 
-    for (const [id,name] of [["8518962","Turkey Point"],["8518750","The Battery"]]){
+    /* Every water station any launch is configured to use, not a fixed pair.
+       Coxsackie went unnoticed for a week because nothing here was reading the
+       registry - the list was written when Cold Spring was the only launch. */
+    const stations = new Map();
+    for (const site of sites()){
+      const html = require("fs").readFileSync(pageFor(site), "utf8");
+      for (const m of html.matchAll(/const WATER_[SN] = ({[^}]*})/g)){
+        const w = JSON.parse(m[1]);
+        stations.set(w.id, w.name);
+      }
+    }
+    ok("more than one bracketing pair is in use", stations.size >= 3,
+       [...stations.values()].join(", "));
+    for (const [id,name] of stations){
       const w = await get("https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=water_temperature"
         + "&application=tests&date=latest&station=" + id + "&time_zone=lst_ldt&units=english&format=json");
       const v = w.data && w.data[0] && parseFloat(w.data[0].v);

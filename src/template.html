@@ -573,7 +573,7 @@ footer .label{margin-bottom:-2px}
       <span class="label">Important note</span>
       <p>Tides and currents are predictions, not observations. Wind, waves, runoff, storm surge and other factors can affect actual conditions. Weather is sourced from the National Weather Service. Use your own judgment and paddle at your own risk.</p>
     </div>
-    <p>{{CURRENT_NOTE}} {{TIDE_NOTE}} Both are predictions, baked into this page and good through 31&nbsp;Dec&nbsp;2028; values between NOAA&rsquo;s published points are interpolated. Weather and alerts come live from the National Weather Service grid covering {{NAME}}. Water temperature has no nearby sensor &mdash; it is estimated between NOAA Turkey Point, upriver, and The Battery, down. Sun and moon are computed rather than fetched, and agree with the US Naval Observatory to within a couple of minutes.{{MARSH_NOTE}}</p>
+    <p>{{CURRENT_NOTE}} {{TIDE_NOTE}} Both are predictions, baked into this page and good through 31&nbsp;Dec&nbsp;2028; values between NOAA&rsquo;s published points are interpolated. Weather and alerts come live from the National Weather Service grid covering {{NAME}}. {{WATER_NOTE}} Sun and moon are computed rather than fetched, and agree with the US Naval Observatory to within a couple of minutes.{{MARSH_NOTE}}</p>
     <p><a href="{{CURRENT_LINK}}" target="_blank" rel="noopener">NOAA currents &#8599;</a> &nbsp; <a href="{{TIDE_LINK}}" target="_blank" rel="noopener">NOAA tides &#8599;</a></p>
     <div class="colophon">
       <p>{{CREDIT}}</p>
@@ -645,13 +645,15 @@ const NWS_GRID  = "https://api.weather.gov/gridpoints/" + SITE.nwsGrid;
 const NWS_ALERT = "https://api.weather.gov/alerts/active?point=" + SITE.lat + "," + SITE.lon;
 const COOPS = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter";
 
-/* No launch on this stretch has a live water-temperature sensor near it. The
-   USGS gauge at West Point stopped reporting temperature in 2014 and the tide
-   station at Beacon has no sensors at all, so the nearest live readings bracket
-   the whole reach at 40-plus miles in each direction. Interpolate between them
-   by river mile and label the result an estimate. */
-const WATER_N = {id:"8518962", name:"Turkey Point", mile:100};
-const WATER_S = {id:"8518750", name:"The Battery",  mile:0};
+/* No launch on this stretch has a live water-temperature sensor near it, so
+   each page takes the nearest NOAA station below it and the nearest above, and
+   interpolates by river mile. Which pair that is depends on the launch -
+   build.py picks them - because a single global pair only ever brackets the
+   launch it was chosen for. Either end can be null at the ends of the river,
+   and then the one reading we have is used as-is rather than extrapolating a
+   gradient past the last measurement. */
+const WATER_S = {{WATER_S_JSON}};   // downriver of this launch
+const WATER_N = {{WATER_N_JSON}};   // upriver of it
 const SITE_RIVER_MILE = SITE.riverMile;
 
 /* ---------- sun and moon ----------
@@ -855,15 +857,20 @@ function readWater(res){
 
 async function loadConditions(){
   const [grid, alerts, north, south] = await Promise.allSettled([
-    getJSON(NWS_GRID), getJSON(NWS_ALERT), getJSON(waterURL(WATER_N.id)), getJSON(waterURL(WATER_S.id))
+    getJSON(NWS_GRID), getJSON(NWS_ALERT),
+    WATER_N ? getJSON(waterURL(WATER_N.id)) : Promise.reject(),
+    WATER_S ? getJSON(waterURL(WATER_S.id)) : Promise.reject()
   ]);
   WX.grid = grid.status === "fulfilled" ? grid.value.properties : null;
   WX.alerts = alerts.status === "fulfilled" ? (alerts.value.features || []) : null;
 
   const n = readWater(north), sth = readWater(south);
-  // linear by river mile: 0 at the Battery, 1 at Turkey Point
+  // linear by river mile between whichever two stations bracket this launch
+  const span = (WATER_N && WATER_S) ? WATER_N.mile - WATER_S.mile : 0;
+  const f = span > 0
+    ? Math.max(0, Math.min(1, (SITE_RIVER_MILE - WATER_S.mile) / span)) : 0;
   WX.water = (n != null && sth != null)
-      ? {f:sth + (n - sth) * Math.min(1, SITE_RIVER_MILE / WATER_N.mile), from:"both"}
+      ? {f: sth + (n - sth) * f, from:"both"}
     : n != null ? {f:n, from:WATER_N.name}
     : sth != null ? {f:sth, from:WATER_S.name}
     : null;

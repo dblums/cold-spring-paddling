@@ -98,6 +98,30 @@ def tip():
             '  </section>\n\n')
 
 
+def water_fields(site):
+    """The two water-temperature stations bracketing this launch, and a footer
+    sentence that names them and says which way each one lies. The old copy was
+    a single hardcoded sentence - "Turkey Point, upriver, and The Battery, down"
+    - which was true only for the Highlands. At Hudson, Turkey Point is
+    DOWNriver, so the page was telling readers the opposite of the fact."""
+    south, north = L.water_pair(site)
+    if south and north:
+        note = ("Water temperature has no nearby sensor &mdash; it is estimated between "
+                f"NOAA {south['name']}, downriver, and {north['name']}, up.")
+    elif north or south:
+        one = north or south
+        way = "upriver" if north else "downriver"
+        note = ("Water temperature has no nearby sensor &mdash; the reading is from "
+                f"NOAA {one['name']}, the nearest station, {way} of here.")
+    else:
+        note = "Water temperature has no nearby sensor."
+    return {
+        "WATER_S_JSON": json.dumps(south, separators=(",", ":")) if south else "null",
+        "WATER_N_JSON": json.dumps(north, separators=(",", ":")) if north else "null",
+        "WATER_NOTE": note,
+    }
+
+
 def locnav(site, sites):
     others = [s for s in sites if s["slug"] != site["slug"]]
     if not others:
@@ -139,6 +163,7 @@ def render(site, sites):
         "TIDE_CARD_NOTE": tide["cardNote"],
         "NWS_LABEL": "NWS " + site["nws"]["grid"].split("/")[0],
         "CURRENT_LINK": cur["link"],
+        **water_fields(site),
         # built from the station this launch actually uses, rather than the one
         # the first launch happened to use
         "TIDE_LINK": ("https://tidesandcurrents.noaa.gov/stationhome.html?id="
