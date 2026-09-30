@@ -61,18 +61,6 @@ WATER_STATIONS = [
 NEAR_MILES = 12
 
 
-# Pages that have moved. GitHub Pages serves static files and cannot issue a
-# 301, so the old URL keeps a small page that names its replacement and sends
-# the reader on. Without it the old file would simply sit there serving stale
-# conditions to anyone with the link or a search result.
-#   old filename -> the slug it now lives under
-REDIRECTS = {
-    # Watervliet became Troy: the launch is Ingalls Avenue, and the site says
-    # "near", so the better-known city is the more useful name.
-    "watervliet-new-york.html": "troy",
-}
-
-
 def water_pair(site):
     """The stations a launch's temperature comes from, downriver first.
 

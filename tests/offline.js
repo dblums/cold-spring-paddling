@@ -766,45 +766,6 @@ group("URL structure");
   ok("stripping removes a worthwhile amount", removed > 8000, `${removed} bytes per page`);
 }
 
-/* Pages that moved. Watervliet became Troy, and the file it used to be
-   served from is still a live URL at the domain - in somebody's history, in a
-   search result. Left alone it would go on serving the old page's conditions
-   forever, because nothing in the build removes a launch page it stopped
-   emitting. */
-{
-  const path = require("path");
-  const src = fs.readFileSync(path.join(__dirname, "..", "scripts", "locations.py"), "utf8");
-  const SITE_URL = "https://" + /^DOMAIN = "([^"]+)"/m.exec(src)[1];
-  const block = /REDIRECTS = \{([\s\S]*?)\}/.exec(src);
-  ok("the registry declares its moved pages", !!block);
-  const pairs = [...(block ? block[1].matchAll(/"([^"]+)":\s*"([^"]+)"/g) : [])];
-
-  for (const [, oldFile, slug] of pairs){
-    const site = ALL.find(s => s.slug === slug);
-    ok(`redirect ${oldFile} points at a launch that exists`, !!site, slug);
-    if (!site) continue;
-    const dest = pageSlug(site) + ".html";
-    ok(`redirect ${oldFile} does not shadow a live page`,
-       !ALL.some(s => pageSlug(s) + ".html" === oldFile));
-
-    const f = path.join(__dirname, "..", oldFile);
-    ok(`the build wrote ${oldFile}`, fs.existsSync(f));
-    if (!fs.existsSync(f)) continue;
-    const html = fs.readFileSync(f, "utf8");
-    // the refresh moves a person, the canonical moves a search result
-    ok(`${oldFile} sends the reader to ${dest}`,
-       new RegExp(`http-equiv="refresh"[^>]*url=${dest.replace(/\./g, "\\.")}`).test(html));
-    ok(`${oldFile} points its canonical at the new page`,
-       html.includes(`rel="canonical" href="${SITE_URL}/${dest}"`), SITE_URL + "/" + dest);
-    ok(`${oldFile} also links it, for anyone the refresh does not carry`,
-       html.includes(`href="${dest}"`));
-    /* noindex here would have a crawler drop the page before following the
-       canonical, throwing away what the old URL earned instead of passing it on. */
-    ok(`${oldFile} is not noindexed`, !/noindex/.test(html));
-    ok(`${oldFile} stays small`, html.length < 2048, `${html.length} bytes`);
-  }
-}
-
 ok("exactly one site is primary", ALL.filter(s => s.primary).length === 1);
 
 console.log(`\n${pass} passed, ${fail} failed`);
