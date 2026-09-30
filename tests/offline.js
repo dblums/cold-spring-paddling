@@ -272,13 +272,25 @@ for (const site of ALL){
   /* A launch must not wear another launch's name - but one of them is called
      Hudson, and every title begins "Hudson River Paddling Conditions". Check
      the part that actually identifies the page rather than the whole string. */
-  const named = t => (/Near ([^,]+),/.exec(t || "") || [])[1] || "";
+  /* A leading article is the launch's name too: "Near the Upper West Side"
+     reads properly where "Near Upper West Side" does not. Strip it before
+     comparing, so the check below still catches a page wearing the wrong
+     name - no launch is called "the" plus another launch's name. */
+  const named = t =>
+    ((/Near ([^,]+),/.exec(t || "") || [])[1] || "").replace(/^the /, "");
   eq(`${site.name}: headline names this launch`, named(heading), site.name);
   eq(`${site.name}: title names this launch`, named(title), site.name);
   for (const other of ALL) if (other.slug !== site.slug){
     ok(`${site.name}: headline does not say ${other.name}`, named(heading) !== other.name, heading);
     ok(`${site.name}: title does not say ${other.name}`, named(title) !== other.name);
   }
+  /* The footer names the launch inside a sentence, where a few places need an
+     article. It is read off the title so the two cannot drift apart. */
+  const phrase = (/grid covering ([^.]+)\./.exec(html) || [])[1] || "";
+  ok(`${site.name}: the footer names this launch`, phrase.endsWith(site.name), phrase);
+  ok(`${site.name}: the footer's name matches the title's`,
+     phrase === named(title) || phrase === "the " + named(title), `${phrase} vs ${title}`);
+
   ok(`${site.name}: site config matches locations/`,
      S.SITE.slug === site.slug && S.SITE.lat === site.lat && S.SITE.riverMile === site.riverMile);
   eq(`${site.name}: tide shift`, S.TIDE_SHIFT_MIN, site.tide.shiftMin);

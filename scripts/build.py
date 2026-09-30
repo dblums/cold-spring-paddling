@@ -211,6 +211,12 @@ def strip_comments(html):
     return re.sub(r"(<script>)(.*?)(</script>)", clean, html, flags=re.S)
 
 
+def name_phrase(site):
+    """The launch's name as the title writes it, keeping any leading article."""
+    m = re.search(r"Near (.+), [A-Z]{2}\b", site["title"])
+    return m.group(1) if m else site["name"]
+
+
 def render(site, sites):
     html = strip_features(open(TEMPLATE).read(), set(site.get("features", [])))
     data = open(os.path.join(L.ROOT, "data", site["slug"] + ".json")).read().strip()
@@ -231,6 +237,11 @@ def render(site, sites):
     fields = {
         "PREDICTIONS": data, "SITE_JSON": site_js,
         "TITLE": site["title"], "NAME": site["name"],
+        # The name as it reads inside a sentence, article and all. A few places
+        # take one - "the grid covering the Upper West Side" - and the title is
+        # already the one field that has to get this right, so read it from
+        # there rather than keep a second spelling in step with the first.
+        "NAME_PHRASE": name_phrase(site),
         "TIDE_LABEL": tide["label"], "CURRENT_LABEL": cur["label"],
         "COORD_LABEL": f'computed for {site["lat"]:.2f}°N {abs(site["lon"]):.2f}°W',
         "UPRIVER": cur["upriverTo"], "DOWNRIVER": cur["downriverTo"],

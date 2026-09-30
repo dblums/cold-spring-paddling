@@ -1,0 +1,36 @@
+{
+  "slug": "upper-west-side",
+  "primary": false,
+  "name": "Upper West Side",
+  "state": "New York",
+  "title": "Hudson River Paddling Conditions Near the Upper West Side, NY",
+  "blurb": "The West 79th Street Boat Basin, below Riverside Park, with the Palisades beginning to rise on the New Jersey shore opposite.",
+  "lat": 40.78556,
+  "lon": -73.98588,
+  "riverMile": 5,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "8530505",
+    "label": "NOAA 8530505 Edgewater",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station 8530505 at Edgewater, about two miles off across the river.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "NYH1928",
+    "bin": 12,
+    "label": "NOAA NYH1928_12 Pier 92",
+    "shiftMin": 0,
+    "floodToward": 26,
+    "ebbToward": 212,
+    "upriverTo": "the George Washington Bridge",
+    "downriverTo": "Midtown Manhattan",
+    "note": "Current from NOAA station NYH1928_12 (Hudson River, Pier 92), about a mile and a half downriver, at the 6 ft bin nearest the surface.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=NYH1928_12"
+  },
+  "nws": {
+    "grid": "OKX/33,45"
+  },
+  "features": []
+}

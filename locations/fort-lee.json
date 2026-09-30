@@ -1,0 +1,36 @@
+{
+  "slug": "fort-lee",
+  "primary": false,
+  "name": "Fort Lee",
+  "state": "New Jersey",
+  "title": "Hudson River Paddling Conditions Near Fort Lee, NJ",
+  "blurb": "Hazard's Ramp at the Ross Dock Picnic Area in Palisades Interstate Park, on the New Jersey shore right under the George Washington Bridge.",
+  "lat": 40.85176,
+  "lon": -73.95962,
+  "riverMile": 10,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "8518902",
+    "label": "NOAA 8518902 Dyckman Street",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station 8518902 at the Dyckman Street ferry slip, about two miles upriver across the river.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "HUR0611",
+    "bin": 16,
+    "label": "NOAA HUR0611_16 George Washington Bridge",
+    "shiftMin": 0,
+    "floodToward": 10,
+    "ebbToward": 203,
+    "upriverTo": "Englewood Cliffs",
+    "downriverTo": "the Upper West Side",
+    "note": "Current from NOAA station HUR0611_16 (George Washington Bridge), half a mile upriver, at the 14 ft bin nearest the surface.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=HUR0611_16"
+  },
+  "nws": {
+    "grid": "OKX/34,48"
+  },
+  "features": []
+}
