@@ -24,7 +24,7 @@
     "shiftMin": 0,
     "floodToward": 8,
     "ebbToward": 188,
-    "upriverTo": "Poughkeepsie",
+    "upriverTo": "Milton",
     "downriverTo": "Chelsea",
     "note": "Current from NOAA station ACT3741_1 at New Hamburg, a few hundred yards from the launch. Flood and ebb headings are the river’s own axis here.",
     "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=ACT3741_1"

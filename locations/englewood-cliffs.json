@@ -1,0 +1,36 @@
+{
+  "slug": "englewood-cliffs",
+  "primary": false,
+  "name": "Englewood Cliffs",
+  "state": "New Jersey",
+  "title": "Hudson River Paddling Conditions Near Englewood Cliffs, NJ",
+  "blurb": "Bloomer's Beach, at the north end of the Englewood Picnic Area in Palisades Interstate Park, under the cliffs on the New Jersey shore.",
+  "lat": 40.892,
+  "lon": -73.9455,
+  "riverMile": 14,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "8518905",
+    "label": "NOAA 8518905 Riverdale",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station 8518905 at Riverdale, about two miles off across the river.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "ACT3671",
+    "bin": 1,
+    "label": "NOAA ACT3671_1 Riverdale",
+    "shiftMin": 0,
+    "floodToward": 15,
+    "ebbToward": 200,
+    "upriverTo": "Alpine",
+    "downriverTo": "the George Washington Bridge",
+    "note": "Current from NOAA station ACT3671_1 at Riverdale, about a mile and a half off across the river.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=ACT3671_1"
+  },
+  "nws": {
+    "grid": "OKX/34,50"
+  },
+  "features": []
+}

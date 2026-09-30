@@ -1,0 +1,36 @@
+{
+  "slug": "hyde-park",
+  "primary": false,
+  "name": "Hyde Park",
+  "state": "New York",
+  "title": "Hudson River Paddling Conditions Near Hyde Park, NY",
+  "blurb": "Bard Rock, on the Vanderbilt Mansion grounds, with Esopus Island a short way upriver and the Esopus Meadows lighthouse across and north.",
+  "lat": 41.7986,
+  "lon": -73.9442,
+  "riverMile": 83,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "8518951",
+    "label": "NOAA 8518951 Hyde Park",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station 8518951 at Hyde Park, about a mile from the launch.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "ACT3751",
+    "bin": 1,
+    "label": "NOAA ACT3751_1 Hyde Park",
+    "shiftMin": 0,
+    "floodToward": 5,
+    "ebbToward": 185,
+    "upriverTo": "Staatsburg",
+    "downriverTo": "Poughkeepsie",
+    "note": "Current from NOAA station ACT3751_1 at Hyde Park, about a mile from the launch. NOAA publishes a flood heading there but no ebb, so the ebb is the river’s own axis.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=ACT3751_1"
+  },
+  "nws": {
+    "grid": "ALY/72,23"
+  },
+  "features": []
+}

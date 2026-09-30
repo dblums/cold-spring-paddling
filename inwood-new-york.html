@@ -1,0 +1,1897 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://api.weather.gov" crossorigin>
+<link rel="preconnect" href="https://api.tidesandcurrents.noaa.gov" crossorigin>
+<link rel="preconnect" href="https://waterservices.usgs.gov" crossorigin>
+<meta name="description" content="Hudson River tides, current and paddling conditions for Inwood, New York.">
+<link rel="canonical" href="https://hudsonconditions.com/inwood-new-york.html">
+<meta name="theme-color" content="#eaeeee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0c1518" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Inwood Tides">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9B%B6%3C/text%3E%3C/svg%3E">
+<title>Hudson River Paddling Conditions Near Inwood, NY</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#eaeeee; --surface:#fbfcfc; --surface-2:#f1f4f4;
+  --ink:#16242c; --ink-2:#3d5058; --muted:#67797f; --line:#d2dbdc; --line-2:#e2e8e8;
+  --ebb:#bd5f33; --ebb-soft:#bd5f3322; --flood:#2f6f96; --flood-soft:#2f6f9622;
+  --safe:#2f7d52; --safe-soft:#2f7d5218; --closed:#a93c3c; --closed-soft:#a93c3c14;
+  --mud:#8a6a2f; --mud-soft:#8a6a2f14;
+  --sun:#b8801f; --moon:#5d7490;
+  --river:#2b6b7f;
+  --shadow:0 1px 2px rgba(22,36,44,.06), 0 6px 20px -12px rgba(22,36,44,.28);
+}
+:root:not([data-theme="light"]){ color-scheme:light dark; }
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0c1518; --surface:#131f23; --surface-2:#18272b;
+    --ink:#e7eeef; --ink-2:#b6c6ca; --muted:#8ba1a7; --line:#26383d; --line-2:#1e2f34;
+    --ebb:#e08a5c; --ebb-soft:#e08a5c26; --flood:#6aa9cf; --flood-soft:#6aa9cf26;
+    --safe:#5cb884; --safe-soft:#5cb8841f; --closed:#e07070; --closed-soft:#e0707018;
+    --mud:#d6ad52; --mud-soft:#d6ad521c;
+    --sun:#e0b25c; --moon:#93a8bf;
+    --river:#78b6c4;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px -14px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#0c1518; --surface:#131f23; --surface-2:#18272b;
+  --ink:#e7eeef; --ink-2:#b6c6ca; --muted:#8ba1a7; --line:#26383d; --line-2:#1e2f34;
+  --ebb:#e08a5c; --ebb-soft:#e08a5c26; --flood:#6aa9cf; --flood-soft:#6aa9cf26;
+  --safe:#5cb884; --safe-soft:#5cb8841f; --closed:#e07070; --closed-soft:#e0707018;
+  --mud:#d6ad52; --mud-soft:#d6ad521c;
+  --sun:#e0b25c; --moon:#93a8bf;
+  --river:#78b6c4;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px -14px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"Barlow","Helvetica Neue",Helvetica,Arial,sans-serif;
+  font-size:16px; line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:760px; margin:0 auto; padding:22px 16px 64px; display:flex; flex-direction:column; gap:16px}
+
+.label{
+  font-family:"Barlow Semi Condensed",sans-serif; font-weight:600;
+  text-transform:uppercase; letter-spacing:.09em; font-size:12px; color:var(--muted);
+}
+.num{font-family:"IBM Plex Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums}
+
+/* ---- masthead ---- */
+/* The banner commits to one look on purpose: light type on a dark scrim over the
+   photo, identical in both themes. Every color here is painted, not inherited. */
+.hero{
+  position:relative; border-radius:14px; overflow:hidden;
+  aspect-ratio:16/7; background:#0e1f27; box-shadow:var(--shadow);
+}
+@media (max-width:560px){ .hero{aspect-ratio:4/3} }
+.hero img{
+  width:100%; height:100%; object-fit:cover; object-position:50% 56%;
+  display:block; border-radius:inherit;
+}
+.hero::after{
+  content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+  background:linear-gradient(to top, rgba(8,20,26,.92) 0%, rgba(8,20,26,.55) 30%,
+                                     rgba(8,20,26,.10) 58%, rgba(8,20,26,0) 80%);
+}
+
+.locnav{
+  display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;
+  margin:-4px 0 -4px; font-size:14px;
+}
+.locnav a{
+  color:var(--river); text-underline-offset:3px; font-weight:500;
+}
+/* Scoped to direct children: an unscoped a + a put a separator in front of
+   every item in the dropdown too. inline-block keeps the link's underline from
+   painting through the separator and its margin, which read as a stray
+   underscore floating in front of the next name. */
+.locnav > a + a::before, .alllocs::before{
+  content:"|"; display:inline-block; margin-right:9px; color:var(--line);
+  text-decoration:none;
+}
+
+/* All locations: a <details> rather than a script, so it works before the page
+   has run anything and keyboard users get it for free. */
+.alllocs{position:relative; display:inline-flex; align-items:baseline}
+.alllocs > summary{
+  list-style:none; cursor:pointer; color:var(--river); font-weight:500;
+  display:inline-flex; align-items:center; gap:5px;
+}
+.alllocs > summary::-webkit-details-marker{display:none}
+.alllocs > summary::after{content:"\25BE"; font-size:10px; color:var(--muted)}
+.alllocs[open] > summary::after{content:"\25B4"}
+.alllocs .menu{
+  position:absolute; z-index:40; top:calc(100% + 8px); left:0;
+  min-width:210px; max-height:min(62vh, 430px); overflow-y:auto;
+  padding:6px; background:var(--surface); border:1px solid var(--line);
+  border-radius:10px; box-shadow:var(--shadow);
+  display:flex; flex-direction:column;
+}
+.alllocs .menu a, .alllocs .menu .here{
+  display:flex; align-items:baseline; gap:9px;
+  padding:6px 10px; border-radius:6px; font-size:14px; white-space:nowrap;
+  text-decoration:none;
+}
+.alllocs .menu i{
+  font-style:normal; flex:0 0 2.1em; text-align:right;
+  font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--muted);
+}
+.alllocs .menu a{color:var(--ink)}
+.alllocs .menu a:hover{background:var(--surface-2); color:var(--river)}
+.alllocs .menu .here{color:var(--muted); font-weight:600}
+@media (max-width:520px){ .alllocs .menu{left:auto; right:0} }
+
+.hero h1{
+  position:absolute; z-index:1; left:clamp(16px,3.4vw,26px); right:clamp(16px,3.4vw,26px);
+  bottom:clamp(13px,2.4vw,20px); margin:0; color:#f4f9fa;
+  font-family:"Barlow Semi Condensed",sans-serif; font-weight:700;
+  font-size:clamp(27px,5.6vw,40px); line-height:1.04; letter-spacing:-.01em;
+  text-wrap:balance; text-shadow:0 1px 14px rgba(8,20,26,.6);
+}
+
+/* A site with no photo yet still gets a deliberate opening rather than a gap:
+   the same shape and type, on the river colours. */
+.hero-plain{
+  aspect-ratio:auto; min-height:0; background:
+    linear-gradient(145deg, #12303b 0%, #0e2029 55%, #14262c 100%);
+  border:1px solid var(--line);
+}
+.hero-plain::after{display:none}
+.hero-plain h1{position:static; padding:clamp(22px,4vw,34px) clamp(16px,3.4vw,26px)}
+@media (max-width:560px){ .hero-plain{aspect-ratio:auto} }
+.coords{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:baseline}
+.coords .num{font-size:12px; color:var(--muted); letter-spacing:.02em}
+
+/* ---- time control ---- */
+.timebar{
+  display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+  background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px 12px;
+  box-shadow:var(--shadow);
+}
+.timebar .label{flex:0 0 auto}
+input[type="datetime-local"]{
+  font-family:"IBM Plex Mono",monospace; font-size:14px; color:var(--ink);
+  background:var(--surface-2); border:1px solid var(--line); border-radius:7px;
+  padding:7px 9px; flex:1 1 200px; min-width:0;
+}
+button{
+  font-family:"Barlow Semi Condensed",sans-serif; font-weight:600; font-size:13px;
+  text-transform:uppercase; letter-spacing:.07em;
+  background:var(--surface-2); color:var(--ink-2);
+  border:1px solid var(--line); border-radius:7px; padding:8px 13px; cursor:pointer;
+}
+button:hover{border-color:var(--river); color:var(--ink)}
+button.on{background:var(--river); border-color:var(--river); color:var(--surface)}
+:root[data-theme="dark"] button.on, :root:not([data-theme="light"]) button.on{color:#0c1518}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]) button.on{color:#fbfcfc}}
+:focus-visible{outline:2px solid var(--river); outline-offset:2px}
+
+.stamp{font-size:13px; color:var(--muted); display:flex; gap:8px; align-items:baseline; flex-wrap:wrap}
+.stamp .now-dot{width:7px;height:7px;border-radius:50%;background:var(--safe);display:inline-block}
+
+/* ---- gate (hero) ---- */
+
+
+/* ---- cards ---- */
+.card{
+  background:var(--surface); border:1px solid var(--line); border-radius:12px;
+  padding:16px 16px 14px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:12px;
+}
+.gates{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+@media (max-width:560px){ .gates{grid-template-columns:1fr} }
+.gate-cell{
+  border-radius:10px; border:1px solid; padding:13px 14px 12px;
+  display:flex; flex-direction:column; gap:1px; min-width:0;
+}
+.gate-cell.ok{background:var(--safe-soft); border-color:var(--safe)}
+.gate-cell.no-cross{background:var(--closed-soft); border-color:var(--closed)}
+.gate-cell.no-mud{background:var(--mud-soft); border-color:var(--mud)}
+.gate-verdict{
+  font-family:"Barlow Semi Condensed",sans-serif; font-weight:700; line-height:1.05;
+  font-size:clamp(21px,4.4vw,25px); letter-spacing:-.01em; margin:2px 0 0;
+}
+.gate-cell.ok .gate-verdict{color:var(--safe)}
+.gate-cell.no-cross .gate-verdict{color:var(--closed)}
+.gate-cell.no-mud .gate-verdict{color:var(--mud)}
+.gate-sub{font-size:13.5px; color:var(--ink-2); margin:5px 0 0; line-height:1.45}
+.gate-sub .fn{display:block; margin-top:6px; font-size:12.5px; color:var(--muted)}
+.gate-when{
+  font-family:"IBM Plex Mono",monospace; font-size:13px; color:var(--ink);
+  margin:9px 0 0; padding-top:9px; border-top:1px solid var(--line-2);
+}
+.gate-when b{font-weight:600}
+/* One block style for anything that says something about RIGHT NOW. A card can
+   stack more than one. Paired with .card-lede, which only ever describes what a
+   card is for, this gives the page two devices instead of four: a grey line
+   describes, a tinted block decides. */
+.answer{
+  background:var(--surface-2); border-left:4px solid var(--line);
+  border-radius:0 9px 9px 0; padding:12px 15px 13px;
+}
+.answer + .answer{margin-top:7px}
+#curWindBand .answer, #skyBands .answer, #wxBands .answer{margin-top:2px}
+.answer p{margin:0; font-size:15.5px; line-height:1.5; color:var(--ink)}
+.answer p + p{margin-top:5px}
+.answer b{font-weight:600; color:var(--ink)}
+.answer .qual{color:var(--muted); font-size:12.5px; font-weight:400}
+.answer.good{border-left-color:var(--safe); background:var(--safe-soft)}
+.answer.warn{border-left-color:var(--ebb); background:var(--ebb-soft)}
+.answer.cold{border-left-color:var(--flood); background:var(--flood-soft)}
+.answer.mud{border-left-color:var(--mud); background:var(--mud-soft)}
+.answer.closed{border-left-color:var(--closed); background:var(--closed-soft)}
+.answer.mute p{color:var(--muted); font-size:14.5px}
+/* The cells are supporting detail. They keep their color but stop out-shouting
+   the sentence above them, which is the part that actually answers the question. */
+/* ---- the one-glance summary, first thing on the page ---- */
+.brief{
+  border-radius:12px; padding:16px 18px 17px;
+  border:1px solid var(--line); border-left:5px solid var(--muted);
+  background:var(--surface); box-shadow:var(--shadow);
+  display:flex; flex-direction:column; gap:7px;
+}
+.brief h2{
+  font-family:"Barlow Semi Condensed",sans-serif; font-weight:700; margin:0;
+  font-size:clamp(21px,3.6vw,26px); line-height:1.12; letter-spacing:-.01em;
+  text-wrap:balance;
+}
+.brief p{margin:0; font-size:15.5px; line-height:1.5; color:var(--ink-2)}
+.brief p b{color:var(--ink); font-weight:600}
+/* The same conditions told twice, once for each way you can go, because that is
+   how a paddler decides. Always in the same place, whatever the verdict. */
+.brief .expect{margin-top:4px; padding-top:11px; border-top:1px solid var(--line-2)}
+.brief .expect > .label{display:block; margin-bottom:9px}
+.brief .expect > .label em{
+  font-style:normal; font-weight:400; text-transform:none;
+  letter-spacing:0; font-size:11.5px; opacity:.75;
+}
+.brief .safety{
+  margin:0; font-size:14px; line-height:1.5; color:var(--muted);
+}
+.brief .safety b{color:var(--ebb); font-weight:600}
+.brief .safety.plain b{color:var(--ink-2)}
+.brief .dirs{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+@media (max-width:560px){ .brief .dirs{grid-template-columns:1fr} }
+.brief .dir{
+  background:var(--surface-2); border-radius:9px; padding:11px 13px 12px;
+  display:flex; flex-direction:column; min-width:0;
+}
+.brief .dirhd{
+  font-family:"Barlow Semi Condensed",sans-serif; font-weight:600; font-size:11px;
+  text-transform:uppercase; letter-spacing:.09em; color:var(--muted);
+}
+.brief .dir ul{margin:7px 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:5px}
+.brief .dir li{
+  font-size:13.5px; line-height:1.4; color:var(--ink-2);
+  padding-left:13px; position:relative;
+}
+.brief .dir li::before{
+  content:""; position:absolute; left:0; top:.55em;
+  width:5px; height:5px; border-radius:50%; background:var(--line);
+}
+.brief .dir .spd{
+  margin-top:auto; padding-top:10px; display:flex; align-items:baseline; gap:7px;
+}
+.brief .dir .spd b{
+  font-family:"IBM Plex Mono",monospace; font-weight:500; font-size:21px;
+  color:var(--ink); font-variant-numeric:tabular-nums;
+}
+.brief .dir .spd em{font-style:normal; font-size:12px; color:var(--muted)}
+.brief .speed-note{margin:9px 0 0; font-size:13.5px; color:var(--muted); line-height:1.45}
+.brief .speed-note:empty{display:none}
+.brief.good{border-left-color:var(--safe)}      .brief.good h2{color:var(--safe)}
+.brief.fine{border-left-color:var(--river)}     .brief.fine h2{color:var(--river)}
+.brief.caution{border-left-color:var(--mud)}    .brief.caution h2{color:var(--mud)}
+.brief.warn{border-left-color:var(--ebb)}       .brief.warn h2{color:var(--ebb)}
+.brief.stop{border-left-color:var(--closed); background:var(--closed-soft)}
+.brief.stop h2{color:var(--closed)}
+
+/* ---- NWS alerts: outrank every number below them ---- */
+.alerts{display:flex; flex-direction:column; gap:7px}
+.alerts:not(:empty){margin-bottom:12px}
+.alert{
+  border-radius:9px; padding:9px 13px 10px; border:1px solid;
+  display:flex; flex-direction:column; gap:2px;
+}
+.alert .hd{
+  font-family:"Barlow Semi Condensed",sans-serif; font-weight:700; font-size:17px;
+  letter-spacing:.01em; display:flex; align-items:center; gap:8px;
+}
+.alert .hd::before{content:"\26A0\FE0E"; font-size:15px}
+.alert .meta{font-family:"IBM Plex Mono",monospace; font-size:11.5px; opacity:.85}
+.alert .meta{display:flex; gap:14px; align-items:baseline; flex-wrap:wrap}
+.alert a{font-size:12.5px; font-weight:600; color:inherit; text-underline-offset:3px}
+.alert.severe{background:var(--closed-soft); border-color:var(--closed); color:var(--closed)}
+.alert.moderate{background:var(--ebb-soft); border-color:var(--ebb); color:var(--ebb)}
+.alert.severe p, .alert.moderate p{color:var(--ink-2)}
+
+
+/* ---- stat tiles ---- */
+.tiles{display:grid; gap:10px}
+.tiles.w{grid-template-columns:1.3fr 1.1fr 1fr 1fr}
+.tiles.s{grid-template-columns:1fr 1fr 1.3fr}
+@media (max-width:620px){ .tiles.w,.tiles.s{grid-template-columns:1fr 1fr} }
+@media (max-width:400px){ .tiles.w,.tiles.s{grid-template-columns:1fr} }
+.tile{
+  border:1px solid var(--line); border-radius:9px; padding:11px 12px 12px;
+  background:var(--surface-2); display:flex; flex-direction:column; gap:1px; min-width:0;
+}
+.tile .lab{
+  font-family:"Barlow Semi Condensed",sans-serif; font-weight:600; font-size:10px;
+  text-transform:uppercase; letter-spacing:.09em; color:var(--muted);
+}
+.tile .big{
+  font-family:"IBM Plex Mono",monospace; font-size:26px; line-height:1.12; margin-top:3px;
+  display:flex; align-items:baseline; gap:5px; font-variant-numeric:tabular-nums;
+}
+.tile .big .u{font-size:13px; color:var(--muted)}
+.tile .sub{font-size:12.5px; color:var(--ink-2); margin-top:3px; line-height:1.4}
+.tile .sub em{font-style:normal; color:var(--muted)}
+.windarrow{width:19px; height:19px; flex:0 0 auto; align-self:center}
+
+.card-note a{color:var(--river); text-underline-offset:3px}
+.station a{color:var(--river); text-underline-offset:3px}
+.card-note{
+  margin:0; padding-top:12px; border-top:1px solid var(--line-2);
+  font-size:12.5px; line-height:1.6; color:var(--muted);
+}
+.gate-rule{
+  font-size:12.5px; color:var(--muted); margin:0; line-height:1.6;
+  padding-top:11px; border-top:1px solid var(--line-2);
+}
+.gate-rule b{color:var(--ink-2); font-weight:600}
+.card-head{display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap}
+.card-lede{
+  flex-basis:100%; margin:3px 0 0; font-size:14px; line-height:1.5;
+  color:var(--muted);
+}
+.mph{
+  font-family:"IBM Plex Mono",monospace; font-size:14px; color:var(--muted);
+  font-weight:400; letter-spacing:0;
+}
+.card-head h2{
+  font-family:"Barlow Semi Condensed",sans-serif; font-weight:600; font-size:19px;
+  margin:0; letter-spacing:.01em;
+}
+.station{font-size:11.5px; color:var(--muted); font-family:"IBM Plex Mono",monospace}
+
+.readout{display:flex; gap:16px; align-items:center; flex-wrap:wrap}
+.dial{flex:0 0 auto; width:58px; height:58px}
+.readout-main{flex:1 1 190px; min-width:0}
+.readout-main .value{
+  font-family:"IBM Plex Mono",monospace; font-weight:500; font-size:34px; line-height:1;
+  letter-spacing:-.02em; display:flex; align-items:baseline; gap:6px;
+}
+.readout-main .value .unit{font-size:15px; color:var(--muted); font-weight:400; letter-spacing:0}
+.readout-main .caption{font-size:14.5px; color:var(--ink-2); margin-top:4px}
+.state-ebb{color:var(--ebb)} .state-flood{color:var(--flood)} .state-slack{color:var(--muted)}
+
+.next{
+  display:flex; gap:10px; align-items:baseline; padding-top:11px; border-top:1px solid var(--line-2);
+  font-size:14.5px; color:var(--ink-2); flex-wrap:wrap;
+}
+.next b{font-weight:600; color:var(--ink)}
+.next .num{font-size:14px}
+
+.chart{width:100%; height:auto; display:block}
+.chart-note{font-size:12px; color:var(--muted); display:flex; gap:14px; flex-wrap:wrap; align-items:center}
+.key{display:inline-flex; align-items:center; gap:5px}
+.key i{width:11px; height:11px; border-radius:2px; display:inline-block}
+
+/* ---- timeline ---- */
+ol.timeline{list-style:none; margin:0; padding:0; display:flex; flex-direction:column}
+ol.timeline li{
+  display:grid; grid-template-columns:64px 12px 1fr auto; gap:10px; align-items:baseline;
+  padding:9px 0; border-top:1px solid var(--line-2);
+}
+ol.timeline li:first-child{border-top:none}
+ol.timeline .t{font-family:"IBM Plex Mono",monospace; font-size:14px; color:var(--ink); font-variant-numeric:tabular-nums}
+ol.timeline .pip{width:9px; height:9px; border-radius:50%; align-self:center; margin-top:1px}
+ol.timeline .what{font-size:15px; color:var(--ink)}
+ol.timeline .amt{font-family:"IBM Plex Mono",monospace; font-size:13.5px; color:var(--muted); text-align:right}
+.empty{font-size:14.5px; color:var(--muted); padding:6px 0}
+
+/* ---- footer ---- */
+footer{border-top:1px solid var(--line); padding-top:14px; display:flex; flex-direction:column; gap:9px}
+footer p{margin:0; font-size:13px; color:var(--muted); line-height:1.55}
+footer a{color:var(--river)}
+footer .label{margin-bottom:-2px}
+.colophon{border-top:1px solid var(--line-2); margin-top:5px; padding-top:11px;
+  display:flex; flex-direction:column; gap:5px}
+.colophon .owner{color:var(--muted)}
+.tip{
+  display:flex; align-items:center; flex-wrap:wrap;
+  gap:12px 16px; margin:0 0 18px; padding:15px 18px;
+  background:var(--surface-2); border:1px solid var(--line-2); border-radius:11px;
+}
+.tip img{
+  flex:0 0 auto; width:96px; height:96px; border-radius:12px;
+  object-fit:cover; display:block; border:1px solid var(--line-2);
+}
+.tip p{flex:1 1 17rem; margin:0; font-size:14px; color:var(--ink-2); line-height:1.5}
+.tip a{
+  flex:0 0 auto; text-decoration:none; white-space:nowrap;
+  font-size:14px; font-weight:600; color:var(--ink);
+  padding:9px 16px; border:1px solid var(--line); border-radius:8px;
+  background:var(--surface); transition:border-color .15s, color .15s;
+}
+.tip a:hover{border-color:var(--river); color:var(--river)}
+/* On a phone there is not room for a photo and a 17rem text column side by
+   side, and flex answers that by dropping the text to its own line - which
+   strands the photo in a row of its own with nothing beside it. Float instead,
+   so the text wraps around the photo and fills the gap. */
+@media (max-width:560px){
+  .tip{display:block}
+  .tip img{float:left; width:72px; height:72px; margin:2px 14px 6px 0}
+  .tip p{margin:0}
+  .tip a{display:block; clear:both; margin-top:13px; text-align:center}
+}
+.important{
+  background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--ebb);
+  border-radius:0 9px 9px 0; padding:12px 15px 13px;
+  display:flex; flex-direction:column; gap:4px;
+}
+.important p{font-size:14px; color:var(--ink); line-height:1.55; margin:0}
+.warn{
+  background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--ebb);
+  border-radius:0 8px 8px 0; padding:11px 13px; font-size:13.5px; color:var(--ink-2); line-height:1.55;
+}
+.warn b{color:var(--ink)}
+#outofrange{display:none}
+@media (max-width:430px){
+  ol.timeline li{grid-template-columns:58px 10px 1fr; row-gap:0}
+  ol.timeline .amt{grid-column:3; text-align:left}
+}
+</style>
+<style>
+html{-webkit-text-size-adjust:100%}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero hero-plain">
+    <h1>Hudson River Paddling Conditions Near Inwood, NY</h1>
+  </header>
+  <nav class="locnav">
+    <span class="label">Nearby locations</span>
+    <a href="midtown-manhattan-new-york.html">Midtown Manhattan</a> <a href="englewood-cliffs-new-jersey.html">Englewood Cliffs</a>
+    <details class="alllocs" id="allLocs">
+      <summary>All 37 locations</summary>
+      <div class="menu">
+      <a href="lower-manhattan-new-york.html"><i>2</i>Lower Manhattan</a>
+      <a href="midtown-manhattan-new-york.html"><i>4</i>Midtown Manhattan</a>
+      <span class="here"><i>12</i>Inwood</span>
+      <a href="englewood-cliffs-new-jersey.html"><i>14</i>Englewood Cliffs</a>
+      <a href="yonkers-new-york.html"><i>18</i>Yonkers</a>
+      <a href="hastings-on-hudson-new-york.html"><i>22</i>Hastings-on-Hudson</a>
+      <a href="irvington-new-york.html"><i>25</i>Irvington</a>
+      <a href="nyack-new-york.html"><i>29</i>Nyack</a>
+      <a href="ossining-new-york.html"><i>33</i>Ossining</a>
+      <a href="croton-point-new-york.html"><i>36</i>Croton Point</a>
+      <a href="verplanck-new-york.html"><i>41</i>Verplanck</a>
+      <a href="peekskill-new-york.html"><i>44</i>Peekskill</a>
+      <a href="fort-montgomery-new-york.html"><i>47</i>Fort Montgomery</a>
+      <a href="cold-spring-new-york.html"><i>54</i>Cold Spring</a>
+      <a href="cornwall-on-hudson-new-york.html"><i>58</i>Cornwall-on-Hudson</a>
+      <a href="beacon-new-york.html"><i>61</i>Beacon</a>
+      <a href="newburgh-new-york.html"><i>61</i>Newburgh</a>
+      <a href="chelsea-new-york.html"><i>65</i>Chelsea</a>
+      <a href="new-hamburg-new-york.html"><i>67</i>New Hamburg</a>
+      <a href="milton-new-york.html"><i>72</i>Milton</a>
+      <a href="poughkeepsie-new-york.html"><i>76</i>Poughkeepsie</a>
+      <a href="hyde-park-new-york.html"><i>83</i>Hyde Park</a>
+      <a href="staatsburg-new-york.html"><i>85</i>Staatsburg</a>
+      <a href="kingston-new-york.html"><i>92</i>Kingston</a>
+      <a href="east-kingston-new-york.html"><i>95</i>East Kingston</a>
+      <a href="ulster-landing-new-york.html"><i>97</i>Ulster Landing</a>
+      <a href="tivoli-new-york.html"><i>101</i>Tivoli</a>
+      <a href="germantown-new-york.html"><i>106</i>Germantown</a>
+      <a href="catskill-new-york.html"><i>112</i>Catskill</a>
+      <a href="hudson-new-york.html"><i>117</i>Hudson</a>
+      <a href="coxsackie-new-york.html"><i>124</i>Coxsackie</a>
+      <a href="stuyvesant-new-york.html"><i>127</i>Stuyvesant</a>
+      <a href="coeymans-new-york.html"><i>132</i>Coeymans</a>
+      <a href="schodack-landing-new-york.html"><i>135</i>Schodack Landing</a>
+      <a href="papscanee-island-new-york.html"><i>142</i>Papscanee Island</a>
+      <a href="albany-new-york.html"><i>146</i>Albany</a>
+      <a href="watervliet-new-york.html"><i>152</i>Watervliet</a>
+      </div>
+    </details>
+  </nav>
+
+
+  <div class="timebar">
+    <span class="label">Conditions at</span>
+    <input type="datetime-local" id="when" step="300" aria-label="Date and time, Eastern">
+    <button id="nowbtn" class="on">Now</button>
+  </div>
+  <div class="stamp" id="stamp"></div>
+
+  <div class="warn" id="outofrange"></div>
+
+  <section class="brief" id="brief">
+    <h2 id="briefHead">&mdash;</h2>
+    <p id="briefBody"></p>
+    <p class="safety" id="briefSafety"></p>
+    <div class="expect">
+      <span class="label">What to expect <em>speeds assume a 3 mph base pace</em></span>
+      <div class="dirs">
+        <div class="dir">
+          <span class="dirhd">Heading north</span>
+          <ul id="expUp"></ul>
+          <div class="spd"><b id="spUp">&mdash;</b> <em>expected speed</em></div>
+        </div>
+        <div class="dir">
+          <span class="dirhd">Heading south</span>
+          <ul id="expDown"></ul>
+          <div class="spd"><b id="spDown">&mdash;</b> <em>expected speed</em></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" id="wxCard">
+    <div class="card-head">
+      <h2>Weather &amp; Water</h2>
+      <span class="station"><span id="wxWhen"></span><a href="https://forecast.weather.gov/MapClick.php?lat=40.8697&amp;lon=-73.9345" target="_blank" rel="noopener">NWS OKX &#8599;</a> &middot; NOAA water temp</span>
+    </div>
+    <div class="alerts" id="alerts"></div>
+    <div class="tiles w">
+      <div class="tile">
+        <div class="lab">Wind</div>
+        <div class="big"><svg class="windarrow" id="windArrow" viewBox="0 0 24 24" aria-hidden="true"></svg><span id="wxWind">&mdash;</span><span class="u">mph</span></div>
+        <div class="sub" id="wxWindSub"></div>
+      </div>
+      <div class="tile">
+        <div class="lab">Sky</div>
+        <div class="big" style="font-size:19px"><span id="wxSky">&mdash;</span></div>
+        <div class="sub" id="wxSkySub"></div>
+      </div>
+      <div class="tile">
+        <div class="lab">Air</div>
+        <div class="big"><span id="wxAir">&mdash;</span><span class="u">&deg;F</span></div>
+        <div class="sub" id="wxAirSub"></div>
+      </div>
+      <div class="tile">
+        <div class="lab">Water</div>
+        <div class="big"><span id="wxWater">&mdash;</span><span class="u">&deg;F</span></div>
+        <div class="sub" id="wxWaterSub"></div>
+      </div>
+    </div>
+    <div class="answer" id="wxAnswer"><p id="wxAnswerText"></p></div>
+    <div id="wxBands"></div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>River Current</h2>
+      <span class="station">NOAA HUR0611_16 George Washington Bridge</span>
+    </div>
+    <div class="readout">
+      <svg class="dial" id="dial" viewBox="0 0 100 100" role="img" aria-label="Current direction"></svg>
+      <div class="readout-main">
+        <div class="value"><span id="curSpeed" class="num">&mdash;</span><span class="unit">knots</span><span class="mph" id="curMph"></span></div>
+        <div class="caption" id="curCaption"></div>
+      </div>
+    </div>
+    <div class="next" id="curNext"></div>
+    <svg class="chart" id="curChart" viewBox="0 0 720 150" preserveAspectRatio="none" role="img" aria-label="Current speed through the day"></svg>
+    <div class="chart-note">
+      <span class="key"><i style="background:var(--flood)"></i>Flood &mdash; north, upriver</span>
+      <span class="key"><i style="background:var(--ebb)"></i>Ebb &mdash; south, downriver</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>Tide</h2>
+      <span class="station">NOAA 8518902 Dyckman Street</span>
+    </div>
+    <div class="readout">
+      <div class="readout-main">
+        <div class="value"><span id="tideHt" class="num">&mdash;</span><span class="unit">ft above MLLW</span></div>
+        <div class="caption" id="tideCaption"></div>
+      </div>
+    </div>
+    <div class="next" id="tideNext"></div>
+    <svg class="chart" id="tideChart" viewBox="0 0 720 190" preserveAspectRatio="none" role="img" aria-label="Tide curve through the day, marked with high and low tide"></svg>
+    <p class="card-note">Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you.</p>
+  </section>
+
+
+  <section class="tip">
+    <img src="dan-blumberg.jpg" alt="Dan Blumberg in a life jacket and cap, grinning in the rain on the Hudson, towing a second kayak behind his own" width="224" height="224" loading="lazy" decoding="async">
+    <p>Hi, I&rsquo;m Dan! I built this site because I paddle on the Hudson with my family (that&rsquo;s my 10-year-old son I&rsquo;m towing through a rainstorm on our way from Cold Spring to Beacon). The site is free. If you find it helpful and want to support it, you can buy me a coffee.</p>
+    <a href="https://buy.stripe.com/cNicN68Q15RF97rbVU1wY00" target="_blank" rel="noopener">Buy me a coffee</a>
+  </section>
+
+  <section class="card" id="skyCard">
+    <div class="card-head">
+      <h2>Sun &amp; Moon</h2>
+      <span class="station">computed for 40.87°N 73.93°W</span>
+    </div>
+    <div class="tiles s">
+      <div class="tile">
+        <div class="lab">Daylight left</div>
+        <div class="big"><span id="skyLeft">&mdash;</span></div>
+        <div class="sub" id="skyLeftSub"></div>
+      </div>
+      <div class="tile">
+        <div class="lab">Sun</div>
+        <div class="big" style="font-size:19px"><span id="skySun">&mdash;</span></div>
+        <div class="sub" id="skySunSub"></div>
+      </div>
+      <div class="tile">
+        <div class="lab">Moon</div>
+        <div class="big" style="font-size:19px"><span id="skyMoon">&mdash;</span></div>
+        <div class="sub" id="skyMoonSub"></div>
+      </div>
+    </div>
+    <div id="skyBands"></div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2 id="restHead">Rest of the Day</h2>
+      <span class="station" id="restDate"></span>
+    </div>
+    <ol class="timeline" id="timeline"></ol>
+  </section>
+
+  <footer>
+    <div class="important">
+      <span class="label">Important note</span>
+      <p>Tides and currents are predictions, not observations. Wind, waves, runoff, storm surge and other factors can affect actual conditions. Weather is sourced from the National Weather Service. Use your own judgment and paddle at your own risk.</p>
+    </div>
+    <p>Current from NOAA station HUR0611_16 (George Washington Bridge), about a mile and a half downriver, at the 14 ft bin nearest the surface. Tide from NOAA station 8518902 at the Dyckman Street ferry slip, a few hundred yards from the launch. Both are predictions, baked into this page and good through 31&nbsp;Dec&nbsp;2028; values between NOAA&rsquo;s published points are interpolated. Weather and alerts come live from the National Weather Service grid covering Inwood. Water temperature comes from NOAA The Battery, 12 miles downriver, or NOAA Turkey Point when that gauge is out. Sun and moon are computed rather than fetched, and agree with the US Naval Observatory to within a couple of minutes.</p>
+    <p><a href="https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=HUR0611_16" target="_blank" rel="noopener">NOAA currents &#8599;</a> &nbsp; <a href="https://tidesandcurrents.noaa.gov/stationhome.html?id=8518902" target="_blank" rel="noopener">NOAA tides &#8599;</a></p>
+    <div class="colophon">
+      <p>Site and photos by Dan Blumberg.</p>
+      <p>Feedback? Something you wish this site had? Want to paddle? Email me: <a id="feedbackLink" data-u="hello"
+        data-d="hudsonconditions.com">hello at hudsonconditions dot com</a></p>
+      <p class="owner">&copy; 2026 Modern Product Minds LLC</p>
+    </div>
+  </footer>
+</div>
+
+<script>
+"use strict";
+const SITE = {"slug":"inwood","name":"Inwood","lat":40.8697,"lon":-73.9345,"riverMile":12,"nwsGrid":"OKX/35,49","tideShiftMin":0,"curShiftMin":0,"floodToward":10,"ebbToward":203};
+const RAW = {"tideStart":29454083,"tideDt":[382,388,360,365,383,386,363,362,381,385,367,361,378,386,368,362,374,386,370,363,370,385,375,362,366,385,378,362,365,382,384,362,362,380,389,364,360,377,391,368,358,374,391,372,358,369,391,375,359,366,390,377,363,359,389,377,366,356,386,379,365,356,380,383,363,358,374,388,360,362,367,394,356,368,359,398,355,373,352,401,355,377,347,401,358,382,342,400,363,385,340,397,370,391,337,395,375,395,339,390,378,396,343,384,380,394,350,377,383,389,360,367,386,383,368,360,386,379,372,357,383,377,374,358,378,379,373,361,373,379,374,364,367,381,374,366,363,381,374,370,358,382,376,373,354,381,379,377,352,380,382,380,351,379,383,384,352,375,383,385,355,371,383,385,360,365,383,383,366,359,381,381,368,358,377,381,367,361,371,384,363,367,364,387,361,373,358,389,360,378,352,392,359,384,347,392,361,388,344,390,365,392,343,388,370,396,343,386,376,397,347,382,380,395,354,377,380,391,362,370,383,384,372,360,387,376,379,355,385,371,381,355,382,369,381,357,377,370,379,362,371,372,376,368,364,375,373,374,358,378,370,379,353,380,368,385,349,380,369,389,347,381,371,394,346,381,373,396,350,378,373,396,355,374,372,393,360,371,371,389,366,366,371,385,368,366,369,382,368,368,365,381,367,373,361,381,366,378,356,382,365,384,352,383,364,390,349,382,365,394,347,382,367,397,348,380,371,397,352,378,375,396,360,373,379,391,369,367,381,384,377,361,382,377,384,356,384,369,388,354,383,363,389,355,380,361,386,360,375,362,382,367,368,365,377,374,362,369,372,381,356,373,367,388,351,376,363,395,347,377,362,400,345,378,361,405,347,378,362,407,352,377,361,406,357,375,359,402,361,376,356,397,365,375,357,391,368,376,357,384,370,378,357,379,371,381,356,376,371,385,355,374,370,390,353,375,369,394,351,376,369,397,351,376,369,397,356,373,371,396,363,369,375,392,373,364,377,386,382,359,378,379,388,357,378,371,392,356,378,365,394,356,378,359,394,359,375,357,390,363,372,357,385,371,366,360,379,378,361,363,373,387,355,368,367,394,350,371,362,401,348,373,358,406,347,374,355,410,350,373,353,414,355,373,350,413,361,376,347,407,364,380,344,401,367,383,344,394,369,387,346,386,372,388,349,379,374,388,353,373,375,390,354,370,375,392,355,369,374,395,355,370,372,397,358,369,371,395,364,367,371,392,373,362,373,388,382,358,374,382,390,356,374,375,394,357,372,369,396,359,371,363,397,361,372,358,396,363,372,354,393,368,370,353,388,373,367,354,382,381,362,358,375,389,357,362,369,396,353,366,362,403,350,370,356,407,351,370,351,411,353,372,346,413,358,374,342,412,364,378,338,409,367,385,336,402,369,391,336,394,372,394,339,387,375,394,345,378,378,393,351,371,380,391,356,367,379,391,358,366,377,392,360,367,374,392,364,366,371,391,370,364,370,388,376,361,370,384,384,359,369,380,391,359,368,374,395,361,366,369,396,364,365,365,396,367,366,360,395,369,369,354,394,371,370,351,390,375,368,352,384,380,365,355,378,386,361,359,370,394,356,365,362,400,353,369,355,404,353,372,348,407,355,375,343,407,359,379,338,406,365,385,334,403,371,391,332,398,374,396,334,392,375,399,338,385,378,397,345,378,380,393,355,369,382,388,361,365,381,386,365,362,379,386,367,363,374,387,369,365,370,385,373,365,367,384,377,365,364,381,383,364,364,378,388,365,363,374,392,367,362,371,392,371,362,367,392,373,363,363,392,374,367,357,392,374,370,353,389,375,371,352,383,379,368,355,377,383,364,360,369,389,360,366,361,394,357,372,353,398,355,378,347,399,357,382,341,399,360,387,337,398,366,392,335,394,373,397,335,392,376,400,338,388,377,399,344,382,378,395,354,374,381,388,364,365,383,382,370,361,381,379,372,361,378,378,373,363,373,379,374,366,368,379,374,369,364,379,375,372,360,379,376,374,358,377,380,376,357,376,383,378,359,372,386,380,360,369,386,381,363,365,385,380,367,361,385,378,372,356,383,377,372,356,379,377,371,358,373,380,367,365,365,383,364,371,359,386,361,378,352,389,359,385,346,391,359,391,341,390,362,395,339,389,367,398,340,387,372,401,343,385,376,400,350,380,377,396,357,375,378,389,367,367,381,381,375,361,381,375,379,359,380,370,380,361,376,370,378,365,371,371,376,370,366,373,374,375,360,375,372,380,356,376,370,385,353,377,370,388,353,376,372,391,356,373,376,391,361,369,377,390,365,366,375,388,368,364,374,384,372,362,372,381,373,364,368,379,372,367,365,378,369,373,360,378,367,379,355,380,365,385,350,381,364,392,346,382,363,397,344,382,365,400,345,381,367,402,348,379,371,401,356,375,375,397,366,370,376,389,374,365,377,382,380,362,378,374,385,359,379,367,387,360,376,364,386,362,374,362,383,368,369,364,379,374,363,367,374,381,358,370,370,388,354,372,366,393,352,373,364,398,351,374,363,401,355,372,364,403,361,369,364,400,367,368,362,396,370,369,358,393,370,372,356,389,371,374,356,383,372,377,356,378,372,381,354,375,372,385,353,373,371,390,351,373,370,395,349,375,368,400,348,376,367,401,352,375,368,400,358,372,370,398,308,427,373,391,379,363,374,383,386,360,374,376,390,360,373,369,393,360,374,362,393,362,374,357,392,365,372,356,387,370,368,357,383,376,364,360,376,385,358,364,371,392,354,367,365,399,351,370,360,404,351,371,357,407,355,370,353,410,361,369,351,409,367,371,347,406,369,376,344,400,369,382,342,394,370,386,343,387,373,388,346,380,374,389,350,374,375,391,351,370,376,392,353,369,374,396,352,371,371,398,355,371,369,399,359,370,368,396,367,367,368,392,377,363,370,386,386,360,371,379,392,360,370,372,395,362,369,366,396,364,370,359,397,365,372,354,395,367,372,351,391,372,369,352,386,377,366,354,380,384,361,359,372,392,357,363,366,398,354,367,358,404,354,369,352,408,355,370,347,410,359,373,341,411,364,378,335,410,368,384,333,404,370,391,332,397,371,395,335,390,374,396,340,382,377,395,347,374,379,392,353,369,379,391,357,366,377,392,359,367,374,393,361,368,370,393,366,367,368,390,372,366,366,387,379,364,366,382,388,363,366,377,393,363,366,369,395,366,365,366,397,368,366,360,398,368,371,353,397,369,373,349,394,371,373,348,389,375,370,351,381,381,366,356,374,387,361,362,365,394,358,367,357,399,355,373,348,403,355,377,342,405,357,381,335,406,361,388,329,405,368,394,327,401,373,400,328,396,374,402,333,390,375,401,341,382,377,397,351,373,380,390,360,366,380,386,365,364,377,385,367,365,374,385,368,367,370,384,371,369,365,384,374,369,363,382,378,370,361,379,384,370,361,376,388,371,362,372,392,372,363,367,393,373,366,362,394,372,372,354,395,371,376,349,393,370,377,348,388,372,375,351,380,377,370,357,372,382,365,364,364,387,361,371,355,393,357,378,347,396,356,384,340,397,357,390,335,396,362,395,331,395,368,401,330,393,374,405,333,391,375,404,341,386,374,400,350,379,376,393,361,370,379,385,369,364,379,380,372,363,377,377,374,365,372,377,374,368,368,378,374,371,364,378,374,374,361,377,375,377,358,376,378,378,359,374,381,380,360,371,385,380,364,367,387,379,368,363,387,378,372,358,387,375,377,353,386,372,380,352,382,371,377,356,376,374,372,363,368,377,368,370,360,381,364,378,353,384,360,386,346,387,359,392,341,388,359,397,338,388,362,401,337,386,367,405,339,386,371,406,346,383,373,401,355,379,372,395,363,373,374,387,372,367,376,379,377,364,377,372,380,364,374,370,380,366,371,370,377,372,366,370,376,376,362,372,374,380,359,373,372,384,357,373,371,387,356,373,372,389,359,371,375,389,365,367,376,389,370,363,376,385,374,362,373,383,376,362,371,379,378,362,370,375,377,365,367,374,374,371,361,375,370,377,357,376,367,384,352,377,365,392,346,379,363,398,344,380,362,403,343,380,363,405,345,379,366,405,352,376,369,402,361,374,370,396,370,370,370,389,375,369,370,381,381,366,372,373,385,365,373,367,386,366,372,363,384,370,369,362,382,374,366,363,378,380,362,365,374,385,359,368,370,390,356,370,366,394,357,369,365,397,360,368,364,399,365,366,364,397,371,366,361,395,373,368,357,392,374,371,355,388,374,375,353,383,374,379,353,378,374,382,353,374,373,386,352,372,371,391,351,371,370,396,348,373,368,400,348,374,367,402,350,375,365,402,356,373,365,400,364,370,367,396,373,367,368,389,381,366,367,382,386,366,367,375,389,366,368,369,391,367,369,362,391,368,371,357,390,370,370,356,385,376,366,358,380,382,363,360,375,387,360,363,370,393,358,365,364,398,358,367,359,401,360,367,355,404,364,368,351,405,368,371,346,403,372,375,343,399,371,382,340,395,371,387,339,390,371,391,342,383,373,392,347,375,375,392,350,371,375,394,351,369,374,396,353,369,371,398,355,370,368,399,358,371,366,397,364,369,365,394,372,367,365,389,381,365,365,384,387,365,365,377,391,367,364,372,393,368,365,365,395,369,369,358,395,369,372,352,394,370,372,351,389,374,370,352,384,379,367,355,377,386,363,359,370,392,360,364,362,398,358,367,355,402,359,370,348,404,361,373,342,407,364,378,335,407,368,384,331,404,370,391,330,398,371,397,330,393,372,399,335,386,375,398,343,378,377,395,351,370,378,393,355,367,377,392,358,368,373,392,361,369,369,393,364,369,367,390,370,369,364,388,375,368,363,384,383,367,363,380,389,367,364,373,393,369,364,369,394,370,366,363,396,370,370,355,398,369,375,349,396,369,376,346,392,372,374,348,385,377,370,353,377,383,366,359,368,389,362,365,360,394,359,371,351,399,357,376,344,401,358,381,337,403,360,387,330,403,365,394,325,402,370,400,326,397,373,404,329,393,373,403,337,386,374,400,346,378,377,394,356,370,378,389,362,366,376,386,366,367,372,386,367,369,368,386,369,371,365,384,372,372,363,382,376,372,362,379,381,373,361,376,386,373,364,370,391,373,367,365,393,373,369,360,395,371,374,354,396,369,379,348,394,368,381,346,390,368,379,349,383,372,374,355,375,377,369,363,366,383,364,370,357,388,360,377,349,393,356,385,341,395,356,391,334,396,358,397,330,394,364,403,327,394,370,408,330,392,373,407,337,389,371,404,346,383,371,398,356,375,374,390,365,369,375,383,370,367,374,379,372,368,371,378,372,371,367,378,373,374,364,377,373,378,360,377,375,379,359,375,377,380,361,372,381,380,364,368,386,379,370,362,389,377,374,358,389,374,379,354,388,372,382,350,387,369,384,350,383,368,381,354,377,370,377,361,369,373,372,368,362,377,367,377,354,381,362,385,347,385,358,393,340,387,358,399,336,387,359,405,333,387,363,409,335,385,368,411,342,384,369,407,352,381,368,400,360,377,368,392,368,372,370,384,374,369,372,376,378,368,371,372,378,370,369,370,378,374,365,370,376,378,363,371,374,382,360,371,373,385,359,371,373,387,360,370,373,388,365,366,376,387,372,361,379,384,379,357,379,380,382,356,376,377,383,357,373,375,383,359,371,372,381,364,367,371,377,369,363,371,373,377,357,373,369,384,351,375,366,391,346,377,363,399,342,379,361,405,340,380,361,408,342,379,362,410,347,378,364,408,357,375,366,402,366,374,365,394,373,372,365,386,378,370,367,378,382,370,368,370,385,370,368,366,384,372,368,363,382,376,365,363,380,380,363,364,376,385,360,366,372,390,359,367,369,393,360,366,368,394,364,365,366,395,371,362,365,394,378,360,364,391,380,362,361,387,380,367,356,384,379,372,355,380,378,376,354,376,376,380,354,372,375,384,353,370,373,389,351,370,370,395,348,371,368,401,346,373,366,404,347,374,364,406,351,374,362,405,358,373,362,401,368,371,362,396,377,369,363,387,383,370,362,380,386,371,363,373,389,371,366,365,391,371,368,360,389,373,369,356,387,376,368,356,383,380,365,358,378,385,363,360,373,391,361,363,367,394,361,365,362,397,364,365,357,400,367,365,354,401,372,367,349,400,375,372,345,397,376,378,341,393,375,384,340,388,374,389,341,383,375,391,345,376,375,392,349,371,375,393,351,368,374,395,352,368,372,398,352,370,368,400,355,371,365,399,360,372,362,397,366,371,361,394,374,370,361,388,383,369,361,383,387,371,361,376,390,372,363,369,393,372,366,361,395,372,370,354,395,371,373,350,392,373,372,350,387,376,371,352,380,382,367,356,374,387,364,361,366,392,362,366,357,397,361,370,350,400,362,374,344,402,364,379,337,403,368,385,331,403,371,391,329,399,372,396,330,394,371,399,335,387,373,399,341,380,375,396,350,371,377,392,356,367,375,392,358,367,372,392,360,369,369,392,362,371,365,391,366,373,361,389,371,373,359,387,376,374,359,383,383,373,360,378,389,373,362,372,393,373,365,366,394,373,369,359,397,369,377,350,397,367,381,345,395,367,379,346,389,370,377,350,380,376,372,356,372,382,367,363,363,388,363,370,354,393,360,376,346,397,358,382,339,399,359,388,331,401,362,395,325,401,367,402,323,400,370,406,327,395,371,406,334,389,371,403,343,382,373,396,354,374,374,390,362,368,374,386,365,369,371,384,367,370,368,384,368,374,363,384,370,376,360,383,372,377,359,381,376,378,359,378,381,377,362,373,387,377,366,368,391,375,370,362,393,373,376,355,395,369,382,348,396,365,386,344,393,364,385,346,386,366,381,352,378,370,376,359,370,376,369,368,361,381,364,376,352,387,359,385,343,391,356,392,336,393,356,397,331,393,359,404,327,393,365,409,328,392,369,412,334,390,368,409,343,386,367,402,352,381,368,394,362,374,371,386,368,371,371,380,372,370,369,378,372,373,366,377,373,376,363,377,372,380,360,377,373,382,359,375,375,382,361,372,378,382,364,369,383,380,371,363,387,378,377,358,388,374,382,353,389,370,386,350,388,366,389,348,386,363,388,351,381,364,383,358,373,367,377,366,366,371,371,374,358,376,365,384,350,380,360,392,344,383,357,399,338,385,356,405,335,385,358,409,335,384,362,412,340,383,365,412,348,382,364,406,356,381,362,398,363,379,363,390,370,375,366,382,375,373,367,375,378,373,367,371,378,375,365,370,377,379,363,370,375,383,361,370,374,385,361,370,373,387,362,368,374,386,367,365,375,386,374,360,378,383,381,356,378,380,385,355,376,376,387,356,373,373,387,359,371,369,386,362,370,367,382,368,365,367,378,374,361,367,373,382,355,371,368,389,350,373,364,398,344,376,361,404,341,378,359,408,342,378,358,410,346,377,359,410,353,377,359,407,362,376,359,400,369,377,358,393,373,377,358,386,377,377,361,377,382,376,363,370,384,375,366,365,383,377,366,363,381,380,364,363,379,384,363,364,375,387,363,364,372,390,364,364,370,390,368,362,368,391,374,360,366,390,380,359,365,387,384,361,361,385,383,366,357,382,382,371,355,379,381,375,355,374,380,379,355,370,378,383,355,368,375,387,353,368,372,392,351,369,368,399,348,371,365,403,348,373,362,405,350,374,359,406,355,374,358,403,363,373,357,400,371,374,356,394,377,375,356,387,381,377,356,380,384,378,358,374,386,377,363,366,388,376,367,360,387,377,368,357,385,379,368,357,381,382,367,358,376,387,366,360,371,389,367,361,366,392,368,362,361,394,370,364,356,395,375,366,352,394,378,370,347,393,379,376,344,390,377,382,342,387,376,387,342,383,375,391,345,376,377,391,349,371,376,391,353,367,374,394,353,367,371,396,354,368,368,398,355,371,364,399,358,373,360,398,363,373,357,396,369,374,356,392,376,375,356,387,382,376,356,381,386,377,358,375,388,378,360,369,391,376,366,360,393,374,372,353,393,372,374,351,389,374,373,352,383,378,371,355,376,383,369,359,369,387,367,363,362,391,365,368,354,394,366,372,348,396,367,376,342,398,369,382,336,398,372,388,333,397,372,394,332,393,371,398,334,389,372,398,340,382,374,396,348,374,375,393,355,368,375,391,358,367,372,391,359,370,368,391,361,373,363,392,363,375,360,391,367,376,357,389,372,377,356,385,378,378,357,381,384,377,360,375,389,377,363,369,391,376,367,363,393,374,373,355,395,370,379,348,395,367,381,347,390,368,379,349,383,373,375,354,376,377,371,361,366,383,367,368,358,388,363,375,350,392,360,382,342,395,360,387,336,396,362,394,329,398,365,401,326,397,369,405,329,394,369,406,334,390,368,403,343,383,369,399,351,377,371,392,360,371,371,388,363,370,370,385,365,372,367,384,366,376,362,384,368,379,359,383,370,381,357,382,373,382,357,379,378,381,360,375,383,380,366,369,388,378,371,362,392,374,377,356,393,370,383,350,394,366,387,345,393,362,388,346,387,364,383,351,381,366,379,358,372,372,372,367,363,377,367,376,354,383,361,384,347,387,357,392,339,390,356,398,333,391,357,405,328,392,360,411,328,391,365,414,334,390,365,411,343,386,363,405,351,382,363,398,359,377,366,390,365,375,367,382,370,374,366,379,371,375,365,377,371,379,362,376,372,382,360,376,372,385,358,376,373,386,359,374,375,386,363,370,380,383,371,363,386,379,380,356,388,374,386,351,388,370,389,349,387,365,392,348,385,362,391,350,381,362,386,357,375,363,381,364,368,367,374,373,361,371,369,382,352,376,363,391,345,381,358,399,339,383,355,407,334,385,355,412,333,384,357,416,338,382,360,416,347,382,359,411,355,381,358,403,361,381,357,395,367,379,360,386,372,378,362,378,376,377,363,373,377,379,363,370,377,381,361,370,376,384,360,370,375,387,360,370,373,389,362,368,373,389,367,364,376,386,376,358,379,382,385,353,380,377,390,352,378,373,392,353,375,370,391,356,373,366,390,360,370,365,386,365,368,363,382,372,362,365,376,380,357,367,371,387,352,371,366,395,346,374,361,403,342,376,358,410,340,377,356,413,343,377,355,414,349,377,355,412,358,377,355,406,366,378,354,398,371,380,353,390,375,381,354,383,378,381,358,375,381,380,361,368,382,380,364,364,381,382,363,364,379,385,362,364,377,387,363,365,373,389,365,364,371,390,369,361,370,389,375,359,368,388,383,356,367,385,388,357,365,381,389,361,361,378,388,366,358,375,386,372,357,372,383,376,358,367,382,380,357,365,378,384,356,365,374,390,352,367,370,396,349,369,365,402,348,372,361,405,349,373,358,407,352,375,354,406,359,375,353,403,367,376,352,399,374,378,351,392,378,381,351,386,381,381,354,378,384,382,358,370,386,380,364,363,387,379,367,358,386,379,368,357,383,381,368,358,378,384,368,359,374,387,368,361,368,389,369,362,363,391,372,363,359,391,376,365,354,392,379,369,350,390,382,373,347,388,381,379,344,385,380,384,344,381,379,387,348,374,379,388,353,368,378,389,354,366,375,391,355,365,372,393,354],"tideV":[-35,473,-37,359,-44,488,-55,373,-48,494,-67,384,-46,489,-73,391,-38,475,-72,392,-24,451,-65,390,-6,421,-51,384,15,388,-32,377,36,356,-11,372,53,327,8,368,62,305,23,367,64,291,32,370,59,285,35,376,48,286,33,386,33,294,28,398,17,306,21,410,2,320,16,419,-12,334,13,424,-23,347,11,423,-30,360,12,417,-34,372,14,406,-34,382,18,390,-29,391,24,370,-21,398,30,350,-12,404,31,333,-5,412,25,323,-5,422,12,323,-10,434,-6,334,-19,449,-27,352,-30,462,-46,374,-38,469,-61,392,-40,467,-68,404,-35,454,-68,409,-25,434,-59,407,-10,407,-43,399,9,377,-22,388,30,346,3,375,51,319,26,364,66,297,45,358,73,284,56,357,71,280,58,362,61,285,53,374,44,299,42,389,24,320,29,405,3,344,15,420,-16,368,4,429,-30,391,-5,431,-39,410,-10,427,-42,424,-10,415,-39,432,-5,398,-29,434,5,376,-15,429,18,353,2,422,28,336,16,417,30,328,21,418,23,333,18,424,8,349,8,434,-11,373,-4,444,-28,398,-14,449,-40,418,-19,447,-45,431,-18,436,-41,435,-12,419,-30,432,0,397,-13,422,17,373,8,408,36,348,32,392,57,325,56,376,74,306,76,365,84,295,87,361,84,295,88,364,73,306,79,374,55,326,64,389,33,354,43,407,10,387,22,423,-10,419,2,434,-25,448,-13,439,-34,469,-21,436,-35,481,-22,425,-28,483,-16,408,-15,474,-3,387,4,459,14,367,25,441,28,354,42,428,34,352,50,421,30,363,47,420,20,383,38,423,7,407,26,427,-5,429,15,428,-11,446,8,424,-11,456,6,416,-5,458,10,403,8,453,18,387,24,442,30,369,43,428,46,351,64,412,62,334,84,396,77,321,102,382,86,316,112,375,86,322,112,375,76,338,101,381,59,363,81,392,38,396,56,405,16,432,28,420,-3,467,4,431,-17,497,-15,437,-24,516,-26,436,-23,524,-27,428,-14,518,-21,415,0,503,-9,399,20,480,6,386,42,456,20,380,60,436,28,385,69,422,29,398,68,412,26,415,62,406,21,433,52,402,18,449,42,400,17,461,34,396,21,467,29,390,28,467,29,383,40,463,33,373,53,454,41,362,68,442,50,351,84,428,60,342,100,413,69,337,113,400,74,338,122,390,74,350,120,385,66,370,108,385,52,398,87,390,36,431,61,397,18,466,32,407,2,498,6,418,-11,524,-14,426,-17,540,-26,429,-16,543,-31,426,-7,534,-28,420,7,516,-20,412,25,490,-9,406,46,462,4,406,65,436,16,411,77,414,24,420,80,396,29,431,78,382,34,441,71,373,37,450,62,368,41,457,54,366,45,462,47,365,50,463,43,363,58,462,42,360,67,456,42,357,77,448,44,354,88,438,47,353,99,426,51,356,108,413,53,363,114,401,54,378,113,391,50,399,103,385,43,425,85,383,32,453,61,384,19,481,35,390,6,507,10,401,-5,529,-11,412,-12,542,-25,422,-12,544,-34,427,-6,535,-36,429,6,516,-32,429,22,490,-23,427,42,459,-8,426,62,427,9,426,78,398,26,427,88,375,40,430,90,358,50,432,86,347,57,436,79,343,61,442,70,344,62,449,60,349,63,454,50,354,65,457,43,360,68,457,37,365,73,453,33,370,79,446,32,376,85,435,32,384,90,423,35,395,95,409,38,408,96,394,40,424,92,382,40,442,80,374,36,462,63,373,28,481,41,378,17,501,18,391,5,519,-4,409,-4,532,-22,426,-8,535,-33,440,-5,526,-38,447,4,508,-34,450,19,481,-23,447,38,449,-5,440,60,415,18,432,80,384,41,425,95,359,60,420,102,342,74,418,102,333,80,420,95,332,81,427,83,338,78,437,69,350,72,447,54,364,67,455,41,378,63,460,30,391,62,459,24,404,62,454,21,415,64,444,22,425,68,430,26,434,73,414,34,440,79,396,42,446,82,380,49,453,79,370,51,462,67,369,45,474,49,378,34,489,26,397,20,504,4,422,8,516,-15,446,0,518,-26,463,0,509,-28,472,8,491,-22,472,21,465,-7,465,39,435,15,451,61,403,41,435,84,374,67,420,102,350,88,410,113,336,102,405,114,331,106,407,106,335,102,415,92,348,92,427,73,367,80,441,54,389,67,452,37,411,56,460,25,432,48,461,18,449,43,457,16,462,42,448,19,470,45,433,26,472,53,415,38,469,63,395,52,462,72,378,64,457,74,371,69,457,66,376,64,463,50,392,51,473,29,418,35,484,9,445,21,491,-6,469,12,490,-13,485,9,481,-11,491,14,464,0,487,26,442,18,475,42,415,41,457,62,389,66,437,83,364,91,417,102,344,111,403,113,334,123,396,114,334,125,396,105,344,117,403,89,363,102,414,69,388,83,427,48,417,62,439,30,445,44,448,17,471,29,453,10,491,20,450,9,503,16,442,14,505,20,428,24,499,28,410,39,486,41,392,56,469,52,379,71,454,56,378,77,447,51,390,72,445,38,411,60,447,23,437,44,450,10,461,30,451,1,480,20,448,0,491,16,439,6,492,19,426,19,485,27,408,37,471,39,388,57,453,55,368,79,433,71,350,100,413,86,336,117,396,95,331,128,385,95,336,129,382,87,351,119,384,72,374,100,391,54,403,76,401,34,434,50,412,17,466,26,422,3,494,6,428,-5,514,-7,429,-6,523,-13,424,-1,521,-11,414,10,508,-4,400,26,488,6,388,44,465,16,383,60,443,22,388,68,426,22,402,66,415,17,421,57,408,11,440,45,402,6,457,33,398,5,468,23,394,8,474,17,388,16,473,17,379,27,466,20,368,41,454,27,356,56,439,36,344,73,422,45,334,88,405,54,328,103,388,60,327,112,374,61,336,114,365,56,353,105,361,46,377,86,362,32,406,61,367,16,437,33,375,0,467,6,385,-15,494,-17,394,-24,513,-34,401,-28,521,-43,402,-24,517,-46,399,-15,503,-44,394,-1,480,-37,390,16,452,-28,389,34,423,-17,394,47,398,-9,403,52,377,-3,413,49,361,2,423,42,349,6,431,33,343,10,437,24,340,14,440,16,339,18,441,11,337,24,438,9,335,32,432,8,332,42,423,9,329,52,411,12,327,64,396,16,327,74,381,20,331,82,365,23,341,86,351,24,356,80,341,21,378,66,336,13,402,45,335,1,428,19,340,-13,454,-8,351,-28,478,-33,365,-40,497,-54,380,-47,506,-68,391,-48,504,-77,398,-41,490,-78,401,-30,467,-73,401,-12,436,-60,400,8,402,-43,398,27,370,-24,396,40,342,-10,398,44,322,4,397,44,309,14,398,39,303,19,402,30,304,20,407,19,309,19,412,8,317,19,415,-1,324,20,415,-8,330,24,411,-12,336,29,403,-13,341,36,391,-11,347,43,376,-6,353,51,360,1,361,56,344,8,370,57,329,12,383,51,319,10,399,36,316,3,418,14,322,-10,439,-12,338,-28,461,-40,361,-44,481,-66,387,-57,492,-85,409,-63,492,-96,424,-60,480,-97,431,-50,456,-89,430,-32,425,-71,421,-10,389,-46,408,15,354,-18,394,37,324,8,382,51,302,27,375,56,290,37,373,53,288,40,377,43,294,37,386,28,307,30,396,13,323,23,404,-2,339,17,409,-12,354,14,409,-19,366,15,404,-20,376,17,394,-17,384,22,381,-11,390,29,366,-2,394,37,349,9,396,44,333,18,399,45,321,23,405,36,320,19,416,18,330,6,432,-7,351,-13,451,-34,382,-32,468,-59,413,-48,478,-77,439,-56,477,-84,455,-55,465,-81,460,-46,443,-68,454,-28,414,-46,439,-5,381,-18,418,22,349,13,396,46,322,40,378,64,303,60,368,72,295,70,364,70,298,70,368,59,310,62,377,42,329,49,389,24,352,36,400,8,375,24,408,-3,396,15,411,-10,413,9,409,-11,426,8,402,-7,434,10,391,0,436,17,377,11,434,26,362,24,428,37,347,37,421,42,338,45,418,37,343,42,422,22,359,29,431,1,386,10,442,-21,419,-10,454,-40,450,-25,460,-52,473,-34,457,-53,484,-34,446,-45,484,-25,427,-28,473,-10,403,-5,454,11,377,22,431,34,352,50,407,57,330,75,387,74,317,93,373,82,314,101,367,80,322,98,368,69,339,87,374,54,362,71,384,38,388,52,394,22,415,34,404,11,440,19,410,5,460,9,411,3,474,3,408,6,480,3,400,14,478,8,390,24,470,16,378,38,457,26,368,52,442,31,368,61,432,29,379,59,427,20,399,48,426,6,426,32,428,-7,453,16,431,-17,476,2,432,-20,492,-5,428,-16,497,-6,419,-4,492,0,405,13,480,12,389,33,462,27,371,55,440,43,354,77,419,59,341,97,399,72,334,113,383,79,337,120,374,78,349,117,370,70,367,105,370,59,391,86,375,46,418,64,383,33,446,42,392,22,472,22,401,14,493,7,407,10,507,-3,409,11,512,-7,407,17,508,-7,403,26,496,-3,398,39,478,4,397,52,457,10,402,62,439,12,415,64,424,11,433,59,413,9,451,49,405,7,468,38,400,7,481,28,397,11,489,22,394,18,490,20,389,28,484,22,382,42,474,27,373,57,461,34,364,72,444,42,357,88,427,51,352,103,409,59,352,116,392,65,357,123,378,67,370,121,369,65,388,110,364,58,411,93,364,49,436,70,369,38,462,46,378,26,488,23,390,15,510,3,402,8,524,-12,411,5,530,-22,418,8,525,-27,422,15,511,-27,425,26,489,-22,428,40,463,-13,434,54,436,-2,441,62,412,8,450,65,393,16,457,63,378,24,463,57,369,31,467,51,366,37,470,44,365,43,471,39,366,49,470,35,367,56,464,34,367,65,456,33,366,75,445,35,367,86,431,39,368,96,415,45,372,107,398,52,378,114,382,58,389,115,368,61,404,109,360,59,423,94,357,53,444,73,360,42,467,49,369,28,491,23,385,14,514,-2,405,1,530,-22,424,-6,536,-37,439,-7,532,-45,451,-2,516,-46,457,10,490,-38,460,26,460,-22,458,45,427,-2,455,62,397,18,451,73,374,36,448,77,357,49,446,76,349,57,446,71,348,61,449,62,353,62,454,52,361,62,457,43,369,62,457,36,377,65,453,31,384,70,445,30,390,76,433,33,395,84,418,40,399,93,402,48,404,100,386,58,411,105,371,65,419,104,360,67,432,94,355,63,448,76,360,51,467,51,373,34,489,23,396,15,512,-5,424,-2,528,-29,452,-13,534,-45,474,-17,528,-51,487,-12,511,-48,490,0,483,-34,485,19,450,-11,473,43,416,16,458,66,385,43,443,84,362,65,433,93,348,79,427,93,343,84,428,87,348,83,433,75,360,77,440,61,375,70,447,47,390,65,450,37,404,62,449,32,416,62,443,32,424,65,433,36,430,70,420,44,433,78,405,54,434,86,389,65,435,94,374,75,435,97,363,80,439,91,360,77,449,74,370,64,464,50,391,44,483,21,421,20,502,-7,456,0,515,-29,487,-15,519,-41,508,-19,512,-42,517,-14,493,-32,514,-1,466,-13,500,20,435,14,478,46,403,44,454,71,374,73,432,92,355,95,418,102,346,106,411,101,348,107,411,93,359,101,416,79,376,89,424,63,396,76,432,48,417,64,437,38,435,55,438,34,449,50,435,34,459,50,427,40,464,53,416,48,464,59,402,59,461,67,388,70,454,76,374,82,447,80,366,89,443,76,370,85,446,60,388,70,454,38,415,48,466,12,449,24,478,-10,483,3,486,-26,510,-12,486,-32,526,-16,478,-26,528,-11,461,-11,518,2,438,11,498,21,411,38,472,44,385,66,444,67,362,92,420,85,348,112,402,94,345,121,393,93,352,119,390,84,367,108,392,71,387,93,398,57,411,75,404,44,434,57,410,34,454,43,414,29,470,33,414,29,481,28,410,33,486,28,403,40,484,30,393,50,476,36,382,61,464,42,374,72,450,45,373,79,438,42,384,77,432,31,406,64,431,15,433,44,433,-1,463,23,436,-15,489,4,437,-22,508,-8,436,-21,516,-13,428,-12,513,-9,416,4,500,1,399,24,479,15,380,46,455,31,362,70,429,47,347,91,405,60,339,108,385,68,340,116,371,69,350,114,364,64,366,104,360,55,386,87,361,44,409,66,365,33,432,45,371,23,454,26,378,16,473,10,384,12,486,0,386,12,492,-7,386,16,490,-10,383,23,480,-9,380,32,464,-7,379,43,445,-4,384,51,425,-3,397,53,408,-5,416,46,396,-9,436,33,388,-14,455,19,383,-17,470,5,380,-16,480,-5,379,-12,482,-10,375,-4,478,-10,369,8,467,-6,360,23,452,0,351,39,433,8,342,56,412,17,336,72,391,26,333,86,370,34,335,95,352,39,344,97,338,40,358,90,329,37,375,76,325,31,395,56,327,22,418,33,333,10,441,10,344,-1,462,-12,357,-11,479,-30,369,-17,489,-44,378,-18,488,-53,386,-15,479,-58,392,-8,460,-57,396,3,436,-51,402,15,408,-41,408,24,382,-31,416,28,360,-22,424,26,345,-15,430,19,335,-10,436,11,332,-6,440,2,333,-2,442,-6,335,2,441,-11,338,8,436,-14,338,16,427,-15,339,25,415,-14,338,36,399,-9,340,46,378,-1,341,58,358,9,342,69,338,19,347,75,321,27,355,74,309,30,368,64,303,26,384,47,304,17,405,23,314,2,429,-5,332,-15,454,-33,355,-33,475,-58,379,-46,488,-79,401,-54,490,-92,417,-54,480,-97,428,-48,459,-92,431,-34,430,-79,428,-16,397,-58,422,4,365,-35,414,20,338,-15,407,28,319,0,403,30,309,10,402,25,308,14,405,16,315,13,410,4,325,12,413,-6,336,10,414,-15,345,11,411,-20,353,14,403,-20,359,20,391,-16,362,28,375,-8,363,39,358,4,364,50,340,16,364,60,323,28,367,65,309,35,373,60,302,35,385,46,305,25,402,23,319,8,424,-6,343,-14,449,-38,376,-37,471,-66,409,-56,485,-88,438,-68,488,-100,458,-70,477,-101,467,-62,455,-91,464,-46,426,-70,451,-22,391,-42,432,4,358,-12,413,27,331,15,397,42,314,33,387,48,308,42,384,44,312,43,387,34,324,38,393,20,341,30,400,7,358,22,404,-3,373,17,404,-9,386,15,400,-9,394,17,391,-4,398,22,379,6,399,31,365,18,398,42,350,30,395,52,335,43,393,60,324,52,392,59,319,53,398,47,327,43,411,25,347,24,428,-3,379,-2,448,-33,416,-28,467,-59,454,-49,478,-77,483,-62,479,-84,500,-64,469,-79,502,-55,448,-63,492,-38,421,-38,470,-13,390,-8,444,15,361,25,417,40,338,52,396,57,326,70,383,64,326,77,378,60,334,74,379,51,350,65,384,38,370,52,391,25,391,39,396,16,409,29,399,12,424,23,397,12,434,21,392,18,438,24,384,27,439,29,374,37,436,37,362,49,430,46,352,60,423,52,346,69,417,51,348,70,416,41,363,60,421,23,389,40,430,0,423,15,442,-24,459,-10,453,-42,492,-31,460,-53,515,-42,460,-53,525,-43,451,-43,521,-35,434,-24,504,-19,412,1,480,2,388,29,451,26,366,58,423,48,351,83,400,63,345,99,384,69,348,103,375,68,360,99,372,61,377,87,373,51,397,72,377,42,418,56,382,34,438,42,387,30,453,31,389,30,464,25,389,34,470,23,386,40,471,23,381,48,468,26,376,56,460,29,373,66,449,32,374,73,438,31,384,74,429,25,403,66,424,13,429,49,423,0,458,29,425,-13,485,8,428,-22,508,-8,430,-24,522,-17,430,-20,525,-18,424,-7,517,-12,412,10,501,-2,398,32,478,13,384,54,452,28,370,77,426,44,362,97,403,57,361,111,384,64,366,116,370,66,378,112,362,64,394,101,358,59,412,85,359,53,431,68,364,47,450,50,370,41,468,35,378,38,482,23,384,36,491,14,389,38,494,7,392,41,491,3,396,46,482,1,401,53,467,2,408,60,450,4,420,64,432,5,437,61,418,4,455,53,407,2,473,40,399,1,488,27,396,1,500,15,397,3,507,8,398,9,507,4,397,20,500,6,393,33,487,10,388,48,469,16,382,64,449,25,377,81,426,35,374,97,404,46,374,110,383,56,379,116,366,63,388,116,353,67,400,108,346,66,415,94,344,62,432,76,348,54,452,55,358,45,472,34,372,35,491,15,388,27,504,-2,403,22,510,-15,416,21,508,-24,428,23,497,-28,438,29,478,-25,446,38,454,-17,452,48,428,-6,459,55,406,5,465,56,388,14,470,53,376,21,475,46,372,26,479,38,374,29,482,29,379,33,483,23,384,38,480,19,388,46,472,17,390,55,460,19,391,65,443,23,391,76,425,32,391,89,404,43,391,101,383,56,392,111,364,68,396,116,349,76,404,112,341,78,415,101,339,73,431,82,345,62,451,58,360,47,474,32,383,30,496,5,409,14,514,-17,434,3,521,-34,456,-3,518,-44,472,-2,504,-44,480,5,482,-36,482,19,453,-20,478,37,422,2,470,53,396,22,463,64,376,39,458,68,365,49,456,65,363,54,457,57,369,55,460,47,379,53,463,37,390,52,463,30,400,53,459,25,408,56,451,25,413,62,438,30,416,70,422,39,415,81,404,52,413,93,385,66,410,105,367,80,408,113,352,91,411,113,344,94,418,103,345,87,433,84,357,72,452,57,379,50,475,26,411,26,498,-4,446,3,515,-28,478,-13,523,-44,503,-21,518,-49,517,-20,503,-44,519,-9,478,-29,510,9,447,-5,493,33,416,23,472,56,389,49,455,72,372,68,443,79,365,78,437,78,368,80,437,70,379,76,440,58,394,69,443,47,409,62,445,38,423,57,444,34,434,55,438,35,440,57,428,41,442,63,415,52,440,72,399,65,436,83,383,79,429,95,368,93,424,103,356,103,420,105,351,106,423,95,358,97,434,74,378,77,450,47,408,51,469,16,446,21,488,-12,484,-5,502,-34,517,-24,507,-45,539,-32,502,-45,546,-29,486,-33,539,-16,462,-13,520,4,433,15,493,29,405,45,465,54,382,73,441,72,370,92,424,79,369,100,416,78,377,98,412,70,390,90,413,60,407,78,416,50,425,65,418,42,441,55,418,38,452,49,415,40,459,47,409,47,461,50,399,57,458,56,387,69,451,64,375,81,443,72,364,93,434,78,358,101,427,78,359,103,424,68,373,93,427,50,399,72,436,25,433,44,447,0,470,14,458,-22,506,-12,468,-38,533,-30,471,-43,548,-37,466,-37,548,-34,452,-22,534,-22,432,0,510,-4,410,26,480,17,388,55,448,38,371,80,421,55,364,98,400,63,366,105,387,64,376,102,379,59,390,91,376,52,407,77,376,44,424,61,378,38,440,47,381,34,453,36,381,35,461,30,380,40,464,28,376,47,462,28,370,55,457,30,364,64,449,32,360,72,438,34,361,78,426,32,370,80,415,26,388,72,409,14,414,54,408,-2,444,30,409,-18,474,5,412,-31,500,-17,417,-39,518,-33,420,-40,526,-40,418,-32,522,-39,410,-18,507,-31,397,2,484,-19,382,24,456,-4,368,48,426,12,358,70,398,26,353,86,373,37,356,94,354,42,364,93,342,43,376,84,335,40,390,70,332,35,406,53,334,30,422,36,339,25,436,21,345,22,449,8,351,20,457,-1,355,21,460,-9,359,24,457,-14,363,28,450,-18,368,33,437,-19,375,38,420,-19,386,42,401,-18,401,40,385,-20,419,31,373,-23,438,16,366,-28,456,0,364,-32,471,-17,366,-34,482,-30,371,-34,486,-38,374,-28,483,-41,373,-17,471,-40,370,-3,453,-34,364,13,430,-26,357,31,405,-14,352,49,378,0,348,65,352,14,348,76,330,25,351,80,313,32,359,76,302,35,369,65,298,33,382,49,299,27,399,30,308,18,417,9,321,8,435,-11,337,-2,450,-30,360],"curStart":29454061,"curDt":[156,198,209,222,191,163,146,213,152,201,208,221,193,162,149,210,151,199,210,218,194,166,153,203,150,201,207,215,197,175,151,197,150,209,195,214,200,184,148,192,153,219,177,215,203,188,149,190,159,219,163,218,206,186,154,194,169,207,152,225,201,187,160,207,179,185,143,237,187,191,170,215,190,164,136,243,173,198,181,214,206,146,132,240,163,208,187,210,220,139,129,230,157,217,188,209,227,139,127,220,154,224,183,211,227,145,126,214,151,225,179,216,220,153,129,210,148,222,178,221,209,162,136,205,147,213,183,222,200,170,146,198,148,200,193,221,193,176,154,192,151,185,206,217,189,180,162,186,157,174,215,210,190,178,170,183,165,169,217,202,191,176,178,182,174,172,207,195,195,173,185,182,186,174,194,191,198,171,191,185,199,169,182,190,199,172,197,199,199,162,171,198,192,174,205,226,182,157,161,215,174,179,213,232,180,156,152,223,161,188,217,227,187,159,145,220,155,199,214,221,195,163,140,216,152,209,204,219,199,163,142,212,151,211,199,216,200,164,149,208,150,209,196,214,198,169,157,200,153,206,193,212,195,178,159,195,155,209,183,211,192,189,157,193,160,212,169,211,190,198,156,193,168,210,156,211,190,202,158,196,182,198,144,213,189,205,162,206,196,176,134,222,181,209,167,221,205,154,124,237,167,212,174,229,215,138,118,245,154,216,181,227,224,131,119,239,149,220,184,221,229,137,123,224,148,224,180,220,224,150,128,211,148,225,175,222,213,164,133,205,147,221,173,224,201,174,141,202,148,211,178,223,192,178,151,200,150,198,188,219,186,176,163,198,156,185,199,213,181,171,177,196,163,173,208,205,180,163,192,195,171,167,209,198,180,160,202,194,179,167,202,192,182,164,205,192,191,168,189,187,187,170,206,192,202,166,175,186,192,175,207,200,207,160,161,192,193,178,211,230,187,157,148,213,176,185,214,238,185,155,142,230,154,196,214,228,195,158,142,222,150,208,206,219,202,163,143,212,152,215,194,214,203,168,148,206,155,213,186,213,199,171,156,202,159,206,184,210,195,175,164,199,162,201,181,208,188,184,167,197,166,200,173,208,181,195,166,198,171,200,162,206,176,207,164,199,179,199,148,205,174,216,163,201,192,191,136,203,175,222,164,207,209,173,125,201,181,224,165,221,219,154,117,207,180,223,167,237,220,142,114,230,157,221,170,243,219,141,118,235,145,218,174,238,216,151,130,221,143,217,174,232,209,167,138,207,146,215,173,227,199,180,143,202,149,212,172,224,189,186,150,202,153,204,175,220,182,184,160,204,158,193,183,214,176,178,173,206,164,182,190,208,173,168,190,206,171,170,198,201,171,161,204,206,177,163,200,195,171,159,215,203,184,161,194,191,173,163,219,200,192,165,181,187,178,171,217,200,202,167,164,186,185,180,213,207,208,164,149,189,190,186,210,234,193,161,139,215,168,195,205,242,192,158,140,231,147,204,201,230,199,162,149,216,151,209,193,217,202,170,156,203,159,210,182,211,199,177,160,199,166,205,174,210,192,181,166,198,173,196,172,208,185,185,171,200,178,187,170,207,176,192,175,201,182,184,165,205,169,201,176,203,185,185,155,203,163,213,173,205,191,187,142,201,161,223,170,206,201,185,130,195,166,230,167,208,216,176,122,185,177,231,165,216,226,166,118,176,189,227,164,233,222,161,120,182,185,219,164,248,210,163,128,216,148,211,166,251,199,172,140,215,142,204,171,242,192,181,151,207,146,201,174,230,185,189,157,203,155,198,174,220,179,191,163,206,161,194,173,215,173,186,173,210,167,186,177,208,169,179,185,214,172,177,181,204,165,172,199,215,177,166,186,200,164,167,211,214,181,160,188,195,165,165,221,212,185,158,184,192,167,167,227,208,191,166,169,189,171,175,224,207,201,174,150,187,177,188,212,216,207,171,140,189,181,199,198,236,200,167,139,215,158,204,188,243,197,165,148,222,149,203,184,233,197,170,163,206,160,200,179,219,195,179,170,197,172,196,170,211,191,187,171,196,183,189,163,208,183,193,173,199,191,179,160,207,174,197,177,203,195,172,158,206,165,203,180,206,198,169,154,205,158,207,184,208,199,171,147,202,154,214,183,211,200,177,138,197,154,221,180,211,205,183,129,189,158,227,174,211,214,184,125,177,168,227,171,211,224,183,125,166,179,221,170,215,228,182,130,162,186,209,170,231,214,183,139,183,170,197,172,243,195,185,150,208,150,190,173,241,183,186,163,211,152,186,175,229,177,185,175,210,161,183,176,216,172,185,183,212,170,181,173,208,168,183,191,216,175,178,169,205,164,181,198,220,179,170,170,203,161,179,207,220,182,163,172,201,161,174,217,220,184,157,174,200,160,172,226,216,187,160,169,197,161,174,229,214,191,173,155,192,163,184,221,214,199,181,143,188,167,203,199,220,207,178,140,192,167,211,182,233,205,172,147,210,156,206,171,242,197,173,160,214,157,195,167,237,190,179,175,203,172,184,165,224,186,188,181,196,189,176,159,214,179,198,181,197,201,169,152,210,171,206,179,202,209,162,147,208,163,211,181,206,212,157,144,209,156,213,183,210,213,155,143,207,151,214,186,213,210,160,141,202,149,214,188,215,206,171,137,196,149,213,188,216,203,185,133,186,153,211,188,214,205,195,132,175,160,207,187,211,212,198,135,165,169,202,186,207,220,195,142,161,180,193,185,206,221,190,151,168,186,184,181,214,208,185,163,195,173,177,177,224,187,181,177,215,165,172,175,222,175,178,192,218,170,170,172,214,169,178,202,219,177,169,167,207,166,181,207,221,182,168,160,205,162,185,210,223,184,165,157,206,159,187,212,223,186,161,158,207,156,185,218,221,188,159,160,205,155,183,223,219,188,166,158,200,155,186,220,217,191,180,149,195,156,199,205,215,198,187,145,191,158,214,182,218,205,185,148,192,162,214,167,227,204,182,155,204,164,200,158,238,192,184,166,212,171,182,152,241,181,189,179,208,188,165,149,234,173,197,188,202,205,155,146,222,167,207,189,201,218,150,140,214,162,216,185,204,225,147,135,211,156,221,183,209,226,145,134,210,150,222,183,213,222,148,136,208,147,219,184,216,214,157,140,202,146,214,186,218,204,172,143,194,147,206,191,218,197,186,144,186,151,194,199,214,197,196,145,177,158,185,204,209,200,199,149,171,167,183,201,202,205,195,157,170,179,182,192,197,209,185,169,173,192,176,185,195,207,177,182,187,195,168,178,201,197,172,194,214,181,163,171,211,180,172,206,226,177,159,166,214,168,177,214,226,182,159,159,211,163,183,218,224,187,162,150,210,160,191,215,224,189,163,146,211,155,198,211,222,191,162,148,212,152,197,211,220,191,163,154,208,151,196,210,217,190,172,156,201,152,199,203,215,191,183,155,195,154,208,187,214,193,192,153,192,158,215,170,214,196,195,155,193,167,209,158,218,196,194,160,202,178,192,147,229,187,195,168,215,188,169,139,240,173,200,177,219,203,149,134,241,162,207,188,213,220,137,131,232,157,214,192,208,232,135,129,220,154,223,187,209,235,138,128,213,151,227,181,212,231,144,130,209,149,225,177,217,220,154,136,205,147,220,177,220,207,166,143,201,147,210,181,221,196,176,151,195,149,199,189,218,189,184,158,190,153,186,199,212,187,187,165,185,161,176,206,204,188,184,174,182,171,173,204,196,192,177,184,182,183,173,195,190,195,172,192,183,197,170,185,186,198,170,200,189,206,162,175,189,197,170,206,212,196,156,164,202,186,173,214,233,181,154,155,217,168,180,220,232,184,155,149,220,159,189,220,226,190,161,143,216,155,201,211,221,194,165,142,214,152,208,202,218,194,167,148,211,152,206,197,216,192,170,157,206,153,202,195,213,189,177,163,200,156,202,188,211,186,188,163,197,159,206,176,209,184,198,161,196,166,208,161,209,183,205,161,197,178,201,149,210,183,209,163,204,193,183,138,215,181,210,167,219,206,159,128,229,169,213,173,230,217,138,121,242,155,216,180,229,229,128,119,240,149,219,186,221,235,130,126,224,149,223,182,218,232,142,131,211,149,225,175,218,223,156,135,205,149,223,169,220,209,169,142,203,149,216,169,221,196,178,150,201,151,206,174,220,186,182,160,199,154,194,184,215,180,179,172,198,160,181,195,207,178,171,188,196,168,170,203,199,178,162,202,195,177,165,203,191,180,160,210,193,188,166,193,186,183,165,211,192,201,164,181,183,189,170,211,194,211,160,167,185,194,173,214,212,205,154,155,195,190,178,216,239,185,154,145,221,165,186,217,236,188,157,144,226,152,197,212,225,194,164,146,216,152,208,199,218,195,172,149,209,155,211,188,214,192,176,156,206,159,205,184,212,187,179,165,203,163,198,181,210,182,185,170,201,167,195,176,208,177,193,172,200,172,195,167,206,172,204,170,201,178,197,153,205,169,215,167,202,191,191,141,202,170,222,166,207,209,175,129,201,174,226,166,218,225,153,121,206,174,225,167,235,229,138,115,229,155,223,169,243,228,134,119,236,144,220,170,240,225,141,132,223,144,217,171,231,217,159,141,208,148,216,166,227,204,176,147,201,151,214,163,223,192,188,151,201,154,208,164,220,183,190,158,204,158,198,170,216,176,186,169,206,163,187,179,210,171,176,185,207,170,174,189,202,170,165,202,207,176,165,196,195,170,159,214,205,183,159,196,190,172,159,221,203,191,158,189,186,174,165,223,200,201,162,173,184,180,173,220,201,211,163,157,184,188,179,216,218,206,161,145,193,187,185,211,241,189,162,141,225,156,194,203,239,189,165,149,223,149,202,197,225,192,172,158,209,157,205,185,216,191,181,162,202,165,204,175,211,186,187,166,202,172,195,171,210,180,189,172,203,177,187,170,207,174,193,177,203,183,182,166,205,167,199,180,205,187,181,159,203,161,209,179,206,193,183,146,201,158,220,175,208,203,181,134,197,159,230,169,211,220,170,125,190,166,235,165,218,234,157,120,184,175,234,161,232,234,151,120,194,170,226,159,247,220,155,128,219,145,217,157,252,206,166,141,218,141,209,158,246,195,179,154,207,147,203,161,234,187,190,160,203,154,200,162,224,179,196,163,205,160,196,164,216,173,194,170,209,167,189,167,210,169,185,182,213,173,179,173,205,165,177,196,215,178,169,179,200,164,168,210,216,182,159,185,195,165,164,221,213,186,154,187,191,166,164,228,210,192,156,178,189,169,168,230,207,199,167,160,186,174,178,223,209,207,172,147,184,180,190,209,222,205,111,202,195,176,197,194,241,192,171,147,222,151,199,184,241,188,174,160,216,155,196,180,228,186,182,171,204,167,193,173,216,184,190,175,198,181,188,163,211,178,197,176,200,189,181,159,208,171,201,178,204,196,172,156,207,164,204,182,207,200,166,155,205,157,208,185,209,204,165,150,202,153,213,186,211,206,170,141,199,150,221,182,212,212,174,131,194,151,230,174,214,220,175,126,184,158,235,166,215,228,174,126,174,168,233,160,220,229,176,130,170,176,223,156,231,218,181,138,189,163,209,155,244,198,187,149,210,148,197,157,244,185,191,161,212,151,189,161,235,176,192,172,211,159,185,165,221,172,190,182,211,169,181,166,210,169,186,191,214,176,178,165,204,165,183,198,219,181,172,165,201,163,179,206,222,183,164,168,200,161,175,216,221,186,156,172,199,160,172,225,219,187,154,173,197,161,170,231,216,189,163,165,193,163,174,230,213,194,178,151,188,167,188,214,214,201,182,145,187,171,202,192,222,203,180,148,199,166,203,176,237,193,180,156,216,157,195,167,242,183,184,170,213,165,185,163,233,179,190,182,203,182,175,160,221,175,198,185,199,198,169,153,212,169,207,184,201,208,163,147,209,163,212,183,205,215,156,144,208,156,215,184,210,217,152,144,205,151,216,187,212,217,154,142,203,147,217,188,214,214,162,139,198,146,219,185,215,212,174,135,191,147,223,178,216,209,187,133,182,153,225,170,214,211,194,136,172,161,222,165,211,215,198,140,166,173,212,164,207,219,197,148,168,182,197,165,210,212,193,159,190,175,183,165,220,195,187,173,213,165,175,165,223,179,182,188,219,169,170,166,216,171,179,201,220,176,168,165,207,167,179,210,220,183,167,160,203,164,182,212,223,186,165,155,204,161,185,214,224,187,161,155,206,158,184,218,223,187,158,159,205,157,182,222,220,188,160,162,202,156,180,225,217,187,172,158,198,156,187,216,215,190,185,152,192,160,201,195,214,196,190,151,191,164,209,175,219,198,190,155,198,168,202,162,229,192,189,164,212,169,187,153,239,180,192,175,215,180,170,149,236,169,198,187,209,197,157,148,227,164,206,192,204,211,152,143,217,160,214,190,204,222,149,137,212,156,220,186,208,225,146,136,209,152,222,184,212,223,147,137,208,149,220,183,215,217,153,141,204,147,216,184,217,207,166,144,199,147,211,184,217,198,182,146,191,150,205,185,215,193,196,147,183,155,197,188,210,194,203,150,176,164,190,189,202,200,202,156,171,177,184,187,195,206,193,167,171,191,177,182,191,209,179,183,178,202,167,177,192,205,171,196,202,195,159,170,202,191,169,207,228,180,156,163,211,174,172,217,232,181,156,157,212,165,178,222,228,187,160,150,209,160,187,220,225,190,164,144,210,156,196,213,223,190,165,146,211,153,198,209,221,188,166,153,209,152,196,208,217,187,171,160,204,153,195,204,214,184,182,162,198,156,200,193,211,184,193,160,195,160,207,176,211,186,199,160,194,167,207,162,212,188,201,163,199,177,196,151,219,185,201,168,211,185,178,143,230,175,202,176,221,194,159,136,239,162,206,186,219,211,142,134,235,156,212,193,212,225,136,134,223,154,218,192,209,232,139,132,213,153,223,185,210,231,144,133,209,151,224,178,214,223,152,137,206,150,220,175,218,210,162,144,204,149,213,175,219,197,175,152,199,150,205,178,218,187,185,159,194,153,194,185,214,183,190,165,189,160,181,195,206,183,188,174,186,169,172,200,197,187,177,189,183,181,169,196,190,192,168,200,182,196,167,187,185,196,166,205,185,210,160,178,184,198,166,210,198,212,154,166,190,195,168,217,230,189,152,155,207,178,174,222,238,184,154,148,219,160,183,224,230,189,160,145,216,155,196,215,223,191,168,143,213,153,206,202,219,189,172,149,211,153,206,195,216,187,174,158,207,156,201,192,213,183,179,166,203,159,197,189,211,179,186,170,200,162,198,181,208,176,197,170,198,167,201,167,207,176,206,167,198,176,200,154,206,177,211,167,202,189,189,143,208,178,213,169,213,202,169,134,218,172,214,173,227,212,148,126,234,158,215,179,231,222,134,125,239,149,216,185,225,230,132,129,228,149,218,185,218,231,140,136,213,151,221,177,216,223,155,139,206,153,219,168,219,209,169,144,204,153,215,164,220,196,180,150,204,154,207,165,220,184,186,159,203,156,197,172,217,176,186,170,202,160,185,183,209,175,176,186,199,168,172,194,201,175,162,205,197,177,162,201,192,177,156,217,195,187,159,198,186,180,157,220,193,199,160,186,183,184,163,219,193,213,158,172,181,190,169,219,201,217,155,158,186,193,173,219,234,193,156,146,206,177,179,219,242,184,160,144,225,154,191,213,231,187,167,149,218,152,202,201,220,188,176,153,210,156,207,189,215,185,182,158,207,160,204,182,212,181,185,165,206,165,196,179,211,176,187,174,203,169,191,177,208,172,192,178,202,173,189,172,205,168,201,178,202,178,191,160,204,165,211,175,203,187,191,147,202,165,220,170,207,202,181,135,200,168,225,169,215,219,162,127,202,170,226,168,230,227,145,121,219,160,222,169,241,226,138,123,234,145,218,169,242,222,143,134,226,145,214,169,234,215,156,146,211,151,211,164,228,204,174,151,204,156,208,159,224,190,190,153,204,158,205,156,222,180,196,158,206,160,199,159,218,173,194,167,208,164,190,167,212,169,184,181,210,169,179,177,205,168,169,200,210,176,166,189,196,168,159,216,208,183,156,196,189,170,155,226,206,190,153,193,185,172,158,230,202,200,157,180,183,175,166,228,200,211,164,161,181,183,174,222,208,214,165,148,184,188,181,214,235,194,166,143,210,168,189,203,243,184,169,150,224,150,197,195,231,183,177,160,214,156,199,186,220,182,185,166,206,165,199,176,213,179,192,169,204,172,194,169,211,174,195,174,204,178,186,167,209,169,197,179,205,183,180,166,206,164,200,184,206,186,178,162,203,160,205,185,207,191,180,152,202,156,214,182,209,199,180,141,198,155,226,175,211,213,174,131,193,159,233,169,215,229,162,125,189,166,234,163,226,233,154,125,194,167,227,158,242,222,156,130,217,149,217,154,250,207,166,142,221,145,206,152,248,194,179,155,213,150,199,152,240,183,192,163,207,156,196,153,229,176,200,166,206,163,194,154,219,171,200,171,210,168,189,157,212,167,193,180,215,173,182,162,206,165,181,195,218,177,172,171,200,163,171,209,219,182,161,179,196,162,164,222,217,186,153,185,191,164,161,231,214,190,153,182,188,166,163,235,210,196,164,167,185,170,170,230,208,205,174,151,183,176,183,216,213,207,177,146,186,179,193,198,231,195,176,150,211,161,195,184,241,182,179,161,219,155,193,177,234,177,186,173,210,164,189,172,223,175,193,179,203,177,185,165,214,172,200,180,202,187,180,159,210,167,205,180,205,194,173,155,209,162,206,184,207,199,166,155,206,157,208,187,209,203,164,153,203,152,211,189,211,206,166,146,200,150,217,186,213,209,172,137,196,149,226,178,214,216,174,131,190,152,233,168,216,222,176,129,182,160,234,159,219,224,178,132,178,169,226,152,226,218,183,139,190,165,213,147,238,201,190,149,211,152,198,146,246,184,195,161,216,152,188,148,241,175,197,172,215,159,183,152,229,170,195,182,214,169,179,157,214,168,190,192,216,176,178,157,205,165,185,200,221,181,174,157,201,162,181,208,224,184,166,161,200,160,176,216,224,187,158,166,199,159,173,224,222,188,154,171,197,159,169,232,218,189,159,169,193,161,170,233,214,191,175,157,190,164,179,222,212,196,185,150,187,168,196,199,214,199,187,151,191,171,201,180,225,193,186,159,208,164,194,168,237,180,189,169,217,163,185,161,238,172,193,181,211,175,176,159,227,169,199,188,204,191,169,155,217,165,207,188,203,203,164,149,211,161,213,186,205,211,159,145,208,157,215,186,209,215,154,145,206,152,216,188,211,216,153,145,203,149,216,189,212,215,158,144,200,146,218,186,214,211,170,140,195,146,222,178,216,207,183,137,188,150,225,169,215,205,194,138,180,158,225,159,212,207,201,142,172,170,217,155,206,213,203,148,169,183,203,153,204,215,200,157,183,183,188,154,208,206,194,170,211,168,176,155,219,187,186,186,223,168,169,157,219,174,179,202,224,175,166,158,211,168,176,214,224,182,166,155,204,164,179,218,225,187,166,150,202,161,183,218,226,188,164,150,204,158,185,217,226,188,160,155,205,156,183,221,222,186,161,161,203,156,180,223,218,185,169,163,199,156,182,219,214,186,182,159,195,159,192,203,211,188,193,156,192,165,203,181,212,191,196,159,194,170,202,166,218,189,196,165,207,172,189,156,231,179,196,174,217,176,175,149,238,168,199,185,215,190,161,146,233,162,205,193,208,207,152,145,221,159,213,193,205,220,149,140,212,156,219,190,206,226,147,138,207,153,223,185,209,227,146,139,206,151,220,184,212,222,150,143,203,149,217,183,214,213,160,147,199,149,214,180,216,202,175,149,195,149,212,176,216,193,192,149,189,152,211,172,212,190,203,150,183,160,207,168,205,194,208,153,176,173,200,167,197,201,203,162,172,188,188,168,190,207,190,176,175,202,175,167,189,208,176,192,190,204,164,165,193,200,168,206,222,186,157,160,205,183,168,216,234,182,155,155,211,168,173,224,232,186,158,150,208,163,180,224,228,190,163,145,207,158,190,218,225,190,166,144,210,154,196,210,223,187,167,151,210,154,194,208,219,183,170,160,207,155,190,207,215,181,176,167,202,157,191,200,212,179,187,168,198,160,198,186,209,179,199,165,196,166,203,169,209,181,204,166,197,176,198,156,211,183,205,169,207,184,184,146,221,177,206,174,221,191,165,138,235,164,207,183,224,205,148,134,237,156,210,192,217,221,138,136,226,153,216,194,209,231,139,138,212,153,221,188,208,232,145,137,206,154,222,180,211,226,150,141,203,154,219,176,213,215,159,147,202,154,213,172,216,202,171,153,201,153,207,172,216,189,184,158,198,155,201,173,214,181,193,163,195,158,194,176,208,180,195,170,190,166,186,181,199,183,188,182,185,178,178,184,191,188,174,198,183,192,172,182,184,193,166,208,183,208,164,176,181,197,165,212,189,219,155,168,183,198,165,216,216,205,152,157,194,189,168,222,240,186,153,149,213,167,175,226,237,186,158,147,216,157,186,221,227,189,166,146,213,154,199,207,222,186,174,148,212,155,202,197,218,182,177,157,210,157,199,192,215,178,179,167,208,159,194,190,212,174,184,174,204,163,191,186,209,171,193,176,201,167,195,174,206,171,203,174,200,174,197,160,205,172,211,171,202,185,192,147,205,174,215,171,210,199,176,138,210,173,216,173,223,211,155,130,226,161,216,177,233,220,138,128,236,150,215,184,228,228,134,134,226,149,216,186,219,230,140,142,211,154,216,180,214,225,152,146,202,159,214,171,214,214,165,149,201,160,211,163,217,199,178,153,203,160,205,161,218,185,187,160,203,161,198,163,216,177,191,167,204,162,190,169,212,172,187,179,202,166,181,179,203,172,174,197,200,174,170,189,194,174,159,216,197,184,162,193,187,177,155,223,195,196,160,188,181,181,159,223,194,210,159,176,178,186,165,222,195,222,156,163,179,192,169,221,215,213,155,151,189,189,172,221,243,187,159,146,216,163,181,216,239,183,166,150,221,152,193,206,226,183,176,155,213,156,201,192,218,180,184,160,210,160,201,182,215,175,188,166,209,165,196,178,212,171,190,174,207,170,188,177,209,168,192,181,206,173,185,173,207,165,197,184,205,177,187,165,204,162,206,182,206,184,189,152,202,161,217,177,207,197,184,140,200,163,224,173,212,216,168,131,200,166,227,170,224,228,150,127,211,160,224,169,238,228,140,128,227,149,217,169,241,224,141,139,224,148,210,169,234,218,153,151,210,156,205,165,226,207,170,157,202,163,202,157,223,193,187,158,202,166,199,152,221,181,197,161,205,166,197,151,218,172,200,166,209,167,191,156,214,167,194,176,211,170,183,165,207,165,181,193,212,174,172,177,198,167,164,212,211,181,161,187,191,168,156,225,208,189,153,192,185,169,156,231,205,198,154,185,181,173,160,232,202,209,160,169,179,178,168,228,201,219,164,154,179,186,175,220,217,210,166,147,189,185,180,209,241,186,170,150,220,156,188,198,239,178,176,161,219,154,193,189,226,176,185,169,211,162,194,179,217,173,194,172,207,170,193,169,213,170,198,175,207,177,186,166,211,165,199,181,208,182,179,164,209,162,200,186,208,186,175,163,206,158,203,189,208,191,176,157,202,154,211,187,210,198,178,146,199,153,221,181,211,210,175,136,195,154,231,172,215,226,164,130,192,158,234,166,222,235,155,129,196,160,229,159,236,228,154,134,212,153,216,154,246,213,161,145,220,150,203,150,248,197,175,158,214,156,194,147,242,184,190,167,207,163,190,146,232,175,201,169,207,168,189,146,222,170,205,171,210,171,189,146,215,166,202,177,214,174,185,151,208,163,191,190,218,178,176,160,201,163,177,205,220,182,166,169,197,162,166,219,220,186,156,179,191,163,162,229,216,191,150,183,188,164,161,235,212,196,156,175,185,167,164,236,208,202,170,159,182,173,172,227,207,208,177,150,181,180,184,208,217,204,177,152,193,177,189,191,235,184,181,160,218,157,189,179,239,173,186,171,218,161,185,173,230,169,193,181,209,172,183,166,220,167,201,183,205,184,179,159,213,164,207,183,206,192,174,154,211,160,208,186,208,198,167,153,208,156,209,189,210,203,162,154,204,152,211,191,211,206,164,150,200,149,215,190,212,210,168,143,196,148,223,182,213,217,171,136,192,149,231,172,215,222,172,134,187,154,234,160,219,224,174,136,185,161,228,152,224,219,179,142,194,163,214,144,235,204,188,150,211,156,199,139,244,187,195,161,218,156,187,138,245,174,201,170,218,162,180,142,234,169,201,180,216,169,179,145,220,167,197,189,217,176,178,147,209,165,191,197,221,181,177,148,202,163,184,206,224,185,171,152,200,160,179,214,225,187,163,159,199,158,174,222,224,189,155,168,196,159,169,230,220,189,155,172,194,160,167,234,215,190,165,167,191,162,170,231,211,193,180,157,187,168,182,213,209,197,187,155,187,174,193,190,213,196,189,160,197,173,193,173,227,184,191,168,216,164,185,163,238,170,194,179,218,170,176,158,234,165,199,189,210,185,168,155,224,162,206,192,205,199,165,149,214,160,213,190,205,210,160,144,210,156,217,188,208,215,155,144,207,152,217,189,210,218,152,147,203,149,216,190,211,217,156,147,199,148,216,188,212,214,165,145,195,147,221,180,213,210,177,142,191,149,225,169,214,206,188,142,186,154,227,157,213,199,202,143,182,164,222,146,210,205,207,147,180,176,211,141,204,211,207,155,190,179,197,137,205,209,204,164,216,168,183,137,217,191,198,178,228,167,174,140,224,173,190,194,229,174,171,143,217,165,184,208,227,182,171,144,207,162,183,214,227,188,172,143,201,159,186,215,227,189,170,145,202,156,187,214,227,188,166,151,204,154,186,216,223,186,164,159,203,155,182,219,218,183,167,167,200,157,179,219,213,182,176,168,197,160,183,209,210,182,188,166,193,165,193,191,207,185,196,165,192,172,197,174,208,187,199,168,199,177,190,161,217,183,199,174,215,174,179,152,233,169,201,182,222,179,167,146,238,160,204,191,217,195,156,145,230,156,210,196,210,210,152,142,218,155,217,193,207,221,150,140,210,153,222,187,209,224,149,141,206,152,220,185,210,222,151,145,204,151,216,183,212,214,159,149,201,151,213,180,213,204,172,152,198,151,211,174,215,193,188,152,195,153,212,166,213,186,204,151,191,158,213,157,208,186,213,153,185,167,212,150,200,193,213,158,178,184,203,148,190,203,205,168,176,200,190,148,186,208,190,183,187,208,175,149,187,205,176,201,222,187,167,146,198,190,170,214,238,180,164,144,210,169,173,221,237,185,164,144,209,160,179,223,230,189,168,143,206,157,188,217,226,188,171,145,206,155,195,208,223,185,171,152,208,155,194,204,219,181,172,161,208,156,190,204,215,177,174,171,205,159,186,202,211,174,181,176,202,162,187,194,207,174,192,175,199,167,193,178,206,176,201,173,198,174,195,163,206,179,206,173,202,183,188,151,210,180,207,176,215,187,175,142,225,169,207,181,228,193,159,136,238,155,210,188,225,209,145,137,233,151,213,194,215,223,142,141,217,152,218,191,209,228,147,142,206,155,220,182,209,225,153,144,203,157,216,176,211,216,160,149,202,159,210,172,213,203,170,155,202,159,205,169,214,190,183,160,201,159,201,166,214,179,194,164,200,160,199,164,210,175,201,167,197,164,198,163,202,177,200,174,192,174,195,162,192,183,189,189,186,189,189,161,184,189,173,206,184,206,180,160,178,195,166,213,188,219,170,156,178,197,165,217,207,215,163,149,185,193,166,220,241,188,162,144,205,171,173,222,241,185,164,146,214,156,182,219,231,185,170,149,211,155,193,208,223,183,176,152,210,156,200,196,218,178,181,158,211,158,197,191,215,173,182,168,210,161,191,189,212,170,183,178,208,164,186,187,209,168,187,183,206,167,186,181,206,167,194,185,203,172,190,168,205,167,205,180,203,180,192,154,203,170,213,176,207,191,185,143,203,173,216,176,218,203,168,135,214,167,216,177,232,211,150,131,232,152,215,180,234,220,140,136,230,148,213,185,224,225,142,146,214,154,212,182,215,222,154,151,203,161,210,172,213,213,166,154,200,167,205,163,214,200,178,156,203,168,200,158,216,185,189,161,205,168,195,157,216,174,195,167,207,167,191,158,213,168,196,175,207,168,187,163,206,167,188,189,205,172,182,170,196,169,169,211,202,181,176,175,187,173,156,226,198,193,174,173,180,177,157,228,196,207,173,165,176,181,162,226,195,221,170,155,175,188,167,222,206,221,166,148,179,191,170,219,237,194,165,147,203,170,177,214,241,182,169,153,218,153,187,205,231,178,176,160,214,156,194,194,221,175,184,165,211,161,196,184,215,171,190,169,211,165,193,177,213,167,192,176,211,169,187,175,211,164,192,183,210,173,181,174,209,162,193,190,208,176,180,170,206,160,199,190,208,180,185,159,203,159,209,186,208,189,187,147,199,161,219,179,211,204,179,137,197,164,225,173,219,220,162,132,204,162,224,170,233,225,149,131,222,151,217,167,242,221,147,140,225,149,208,167,238,214,155,154,213,159,199,164,229,206,168,163,203,170,193,157,223,193,186,164,201,176,190,150,220,180,199,164,205,177,189,145,218,171,205,166,210,175,188,146,215,164,204,173,213,174,185,151,210,161,195,185,215,175,180,160,202,161,177,205,215,179,172,171,192,164,160,225,212,186,165,178,185,166,155,233,209,195,165,175,180,168,157,236,205,204,173,162,177,173,164,231,202,215,175,153,174,181,172,222,207,216,173,150,179,186,178,210,229,194,174,153,205,168,182,198,238,178,178,162,219,156,186,189,231,171,185,172,215,161,187,181,221,168,192,178,211,168,188,172,215,165,198,180,210,175,185,164,214,161,201,183,211,180,179,162,212,159,201,188,211,184,173,163,209,156,201,193,211,187,173,160,205,154,204,195,211,192,177,152,201,152,213,189,212,201,179,142,196,152,225,179,214,214,174,135,194,154,232,168,220,226,164,134,195,158,229,160,230,227,159,137,208,156,217,153,243,213,164,147,219,154,201,148,248,198,174,160,216,164,187,143,244,185,189,169,210,174,178,141,236,174,202,173,207,180,178,138,227,166,211,173,210,181,181,137,218,163,211,175,215,181,182,139,212,159,205,182,220,181,179,146,205,158,191,197,222,183,173,156,198,158,175,214,222,186,166,166,192,159,164,228,219,189,162,172,187,160,161,235,215,193,165,170,184,163,161,237,210,199,174,161,180,169,168,229,206,205,180,155,179,176,179,212,208,205,182,156,183,182,185,194,220,193,183,162,206,169,185,181,233,175,187,171,220,161,182,172,234,166,192,182,216,167,179,167,226,162,199,188,211,177,177,161,218,160,205,189,209,186,175,154,214,158,209,188,211,193,169,152,212,154,210,190,212,198,164,153,208,152,209,194,212,201,164,152,204,149,211,194,212,205,168,149,199,147,217,188,213,209,174,142,195,147,226,176,215,214,177,138,191,151,231,164,217,218,178,139,189,158,228,152,222,216,181,144,195,164,215,142,231,205,189,150,212,163,197,134,243,187,197,160,222,164,182,130,248,172,204,170,222,170,175,129,242,164,208,179,219,177,173,131,229,162,208,184,219,183,175,134,215,160,205,190,222,185,178,136,206,158,198,197,226,187,175,142,201,156,188,207,228,188,170,149,199,155,179,217,226,189,164,159,196,155,173,226,222,188,162,167,193,157,168,231,217,188,166,169,190,161,168,230,211,190,177,165,187,166,175,218,207,192,186,162,186,173,186,197,206,194,190,165,189,179,189,179,212,190,192,170,206,174,183,167,227,175,194,179,220,168,176,159,235,164,197,189,218,176,169,155,231,159,203,195,212,189,165,151,221,157,210,195,209,200,163,146,215,154,216,191,209,209,159,144,211,152,217,190,210,213,156,146,207,150,215,191,211,213,157,149,202,149,214,189,212,211,164,150,197,149,216,183,213,206,176,147,194,150,220,172,214,201,189,145,191,154,224,158,213,199,199,145,189,161,222,147,211,199,206,149,188,172,212,138,207,203,209,155,195,179,198,131,205,206,209,162,216,172,185,128,212,196,205,172,231,170,175,128,224,176,199,186,234,175,170,132,222,165,192,200,231,184,170,135,212,160,187,211,229,189,173,137,202,158,188,213,229,191,173,139,200,156,189,212,228,190,170,145,202,154,187,213,225,187,167,156,202,155,182,216,220,184,166,166,201,157,177,219,214,181,170,173,198,161,176,215,209,180,180,174,195,165,182,202,205,181,191,172,193,172,190,182,204,184,197,173,195,179,189,167,206,187,199,176,207,180,180,156,220,177,200,182,223,177,170,148,235,162,203,190,223,186,161,143,236,154,208,197,215,203,154,143,224,153,215,196,209,215,153,143,212,153,220,190,208,220,154,142,206,154,220,185,209,219,155,147,203,153,216,183,210,214,159,152,200,155,211,181,211,204,169,156,198,155,209,175,212,194,184,156,197,156,210,166,212,185,199,156,195,159,212,156,209,181,211,156,192,166,212,146,202,186,216,158,187,178,208,140,192,196,214,163,182,196,198,136,185,205,203,175,186,209,184,136,182,208,187,192,218,193,174,135,189,198,175,208,241,182,168,135,206,174,173,218,241,186,167,138,209,160,177,221,235,190,170,140,205,156,185,217,229,190,173,143,204,155,193,208,224,186,174,149,207,155,194,203,220,181,173,160,208,156,190,202,216,176,173,171,207,160,183,203,211,172,176,181,204,163,181,199,207,171,183,184,201,168,184,187,204,173,193,182,199,174,190,171,202,176,202,179,201,182,188,157,202,180,207,179,209,188,179,147,211,177,207,182,225,190,166,138,232,159,209,187,229,201,152,137,236,150,212,192,221,215,146,143,221,151,215,193,211,222,151,146,207,155,217,186,208,221,156,149,201,160,214,178,208,215,162,152,201,162,208,173,210,204,170,158,201,165,201,169,212,191,180,163,202,165,197,166,212,179,192,166,203,164,197,161,210,172,201,169,202,166,198,156,205,171,205,173,198,172,200,151,195,177,201,180,193,184,199,148,184,185,185,198,187,202,192,146,178,191,170,213,186,220,181,145,174,196,165,218,196,226,172,142,176,197,164,220,236,197,167,140,191,181,168,221,247,186,167,143,210,158,176,219,238,185,171,149,210,154,187,210,226,183,177,154,208,156,195,198,220,177,182,159,210,159,196,190,216,172,183,167,212,162,190,187,213,168,183,178,211,165,183,188,209,165,184,187,209,169,179,185,206,164,188,192,206,173,182,175,204,164,197,190,205,178,188,161,201,167,207,185,206,187,187,148,200,171,214,180,213,199,176,139,205,171,216,178,227,207,160,134,223,157,215,179,235,213,149,137,230,148,212,182,229,218,148,148,217,153,209,182,218,218,155,158,201,163,206,175,212,212,167,159,198,171,200,166,211,201,178,160,201,175,195,159,212,187,189,163,204,177,189,155,214,175,196,168,207,175,186,155,213,166,200,174,209,173,186,155,208,164,196,184,209,173,186,157,200,165,183,201,206,179,185,160,189,170,162,223,202,190,186,158,180,174,155,232,198,204,185,153,175,178,158,230,196,220,180,149,170,184,164,225,200,228,174,145,171,190,167,221,224,209,170,146,185,182,171,215,243,186,171,151,213,157,179,207,237,177,176,161,215,155,187,197,225,173,183,168,212,160,191,187,217,169,189,172,212,166,190,178,213,165,193,177,213,170,185,174,212,161,193,185,212,173,180,173,209,160,192,193,211,176,176,172,207,158,194,197,210,179,179,165,203,158,201,195,209,186,184,153,200,158,213,187,210,197,184,141,197,161,223,177,216,213,171,136,198,163,224,172,227,221,158,136,211,156,218,168,239,217,153,143,222,151,207,167,239,211,157,157,214,159,196,165,231,204,168,168,202,173,188,160,222,194,183,170,199,183,183,152,218,182,197,169,203,186,180,145,217,171,206,169,209,186,178,143,215,163,209,173,213,182,179,144,213,158,204,181,216,180,179,149,206,158,190,196,217,181,177,157,196,160,170,218,215,185,175,163,187,163,157,232,212,193,175,164,179,166,155,237,208,202,180,157,175,169,159,236,203,214,180,151,172,176,167,227,203,220,177,150,173,184,173,214,215,210,175,154,187,181,176,202,234,184,178,162,215,160,180,190,235,171,183,173,218,160,182,182,226,166,189,181,214,167,183,174,218,163,196,184,212,174,183,165,214,160,201,186,213,179,178,161,213,157,202,190,213,183,173,161,211,155,201,195,213,186,170,161,207,154,201,199,212,190,173,156,203,152,207,196,212,196,179,147,198,151,219,185,213,207,179,140,194,153,228,173,216,219,172,138,193,156,229,164,224,223,165,141,202,158,218,156,236,214,167,148,215,158,201,150,244,200,174,160,217,167,184,144,244,186,186,172,211,180,171,141,237,175,199,178,207,189,167,137,228,167,210,177,209,193,170,133,220,161,216,176,214,191,173,133,215,157,214,178,220,188,175,137,208,156,203,189,223,186,175,144,202,155,186,205,225,186,172,154,194,156,171,222,223,188,169,163,187,158,162,233,218,192,169,166,183,160,159,238,213,196,176,162,179,165,162,234,207,203,181,157,178,172,171,221,204,206,183,158,178,182,179,202,207,203,183,164,190,182,179,187,222,185,185,172,216,166,177,175,233,168,189,183,220,166,175,168,230,161,195,191,216,174,173,162,222,159,202,193,213,183,173,154,217,157,208,192,212,190,170,151,214,154,210,193,212,196,165,151,211,152,210,194,213,199,163,153,207,149,210,196,212,202,167,152,200,149,212,193,212,205,174,147,196,148,220,182,213,209,179,143,193,150,227,168,215,212,181,144,190,157,226,156,218,213,183,146,195,164,215,146,225,206,188,152,208,169,196,137,236,191,195,161,220,172,179,129,246,174,203,170,223,180,166,125,246,163,209,179,221,188,161,125,236,159,213,183,220,192,165,127,221,158,213,185,222,193,172,128,210,156,209,190,225,193,174,133,203,155,198,199,228,191,173,140,200,153,187,210,228,190,169,151,196,153,177,220,225,189,167,162],"curV":[-241,0,261,0,-309,0,138,0,-244,-1,268,1,-322,0,143,0,-246,1,266,-1,-329,-1,146,0,-244,0,252,-1,-328,1,150,0,-237,0,232,0,-318,1,156,1,-224,0,208,0,-298,-1,163,-1,-206,0,184,0,-270,1,167,-1,-188,0,159,1,-238,0,170,1,-179,1,133,1,-212,1,172,0,-183,0,110,0,-195,1,175,-1,-197,0,93,0,-186,0,179,1,-212,0,84,0,-180,-1,183,0,-225,0,85,0,-177,0,189,0,-237,0,93,0,-177,1,194,0,-250,-1,104,0,-180,0,198,0,-265,0,116,0,-185,0,203,0,-281,0,127,0,-193,1,208,0,-296,1,135,1,-204,0,215,1,-308,-1,143,0,-217,0,219,1,-314,1,153,0,-231,1,219,-1,-311,-1,165,-1,-242,0,211,1,-300,0,179,0,-246,-1,196,1,-280,1,194,0,-243,0,177,1,-257,0,207,1,-234,0,154,1,-234,-1,217,0,-235,1,132,-1,-220,1,224,0,-248,0,115,0,-218,0,229,0,-265,0,109,0,-221,-1,235,0,-282,-1,117,0,-227,1,243,0,-301,0,133,0,-235,1,250,0,-317,0,150,1,-243,-1,249,1,-326,-1,163,-1,-248,1,239,-1,-327,1,173,-1,-249,0,222,-1,-316,0,180,0,-242,1,200,0,-293,-1,183,0,-229,0,174,0,-261,0,183,0,-211,1,146,-1,-225,0,179,0,-193,0,118,0,-191,-1,173,0,-183,0,93,1,-166,0,167,0,-185,0,76,0,-155,0,163,1,-195,0,69,0,-152,0,161,0,-208,0,74,0,-155,0,164,0,-224,0,88,0,-162,0,171,0,-242,0,107,0,-172,-1,182,1,-263,0,126,0,-187,0,196,0,-283,0,142,-1,-206,-1,212,0,-301,1,158,1,-230,0,225,-1,-313,0,173,0,-254,0,231,-1,-317,1,190,1,-275,1,228,0,-313,1,206,1,-287,-1,214,1,-301,0,219,1,-286,1,193,0,-281,0,227,-1,-272,1,166,-1,-254,0,229,0,-248,1,138,0,-226,0,225,0,-233,0,114,0,-203,0,218,-1,-240,1,101,-1,-199,0,212,0,-257,0,103,-1,-207,0,213,0,-276,1,122,1,-220,0,221,0,-295,0,148,0,-236,1,230,1,-310,0,172,1,-251,0,232,1,-317,1,189,0,-263,0,224,0,-313,0,198,0,-268,-1,207,1,-299,1,200,0,-264,0,184,0,-274,0,198,0,-252,0,158,1,-242,0,191,0,-232,-1,131,0,-209,-1,181,-1,-207,0,105,0,-176,-1,168,0,-187,0,84,0,-148,0,155,0,-179,0,72,0,-132,0,144,0,-185,0,70,0,-131,0,140,0,-200,0,79,0,-140,0,142,0,-219,0,96,0,-154,0,153,0,-241,0,118,0,-175,-1,170,0,-262,0,141,-1,-201,0,191,0,-281,0,163,0,-231,0,211,-1,-295,-1,186,0,-264,0,225,1,-304,0,210,0,-293,1,230,0,-307,0,232,1,-313,1,221,0,-302,0,248,-1,-319,1,202,1,-291,-1,254,-1,-310,-1,175,-1,-272,0,249,1,-285,0,147,0,-244,0,236,0,-253,1,122,0,-211,0,218,-1,-233,0,105,0,-185,-1,200,0,-238,0,103,0,-185,-1,190,0,-255,0,117,0,-201,1,190,0,-273,0,143,0,-222,0,198,0,-288,0,172,-1,-243,-1,207,1,-296,-1,197,-1,-263,-1,209,0,-296,1,212,0,-278,1,201,1,-287,0,217,0,-284,0,184,0,-269,1,215,-1,-281,0,161,0,-247,0,207,1,-268,0,138,0,-221,0,194,0,-248,0,116,1,-194,0,179,0,-223,0,98,0,-168,0,161,0,-201,0,86,0,-143,0,145,1,-187,0,81,0,-123,1,133,0,-189,0,84,0,-119,0,128,0,-204,0,95,0,-133,1,132,0,-223,1,112,0,-157,-1,145,-1,-243,0,134,0,-188,1,163,-1,-259,-1,159,0,-223,1,184,1,-272,1,187,-1,-260,1,202,-1,-281,1,217,0,-294,0,212,-1,-287,-1,246,0,-320,1,212,1,-289,-1,268,1,-334,-1,199,0,-286,-1,278,1,-333,0,178,0,-276,-1,273,-1,-318,-1,153,0,-257,-1,254,0,-290,0,131,0,-229,0,229,1,-259,1,117,1,-195,1,203,1,-239,-1,113,0,-172,0,182,0,-242,0,122,0,-179,1,170,0,-255,0,141,0,-201,1,168,0,-266,-1,166,0,-227,-1,172,1,-272,1,192,0,-251,-1,178,0,-271,1,213,0,-271,1,178,0,-264,1,225,0,-285,0,170,0,-252,0,228,0,-290,0,156,0,-237,1,223,-1,-287,0,138,0,-220,-1,211,1,-276,-1,121,0,-202,0,195,-1,-261,0,109,-1,-184,0,177,0,-243,0,101,0,-165,0,159,0,-227,0,97,1,-146,0,144,-1,-215,0,99,0,-130,1,135,1,-211,0,105,0,-125,0,132,-1,-216,0,116,0,-140,0,136,-1,-229,0,133,0,-171,-1,146,0,-241,1,155,0,-208,-1,158,-1,-251,-1,182,1,-247,0,171,-1,-258,0,213,0,-282,0,181,0,-264,1,245,0,-311,1,186,0,-268,-1,271,-1,-330,0,182,-1,-271,1,287,1,-338,1,171,0,-269,0,288,-1,-334,1,154,1,-261,0,273,-1,-319,1,139,-1,-243,0,246,-1,-296,0,130,0,-217,0,216,0,-270,0,130,1,-187,-1,190,0,-250,1,135,0,-170,0,168,0,-244,1,147,-1,-180,1,153,-1,-247,-1,164,0,-204,0,145,0,-249,0,182,0,-229,0,142,0,-246,-1,201,0,-252,0,143,1,-238,0,217,1,-269,1,142,0,-229,0,226,-1,-281,0,138,1,-219,1,228,0,-285,0,130,0,-210,1,222,0,-285,0,121,0,-200,0,210,0,-280,0,115,0,-191,0,195,1,-274,0,112,1,-181,0,179,0,-267,-1,113,0,-171,1,166,1,-259,0,116,0,-161,0,157,1,-252,0,121,0,-154,0,152,-1,-243,1,128,0,-153,0,149,0,-235,1,140,0,-165,0,148,0,-233,0,158,0,-193,0,148,0,-235,0,181,-1,-228,0,149,0,-239,0,207,0,-261,0,150,1,-244,1,235,0,-289,1,153,1,-248,-1,260,-1,-310,0,154,0,-252,0,278,0,-325,-1,154,-1,-256,0,286,0,-333,1,150,0,-256,0,280,0,-332,0,144,0,-250,0,261,1,-323,0,143,1,-236,1,233,-1,-306,0,146,-1,-216,1,206,0,-282,0,153,-1,-193,-1,181,1,-257,1,160,-1,-179,0,157,0,-238,-1,167,0,-185,0,136,0,-227,-1,176,0,-203,0,121,1,-220,-1,186,0,-225,0,112,0,-212,-1,197,0,-243,-1,109,0,-204,1,208,0,-257,-1,111,0,-197,1,215,-1,-267,0,113,0,-193,-1,217,-1,-274,1,116,0,-191,0,213,-1,-279,1,118,0,-190,-1,206,0,-284,0,122,0,-189,0,197,-1,-288,0,126,1,-189,1,189,-1,-290,1,131,1,-190,0,184,0,-289,1,137,0,-192,-1,179,0,-282,-1,145,0,-195,0,173,1,-270,0,155,0,-198,0,166,0,-252,-1,170,-1,-202,0,156,0,-236,1,187,-1,-216,-1,145,0,-227,1,207,-1,-239,0,134,-1,-226,0,225,1,-262,1,126,-1,-229,0,242,1,-283,0,125,0,-234,1,257,0,-301,0,131,-1,-240,-1,268,0,-316,0,140,0,-247,1,271,0,-327,1,148,0,-251,1,264,0,-332,0,155,1,-251,0,246,1,-327,1,162,-1,-244,1,223,1,-312,1,170,-1,-230,-1,198,0,-286,0,176,-1,-211,-1,171,-1,-254,0,178,0,-194,0,144,0,-222,0,178,0,-190,0,118,0,-199,0,178,1,-199,0,98,0,-185,-1,179,-1,-213,0,86,0,-178,0,182,0,-227,0,84,0,-174,0,188,0,-239,0,91,0,-174,0,193,-1,-250,0,103,0,-177,0,198,0,-262,0,116,0,-182,-1,199,0,-275,0,128,0,-190,1,200,0,-288,1,139,1,-200,0,201,0,-298,0,147,0,-211,0,203,1,-305,0,155,0,-224,0,203,0,-305,-1,164,-1,-236,0,199,0,-297,0,176,0,-244,1,189,0,-282,0,190,1,-245,-1,174,-1,-260,-1,203,-1,-238,0,155,0,-237,0,215,1,-232,-1,134,1,-218,0,222,-1,-239,-1,116,0,-211,-1,228,0,-255,-1,107,0,-214,1,233,1,-273,0,111,0,-223,0,239,0,-292,0,127,1,-234,-1,248,-1,-309,0,148,0,-247,0,252,1,-323,0,166,0,-258,0,247,1,-328,0,180,0,-264,-1,232,0,-322,1,188,-1,-262,-1,210,-1,-305,1,192,1,-251,0,185,0,-276,0,192,1,-233,0,158,-1,-239,0,187,-1,-211,0,129,-1,-201,0,179,1,-194,0,102,0,-170,0,171,0,-191,0,81,0,-153,0,164,0,-199,0,71,0,-148,0,161,0,-210,0,74,0,-151,0,162,0,-223,0,88,0,-159,0,167,0,-238,0,107,0,-169,-1,175,0,-255,0,128,0,-183,0,185,-1,-272,1,146,0,-201,0,195,0,-288,1,161,-1,-222,-1,206,0,-300,1,174,1,-245,-1,213,0,-306,0,188,-1,-266,0,215,-1,-305,1,203,0,-283,0,207,-1,-297,0,217,0,-289,-1,191,0,-281,-1,228,1,-281,1,169,-1,-259,1,232,0,-262,-1,143,1,-233,1,230,-1,-240,1,119,0,-207,0,223,0,-236,1,103,0,-195,0,215,0,-249,0,102,0,-203,1,212,1,-267,0,117,0,-218,0,216,1,-286,0,143,0,-237,0,225,0,-303,0,171,0,-256,1,230,-1,-313,-1,193,0,-272,1,227,1,-314,-1,206,1,-281,0,213,1,-304,0,210,0,-281,1,192,0,-283,0,208,0,-271,0,167,1,-253,0,200,0,-252,0,140,-1,-218,0,189,0,-226,0,113,0,-182,0,175,-1,-201,0,91,-1,-150,1,160,0,-188,0,76,0,-129,0,148,0,-189,0,73,0,-126,0,139,0,-200,0,81,0,-135,1,138,-1,-215,0,98,0,-150,0,143,0,-233,0,120,0,-170,0,156,0,-251,-1,143,-1,-193,0,172,0,-267,1,164,0,-221,1,190,0,-281,1,184,0,-251,0,205,0,-291,-1,205,0,-281,1,213,1,-295,-1,227,0,-305,0,212,-1,-294,1,246,0,-318,-1,199,1,-287,1,257,0,-317,0,178,-1,-273,-1,257,0,-301,0,153,-1,-252,-1,247,1,-273,0,129,-1,-224,0,231,0,-244,1,112,0,-195,1,211,-1,-236,0,106,0,-183,1,195,1,-248,0,116,0,-198,-1,189,-1,-265,1,139,0,-221,1,192,1,-281,1,169,-1,-245,-1,200,0,-291,-1,197,0,-267,0,205,0,-294,0,217,1,-284,-1,201,-1,-288,1,226,0,-294,0,188,0,-274,0,225,1,-294,1,168,-1,-252,1,217,-1,-284,0,144,0,-226,1,204,-1,-265,0,122,0,-198,1,188,1,-240,0,104,0,-169,0,169,0,-214,0,91,0,-142,0,151,1,-195,0,85,0,-120,0,135,0,-191,0,88,0,-115,0,125,0,-199,0,99,0,-128,0,123,0,-215,0,116,-1,-150,0,129,0,-231,0,136,-1,-178,0,144,0,-246,0,158,0,-210,-1,162,0,-258,0,182,0,-244,1,180,0,-267,1,208,0,-278,1,194,1,-274,-1,236,-1,-308,1,199,1,-277,0,262,0,-328,1,193,1,-278,0,278,0,-335,-1,178,-1,-273,0,281,0,-328,1,158,1,-262,0,270,-1,-308,0,138,1,-242,-1,247,0,-279,1,124,-1,-214,-1,220,0,-252,0,120,0,-185,0,195,0,-242,0,126,0,-180,0,176,1,-249,1,142,0,-199,1,167,0,-260,0,165,0,-225,0,166,-1,-268,1,191,-1,-251,1,170,1,-269,0,213,-1,-273,-1,173,-1,-264,0,228,0,-289,1,169,1,-254,0,234,0,-298,0,158,0,-239,-1,231,1,-298,1,142,0,-222,0,221,0,-289,-1,125,0,-204,1,205,0,-274,0,113,1,-184,0,185,0,-254,0,105,-1,-164,1,166,-1,-235,0,102,0,-144,0,147,-1,-218,0,104,0,-128,1,132,0,-209,0,110,0,-120,0,123,0,-210,0,120,0,-132,0,122,-1,-219,1,134,0,-158,1,128,-1,-229,0,152,1,-192,-1,138,-1,-239,0,174,0,-228,0,151,0,-246,0,201,-1,-264,0,163,0,-251,-1,231,1,-295,1,171,-1,-256,1,260,1,-319,0,173,-1,-260,0,283,0,-334,1,168,0,-263,-1,292,0,-338,1,156,0,-261,0,286,1,-330,-1,144,0,-252,0,265,0,-313,-1,136,-1,-234,1,236,-1,-289,0,136,1,-210,1,207,0,-264,0,142,0,-186,1,181,0,-248,0,152,1,-184,1,160,0,-245,-1,166,0,-202,0,146,0,-246,0,182,0,-227,0,139,0,-244,1,200,0,-250,0,138,0,-238,-1,216,-1,-270,-1,138,1,-229,1,227,-1,-284,0,137,1,-220,0,232,1,-291,0,131,-1,-210,0,229,1,-293,0,124,0,-200,0,218,0,-289,0,118,0,-191,0,202,0,-281,0,116,0,-181,-1,184,0,-271,0,118,0,-170,1,167,0,-260,0,121,-1,-160,-1,152,1,-250,0,126,1,-151,-1,142,0,-240,0,132,0,-148,-1,136,-1,-231,0,141,0,-155,0,133,1,-225,0,153,0,-177,1,133,0,-225,0,172,0,-209,0,134,0,-228,0,195,1,-242,-1,136,0,-231,-1,221,0,-272,0,140,0,-236,0,247,1,-297,0,144,1,-241,1,270,-1,-316,0,147,0,-248,1,285,-1,-329,0,148,0,-254,0,288,1,-335,1,148,0,-256,0,276,0,-332,-1,148,1,-251,-1,252,0,-320,0,152,-1,-238,1,223,0,-299,1,160,0,-218,0,196,0,-273,1,167,0,-198,1,169,0,-247,1,173,0,-191,1,144,0,-230,1,180,0,-203,0,124,-1,-229,0,198,0,-232,1,120,-1,-220,0,205,-1,-250,-1,113,0,-212,0,213,0,-264,0,113,0,-205,1,220,0,-274,0,117,0,-199,0,224,0,-281,0,120,0,-196,1,221,0,-284,0,124,0,-195,0,212,0,-286,0,127,0,-194,1,200,-1,-286,0,131,0,-193,1,186,-1,-284,0,136,-1,-192,0,174,0,-280,0,140,-1,-191,0,165,0,-274,0,145,0,-192,0,157,-1,-262,0,151,0,-192,-1,149,0,-245,0,160,0,-193,-1,139,0,-226,-1,174,1,-198,0,127,0,-211,0,190,1,-216,1,117,0,-206,-1,207,1,-240,0,110,0,-209,1,224,1,-264,0,110,-1,-217,0,240,0,-287,0,120,1,-228,0,256,-1,-307,0,135,0,-242,1,267,0,-324,-1,152,1,-257,-1,269,1,-335,1,166,0,-267,0,259,1,-338,-1,178,-1,-269,1,240,-1,-329,0,189,0,-262,0,217,0,-309,1,196,0,-246,-1,191,1,-279,0,198,1,-226,0,164,1,-245,0,196,0,-211,-1,137,-1,-215,1,193,-1,-211,-1,113,0,-195,0,190,0,-221,0,96,0,-185,0,189,-1,-233,0,89,0,-180,0,192,0,-245,0,94,0,-179,1,196,0,-254,0,105,0,-181,0,200,0,-263,0,119,0,-186,0,200,0,-272,0,132,1,-194,-1,197,0,-279,0,143,0,-202,-1,193,0,-286,0,151,-1,-211,-1,189,0,-290,1,157,-1,-220,0,185,-1,-290,-1,163,0,-230,1,180,0,-284,-1,171,0,-237,0,172,1,-272,0,181,0,-239,0,159,0,-253,1,192,1,-233,1,142,-1,-230,0,202,1,-224,0,123,0,-208,-1,209,-1,-224,0,106,0,-195,0,214,-1,-240,1,98,-1,-199,-1,220,0,-261,0,104,0,-212,0,228,-1,-283,1,123,0,-231,0,240,-1,-304,-1,150,-1,-252,0,251,0,-321,1,176,-1,-271,0,253,1,-332,0,196,0,-285,0,245,0,-333,1,208,1,-289,0,227,-1,-321,-1,214,-1,-283,1,204,0,-298,0,213,0,-267,0,177,0,-264,0,207,0,-243,0,148,0,-225,0,197,0,-219,0,120,0,-188,0,185,-1,-207,0,96,0,-162,0,175,-1,-208,0,82,0,-153,1,168,0,-216,0,80,0,-154,1,165,0,-226,0,91,0,-161,0,166,-1,-237,0,109,0,-172,0,171,1,-248,-1,130,0,-185,-1,176,0,-260,1,148,0,-201,1,181,0,-271,0,162,0,-218,0,187,0,-280,-1,173,0,-236,0,191,-1,-286,1,184,0,-255,1,192,0,-286,1,196,0,-271,1,187,0,-281,-1,209,-1,-279,1,175,-1,-269,1,219,0,-277,-1,157,1,-251,0,224,1,-263,1,135,0,-228,-1,223,0,-242,0,115,0,-203,0,217,0,-230,1,101,0,-187,0,209,0,-241,-1,101,0,-194,1,206,0,-260,0,117,0,-216,1,210,0,-281,-1,145,0,-241,0,221,-1,-300,0,178,-1,-267,-1,230,-1,-313,0,206,1,-288,1,233,1,-319,0,225,-1,-303,-1,224,0,-315,1,232,0,-307,0,207,-1,-299,0,230,-1,-300,0,183,1,-273,-1,222,-1,-282,0,157,0,-240,1,209,1,-256,0,131,1,-202,-1,193,0,-228,0,107,0,-166,-1,175,1,-206,0,90,1,-139,1,159,-1,-199,0,83,0,-130,0,146,1,-203,0,87,0,-137,0,138,-1,-213,0,102,0,-151,-1,137,1,-224,0,122,0,-169,1,143,0,-236,-1,143,0,-189,0,153,0,-248,1,162,0,-212,0,166,0,-259,0,179,0,-237,0,178,0,-267,0,196,1,-263,-1,186,1,-272,1,215,1,-287,0,188,-1,-272,0,234,0,-303,0,181,-1,-269,1,248,0,-309,0,166,0,-260,1,252,-1,-301,0,145,-1,-245,-1,245,0,-281,0,126,-1,-224,0,231,0,-254,0,113,0,-199,-1,213,1,-238,0,111,1,-184,0,197,1,-245,0,122,0,-197,-1,189,0,-262,-1,145,0,-224,1,190,1,-278,0,175,1,-253,0,197,0,-291,1,206,0,-279,0,204,0,-297,0,230,-1,-300,0,206,1,-296,0,244,0,-313,0,197,0,-286,-1,246,-1,-316,0,181,-1,-268,0,239,0,-309,-1,159,1,-244,1,225,0,-292,0,138,0,-215,-1,207,0,-267,0,119,0,-185,0,187,-1,-239,0,104,0,-155,0,165,0,-213,0,97,0,-130,0,145,1,-199,0,97,1,-119,0,128,0,-198,0,105,0,-127,0,118,0,-205,0,118,0,-146,0,117,0,-216,0,135,0,-170,-1,123,0,-227,0,153,-1,-196,0,135,-1,-236,1,172,-1,-226,1,151,0,-243,0,194,1,-256,0,164,1,-249,1,218,-1,-285,0,172,-1,-253,0,243,0,-308,1,172,0,-256,-1,264,0,-322,0,164,0,-256,0,274,0,-324,-1,150,0,-252,0,269,-1,-314,0,136,-1,-241,1,252,1,-293,1,127,1,-222,0,228,0,-268,-1,127,0,-200,-1,204,0,-251,1,136,-1,-189,1,184,0,-251,0,152,0,-205,1,172,0,-260,-1,175,0,-232,-1,168,1,-269,0,199,0,-260,0,169,0,-273,0,223,0,-283,0,173,-1,-271,0,241,0,-301,1,173,1,-264,1,250,-1,-312,1,167,0,-252,0,249,1,-315,0,154,-1,-236,0,240,1,-309,1,138,1,-218,1,223,0,-295,0,125,0,-198,0,203,0,-275,0,117,0,-177,0,181,1,-252,0,113,0,-156,0,158,0,-230,0,113,1,-137,0,137,1,-213,0,117,1,-125,0,121,0,-204,0,124,0,-128,0,111,0,-205,0,134,-1,-147,0,109,0,-210,0,146,0,-175,0,114,1,-217,0,162,0,-206,1,123,-1,-222,0,183,-1,-238,0,134,-1,-227,-1,209,0,-269,1,144,-1,-231,-1,237,-1,-296,1,150,-1,-237,0,262,0,-317,1,151,0,-244,-1,279,1,-329,1,148,0,-250,0,282,0,-331,1,143,0,-250,0,271,0,-323,-1,141,1,-244,1,247,0,-306,0,145,0,-229,-1,220,-1,-283,0,155,1,-210,-1,195,0,-262,0,166,0,-201,1,173,0,-252,-1,180,0,-212,0,155,1,-250,0,195,0,-235,-1,145,0,-250,0,210,1,-258,0,140,0,-246,0,224,0,-278,0,140,0,-239,0,236,0,-293,-1,141,0,-230,1,243,1,-303,-1,139,0,-221,0,242,0,-306,0,134,0,-212,0,234,0,-303,0,129,0,-203,0,218,0,-295,0,126,0,-193,-1,198,1,-282,0,127,0,-182,-1,176,0,-267,0,130,0,-170,1,156,0,-252,0,133,-1,-159,1,139,-1,-238,0,136,-1,-150,1,126,0,-224,0,140,0,-149,0,117,-1,-213,0,147,0,-160,-1,113,1,-206,-1,159,0,-185,0,111,0,-206,1,176,0,-215,-1,112,0,-208,0,198,0,-245,-1,115,0,-212,-1,222,-1,-273,1,122,1,-219,-1,246,-1,-297,-1,131,0,-230,1,266,1,-316,0,139,0,-242,1,278,-1,-329,-1,147,0,-253,1,277,1,-334,-1,154,0,-260,-1,261,1,-330,1,163,0,-258,0,238,0,-316,0,174,1,-246,1,212,0,-294,1,184,-1,-228,-1,186,0,-267,0,191,0,-214,1,161,0,-243,1,196,0,-216,0,138,0,-229,1,200,0,-231,0,121,0,-221,0,205,0,-249,0,113,0,-214,0,212,0,-265,0,113,0,-207,0,221,-1,-278,0,118,0,-203,-1,227,0,-287,0,124,0,-201,1,227,1,-292,0,130,0,-201,0,221,1,-293,0,135,0,-201,0,208,1,-291,0,140,0,-201,0,192,1,-286,0,145,-1,-198,-1,175,-1,-279,1,149,0,-195,0,160,0,-270,0,151,1,-192,0,148,0,-259,1,153,-1,-190,1,138,0,-243,0,158,1,-188,0,129,1,-225,1,166,1,-189,-1,118,-1,-206,1,179,0,-200,0,108,0,-195,1,193,1,-222,0,101,0,-195,-1,209,0,-247,0,101,0,-202,1,225,1,-271,0,109,0,-215,-1,242,-1,-293,1,126,0,-232,-1,258,1,-313,0,146,0,-251,1,266,0,-328,-1,165,1,-269,0,264,1,-335,1,181,0,-279,0,249,1,-332,1,193,-1,-279,-1,227,-1,-318,0,202,0,-268,-1,201,0,-293,0,206,0,-248,0,174,0,-259,0,204,1,-227,0,146,0,-225,-1,199,0,-217,0,121,0,-199,0,194,0,-223,0,102,0,-186,1,191,0,-236,0,93,0,-182,0,192,0,-249,0,97,0,-182,0,197,1,-260,0,109,0,-185,1,203,1,-269,0,124,0,-192,-1,205,-1,-276,0,139,0,-200,0,202,1,-280,0,151,0,-209,0,195,0,-283,0,160,1,-216,0,186,0,-284,0,165,0,-223,0,177,1,-282,0,168,0,-228,0,169,0,-277,-1,171,0,-233,0,160,1,-266,0,177,0,-235,0,149,0,-250,0,185,0,-232,0,135,0,-228,0,193,0,-223,1,119,0,-206,0,200,1,-217,0,104,0,-188,0,205,0,-227,0,95,0,-186,-1,210,0,-247,0,97,0,-199,1,218,0,-269,1,114,0,-220,-1,229,0,-290,0,141,0,-244,1,242,0,-309,0,171,-1,-269,1,249,0,-322,0,197,0,-290,-1,246,0,-328,0,214,0,-301,-1,232,-1,-323,0,222,0,-300,-1,211,-1,-306,0,223,-1,-288,1,186,0,-278,1,217,0,-265,1,158,1,-240,0,207,1,-238,0,131,0,-201,0,194,0,-219,0,107,0,-169,-1,182,0,-216,0,91,0,-155,0,173,0,-223,0,87,0,-156,-1,168,0,-233,0,96,0,-164,0,169,0,-242,0,114,0,-177,0,173,0,-250,0,135,0,-191,-1,176,1,-258,0,155,0,-206,0,178,-1,-265,0,170,-1,-221,0,179,0,-271,1,180,0,-236,1,179,1,-275,1,187,0,-250,-1,178,0,-275,-1,194,0,-263,0,174,0,-271,0,204,-1,-273,0,165,0,-262,1,213,0,-275,0,151,0,-247,1,219,1,-267,0,133,-1,-227,0,219,0,-249,0,115,0,-204,-1,215,0,-231,1,102,0,-185,-1,208,0,-232,0,100,0,-183,0,202,1,-248,-1,112,0,-204,0,202,1,-268,0,137,0,-232,0,210,1,-286,-1,170,-1,-262,0,220,1,-301,-1,203,1,-288,-1,226,-1,-311,0,227,0,-308,1,223,-1,-311,0,240,0,-317,0,210,1,-302,0,241,0,-315,-1,189,-1,-282,0,234,0,-301,1,165,0,-252,-1,221,-1,-278,0,141,1,-216,0,204,-1,-250,0,118,0,-179,0,186,0,-224,0,101,-1,-147,0,168,0,-212,0,93,0,-134,1,154,0,-212,0,96,0,-139,0,144,0,-218,0,108,0,-154,0,140,0,-226,0,127,0,-173,0,141,1,-234,0,149,0,-192,0,147,1,-241,0,167,-1,-212,0,155,0,-249,-1,183,0,-233,0,163,0,-255,0,195,1,-254,0,170,0,-258,-1,209,0,-275,-1,172,0,-259,1,225,1,-292,-1,169,1,-257,1,240,0,-303,0,158,0,-251,-1,247,1,-302,-1,143,0,-241,1,246,0,-290,1,127,-1,-225,0,235,-1,-267,1,115,0,-205,0,219,-1,-245,0,112,1,-186,1,201,1,-240,0,121,0,-189,0,189,0,-251,0,141,-1,-215,0,184,-1,-266,0,169,0,-246,0,187,0,-279,0,200,0,-275,-1,194,1,-288,1,228,0,-299,-1,198,-1,-290,0,247,0,-316,0,195,1,-285,1,254,0,-324,-1,183,0,-272,1,250,0,-321,-1,165,0,-252,-1,237,1,-309,0,145,0,-226,1,220,-1,-288,0,128,0,-196,0,200,0,-261,0,115,0,-166,-1,179,0,-233,0,108,0,-140,0,157,0,-214,0,107,0,-126,0,137,0,-206,0,113,1,-131,0,123,0,-207,0,126,0,-148,0,116,0,-213,0,141,0,-170,-1,116,0,-220,-1,157,1,-193,0,122,0,-226,0,172,0,-217,-1,134,1,-231,0,189,0,-243,-1,146,0,-235,-1,208,-1,-269,0,154,-1,-239,1,229,-1,-293,0,158,1,-242,1,251,1,-311,0,155,0,-244,1,266,-1,-320,1,146,0,-244,1,269,0,-318,1,136,1,-239,0,259,-1,-304,0,129,0,-228,1,238,-1,-283,0,129,1,-212,-1,214,1,-260,1,137,1,-196,0,192,-1,-248,0,152,-1,-201,-1,174,0,-252,0,173,1,-225,1,164,-1,-260,0,196,0,-254,-1,161,0,-266,1,219,0,-279,0,163,0,-267,0,239,0,-300,-1,166,0,-263,1,252,0,-314,0,164,1,-254,-1,256,1,-321,1,157,-1,-242,-1,250,0,-321,0,145,-1,-226,0,236,0,-311,0,134,0,-208,1,217,0,-294,0,127,0,-188,0,195,-1,-271,0,124,0,-167,0,172,1,-246,0,124,0,-147,-1,149,0,-224,0,127,0,-133,0,128,0,-208,0,132,0,-132,0,112,0,-202,0,140,0,-146,0,103,1,-203,0,149,1,-168,1,102,-1,-207,0,160,0,-194,0,107,0,-211,1,175,-1,-221,0,116,1,-214,0,194,0,-250,-1,126,0,-217,0,219,0,-277,0,135,1,-223,0,244,-1,-301,-1,140,0,-230,-1,266,0,-319,1,142,-1,-239,1,277,0,-328,-1,141,0,-245,1,275,0,-327,-1,142,1,-247,-1,258,0,-316,0,147,0,-241,0,233,0,-296,0,157,0,-227,1,206,0,-273,-1,169,0,-213,-1,181,0,-253,-1,182,-1,-212,-1,160,0,-245,0,195,0,-230,0,144,0,-244,1,208,0,-253,0,135,0,-243,1,222,0,-274,0,134,0,-239,1,234,-1,-291,1,137,1,-233,0,244,0,-305,0,140,1,-226,-1,248,1,-313,1,139,-1,-219,0,243,0,-314,0,137,0,-212,1,230,0,-308,0,136,0,-203,-1,212,0,-296,0,137,0,-193,0,189,-1,-279,0,140,0,-181,-1,167,0,-259,0,138,-1,-164,1,136,1,-233,0,140,1,-151,0,118,0,-215,0,141,0,-144,-1,104,0,-200,0,143,0,-149,0,95,0,-190,0,148,0,-168,1,92,0,-187,1,160,0,-195,0,93,0,-190,1,177,0,-225,0,99,1,-196,1,199,1,-255,1,109,-1,-205,0,224,0,-283,0,123,-1,-218,1,249,1,-308,0,138,0,-236,0,268,0,-327,1,152,1,-255,-1,277,0,-339,-1,165,0,-270,0,273,0,-341,0,177,1,-278,0,256,1,-333,1,189,-1,-275,0,232,-1,-315,1,200,0,-261,-1,206,-1,-289,0,208,0,-242,1,178,0,-260,0,210,0,-229,0,152,1,-237,0,210,-1,-233,0,130,0,-224,1,211,0,-247,0,115,-1,-217,1,213,0,-262,0,111,0,-211,1,218,0,-276,0,116,0,-207,0,224,0,-287,1,126,0,-206,0,227,0,-294,1,134,0,-207,1,223,0,-295,0,141,0,-208,0,211,0,-292,0,146,-1,-208,0,194,1,-284,1,150,0,-206,0,174,0,-273,0,153,0,-200,1,155,1,-260,-1,154,0,-193,-1,138,1,-247,0,153,0,-186,1,124,0,-231,0,152,-1,-180,-1,112,1,-213,1,154,1,-177,0,102,0,-194,1,161,-1,-183,0,94,0,-180,1,173,-1,-205,-1,90,1,-179,0,187,1,-232,0,93,0,-188,1,205,0,-259,0,105,1,-205,1,225,-1,-285,0,125,-1,-227,0,246,0,-308,0,150,-1,-252,1,263,1,-326,-1,174,1,-277,-1,269,0,-338,1,195,0,-296,0,262,-1,-340,0,211,0,-304,0,244,-1,-332,0,220,0,-298,0,219,1,-312,1,224,0,-280,0,192,1,-282,0,221,0,-255,1,163,0,-246,0,213,-1,-232,-1,134,0,-212,0,203,0,-227,-1,111,0,-192,0,195,0,-235,0,98,0,-184,1,192,0,-248,0,98,0,-184,0,193,0,-259,0,110,0,-189,0,198,1,-268,0,126,0,-196,0,202,0,-274,0,143,0,-206,0,200,0,-276,0,156,0,-215,0,192,0,-276,1,165,-1,-222,0,180,0,-273,0,169,0,-226,0,167,0,-268,1,170,1,-227,-1,154,0,-261,1,169,1,-227,0,142,0,-251,0,168,-1,-226,1,131,1,-236,0,171,0,-222,1,120,0,-218,1,177,1,-215,-1,107,0,-196,0,183,0,-209,0,97,0,-178,1,188,0,-217,-1,93,0,-174,0,195,0,-238,0,99,0,-189,0,205,0,-262,-1,116,0,-215,0,219,0,-284,1,144,0,-245,-1,235,-1,-304,0,177,0,-275,0,248,-1,-320,-1,207,0,-302,-1,252,0,-329,-1,229,0,-319,0,244,0,-329,1,241,1,-324,-1,225,-1,-319,1,243,-1,-315,0,200,1,-296,0,236,0,-294,0,173,1,-263,0,223,1,-265,-1,145,0,-223,-1,207,0,-237,0,120,0,-184,0,191,-1,-223,0,101,0,-161,0,177,0,-225,0,94,0,-158,0,168,-1,-233,0,100,0,-166,0,165,0,-241,0,116,0,-179,0,167,0,-247,0,137,-1,-194,0,170,0,-251,0,157,0,-209,0,171,0,-254,-1,172,0,-223,0,169,-1,-256,0,182,0,-235,0,165,1,-257,-1,186,1,-245,0,159,1,-256,-1,188,-1,-254,1,153,-1,-252,-1,192,0,-261,1,145,0,-245,0,199,1,-264,0,135,0,-233,-1,203,1,-261,0,123,0,-217,-1,205,0,-250,0,111,1,-199,1,203,0,-235,0,104,1,-182,0,200,0,-232,1,106,0,-179,-1,197,0,-245,0,119,-1,-200,-1,199,0,-264,0,143,1,-232,-1,206,1,-282,0,175,0,-265,0,216,-1,-297,0,209,0,-295,-1,225,1,-308,-1,238,0,-319,0,226,0,-313,1,256,1,-332,0,218,1,-309,1,260,-1,-333,0,200,0,-294,1,253,1,-323,-1,176,1,-270,-1,238,0,-302,0,153,0,-237,0,219,0,-274,0,131,-1,-199,1,199,0,-244,0,114,0,-163,0,177,-1,-223,0,103,0,-141,0,159,1,-216,0,103,0,-141,0,145,0,-218,0,112,0,-155,0,136,0,-222,0,129,0,-174,0,134,1,-226,0,149,-1,-193,0,136,0,-229,0,167,0,-211,0,140,0,-232,0,181,1,-228,-1,145,-1,-236,0,191,0,-245,-1,149,0,-238,-1,199,0,-262,-1,150,0,-239,-1,209,1,-277,-1,148,0,-239,0,222,-1,-289,0,143,0,-235,1,231,1,-295,1,133,0,-229,-1,234,0,-291,-1,125,0,-220,1,228,0,-277,0,120,-1,-207,-1,217,0,-259,-1,121,0,-194,-1,204,-1,-247,0,131,0,-192,0,193,0,-251,1,150,0,-216,0,187,0,-264,0,176,0,-248,1,187,0,-276,0,205,0,-279,0,190,-1,-285,1,234,0,-304,0,195,1,-290,-1,256,1,-323,1,195,1,-289,1,267,0,-333,1,187,0,-281,0,266,0,-334,-1,173,0,-265,0,254,-1,-325,0,155,-1,-242,1,236,-1,-308,1,139,-1,-214,-1,213,-1,-282,0,126,0,-183,0,190,1,-253,0,118,0,-154,0,166,1,-226,0,116,1,-135,0,143,0,-210,0,119,-1,-134,0,124,0,-204,0,129,0,-148,0,111,0,-204,0,141,0,-168,0,105,0,-206,0,155,0,-188,0,107,1,-209,-1,168,0,-209,0,114,0,-213,1,181,0,-230,0,124,0,-216,-1,194,0,-252,0,133,0,-219,-1,210,-1,-275,1,139,-1,-223,0,229,0,-295,1,141,-1,-228,1,246,-1,-310,0,138,0,-232,-1,256,0,-317,-1,135,1,-234,0,254,0,-313,1,134,0,-232,1,241,0,-299,1,139,0,-225,0,223,1,-279,-1,150,0,-214,0,204,1,-261,-1,164,1,-212,-1,186,-1,-255,0,183,1,-229,0,172,0,-259,1,204,0,-256,-1,164,0,-265,-1,224,0,-281,0,161,-1,-267,-1,243,0,-301,-1,162,0,-266,0,258,1,-316,0,163,0,-261,-1,264,1,-326,0,160,0,-251,0,261,0,-329,-1,152,1,-238,-1,249,0,-324,0,143,-1,-222,0,230,0,-310,0,136,0,-203,0,207,0,-288,0,133,0,-182,0,182,-1,-261,0,132,0,-161,0,156,0,-233,0,133,-1,-143,0,131,1,-209,0,136,0,-136,0,110,0,-194,0,141,0,-144,0,95,0,-189,0,146,0,-161,0,88,-1,-189,-1,154,0,-182,0,88,0,-192,0,163,0,-205,1,96,0,-195,-1,177,0,-231,0,107,0,-199,-1,196,0,-258,1,119,-1,-205,0,219,0,-284,1,129,0,-214,1,242,0,-307,1,136,0,-227,-1,261,-1,-323,0,142,-1,-240,0,268,1,-330,0,148,1,-251,0,262,0,-327,1,157,-1,-255,1,244,0,-315,1,170,0,-251,0,222,1,-294,0,183,-1,-239,0,198,0,-271,-1,196,0,-229,1,175,-1,-253,-1,207,-1,-236,0,154,0,-247,1,217,-1,-253,0,140,0,-245,1,227,0,-273,1,133,-1,-243,0,236,0,-290,-1,134,0,-239,0,246,0,-304,0,139,1,-234,0,251,0,-315,0,143,0,-228,0,249,-1,-320,1,144,1,-223,0,239,1,-317,1,144,0,-216,0,221,0,-305,0,145,0,-207,0,198,0,-287,0,147,0,-195,1,173,0,-264,0,149,1,-180,-1,148,-1,-240,0,149,0,-164,0,124,0,-217,0,148,0,-151,0,104,0,-198,0,146,0,-148,0,90,-1,-183,1,147,1,-159,0,82,-1,-176,0,151,0,-180,0,81,0,-175,1,161,0,-206,0,85,1,-180,0,178,0,-234,0,96,0,-188,-1,200,0,-262,1,110,0,-200,0,224,0,-289,1,127,1,-219,-1,248,1,-312,-1,144,0,-241,1,265,1,-328,0,161,0,-263,0,269,0,-336,0,176,1,-279,1,260,0,-334,1,191,-1,-285,0,240,-1,-322,0,203,0,-279,0,215,1,-300,-1,213,0,-261,0,188,1,-272,1,217,0,-242,1,160,1,-244,0,217,0,-236,1,136,-1,-225,1,215,-1,-245,0,119,1,-218,-1,215,0,-260,0,112,0,-215,0,218,0,-276,0,117,-1,-213,0,225,0,-290,0,129,1,-214,1,231,0,-300,0,141,-1,-217,0,231,0,-304,0,151,0,-220,1,223,-1,-302,0,157,0,-222,-1,207,1,-293,0,161,0,-221,-1,186,1,-279,0,163,0,-215,-1,163,0,-262,-1,163,-1,-204,0,142,0,-245,0,160,-1,-192,0,123,-1,-227,1,155,0,-180,0,106,1,-208,0,151,0,-172,0,94,0,-188,0,151,-1,-171,0,85,-1,-170,0,157,0,-187,0,81,0,-163,0,167,-1,-212,0,84,0,-170,1,182,1,-239,0,95,1,-186,0,202,1,-266,1,115,0,-209,1,224,-1,-291,0,140,0,-237,0,245,-1,-311,1,167,-1,-267,-1,259,0,-326,1,193,0,-293,0,260,-1,-333,-1,213,-1,-309,-1,249,-1,-331,0,226,0,-312,0,227,1,-318,1,232,1,-301,-1,201,0,-294,1,231,1,-278,1,173,0,-262,-1,224,0,-250,-1,144,-1,-225,1,213,0,-234,0,120,0,-198,0,202,-1,-237,0,106,0,-188,0,196,0,-250,0,103,0,-189,-1,195,0,-263,-1,114,0,-195,-1,200,0,-274,0,132,0,-205,1,205,-1,-281,1,150,1,-216,-1,206,0,-282,0,165,0,-226,1,199,0,-280,0,175,0,-234,0,187,0,-273,0,180,1,-237,-1,170,0,-265,0,179,1,-235,0,153,0,-255,1,175,-1,-231,0,138,0,-243,1,170,0,-224,0,124,-1,-229,0,166,0,-218,0,111,0,-211,0,166,0,-210,1,100,0,-190,0,169,-1,-202,-1,90,0,-169,1,172,-1,-203,0,87,0,-159,0,177,0,-222,0,92,0,-170,0,186,0,-246,0,108,0,-196,1,199,0,-268,0,134,-1,-228,-1,217,0,-288,-1,167,0,-263,-1,233,-1,-305,1,200,1,-295,0,243,1,-317,0,229,0,-319,-1,242,-1,-322,-1,247,1,-332,1,229,0,-318,-1,253,0,-330,1,207,1,-303,-1,249,1,-314,0,181,0,-277,0,237,0,-288,0,155,0,-241,0,221,0,-258,0,131,0,-202,1,203,0,-236,0,113,0,-171,0,186,-1,-232,0,105,0,-163,0,175,0,-240,-1,108,1,-171,0,170,0,-248,0,122,0,-185,-1,170,1,-254,1,143,0,-202,0,172,1,-256,0,163,1,-218,0,173,0,-255,-1,180,0,-232,1,170,0,-253,0,190,0,-243,0,163,0,-251,-1,193,0,-249,0,154,0,-247,1,192,0,-253,0,145,0,-241,0,190,-1,-256,0,135,-1,-234,1,191,0,-256,1,125,-1,-223,0,193,0,-254,1,115,1,-209,0,193,1,-247,1,106,0,-192,0,191,1,-235,0,100,0,-175,0,188,-1,-226,-1,102,0,-167,-1,185,0,-234,0,113,0,-182,-1,186,0,-250,-1,135,0,-215,-1,192,0,-268,0,165,0,-252,-1,202,-1,-283,1,200,0,-286,1,212,-1,-295,0,233,0,-314,1,218,-1,-302,-1,257,-1,-333,-1,215,0,-304,0,269,-1,-341,0,202,-1,-297,0,267,0,-337,-1,182,-1,-280,0,255,0,-321,0,161,0,-253,-1,235,0,-297,0,142,1,-218,0,214,1,-267,1,126,0,-182,1,192,0,-242,0,116,-1,-154,0,171,0,-229,-1,115,0,-148,1,155,-1,-228,0,122,0,-160,0,143,0,-229,0,136,0,-180,0,138,0,-230,0,154,0,-199,0,136,0,-229,0,172,-1,-217,0,137,1,-228,0,186,1,-232,1,139,0,-228,-1,195,-1,-245,-1,140,1,-227,-1,200,0,-256,0,139,1,-227,0,203,0,-268,0,136,0,-225,0,210,-1,-278,0,131,0,-222,1,218,1,-285,1,125,0,-217,0,222,1,-286,-1,119,1,-210,0,219,-1,-278,1,116,1,-201,0,210,-1,-264,0,119,0,-191,-1,200,1,-248,0,128,0,-186,0,189,0,-244,-1,145,0,-202,0,181,0,-252,-1,170,0,-235,1,178,0,-263,0,198,0,-268,0,179,0,-273,0,227,0,-297,-1,183,0,-280,-1,253,0,-319,0,187,1,-283,-1,270,0,-334,-1,184,0,-281,0,276,0,-340,0,175,0,-271,1,269,-1,-338,0,161,0,-254,1,252,-1,-326,0,148,0,-231,0,230,1,-305,0,138,0,-203,1,207,0,-277,0,132,0,-174,-1,183,0,-249,0,129,1,-151,0,159,0,-226,0,131,1,-144,0,136,0,-213,0,138,0,-155,0,119,0,-208,0,148,0,-173,0,108,0,-206,0,159,0,-191,0,103,0,-205,0,171,1,-208,0,106,0,-204,-1,181,0,-225,0,112,0,-205,0,190,0,-242,0,120,-1,-206,0,200,-1,-261,0,126,0,-209,0,212,1,-280,-1,129,0,-213,-1,227,0,-296,-1,130,-1,-217,0,239,-1,-307,0,129,0,-222,0,243,0,-310,-1,131,-1,-224,0,237,1,-303,0,136,1,-224,0,223,0,-287,0,147,0,-218,0,205,0,-267,-1,162,-1,-213,1,188,0,-252,-1,180,0,-222,1,172,0,-250,0,200,-1,-246,0,160,0,-255,0,221,0,-273,1,154,0,-259,0,240,1,-295,0,153,1,-261,1,256,0,-313,0,157,-1,-260,1,267,-1,-326,0,158,0,-256,1,269,0,-334,0,156,0,-248,-1,262,-1,-335,0,151,-1,-236,0,246,-1,-326,0,147,0,-221,0,224,0,-309,0,145,1,-202,0,200,1,-283,0,145,-1,-181,0,174,0,-253,1,145,0,-162,0,147,0,-223,0,147,0,-149,0,121,0,-201,0,149,0,-151,0,100,0,-188,1,152,0,-163,0,87,0,-183,0,155,0,-179,0,81,0,-182,0,161,0,-197,0,84,-1,-183,1,169,1,-218,0,94,0,-186,-1,181,0,-241,1,106,-1,-190,1,199,-1,-265,0,117,1,-199,0,220,-1,-289,1,127,0,-211,-1,240,1,-309,1,148,0],"tideFirstType":"L"};
+const TZ = "America/New_York";
+const TIDE_SHIFT_MIN = SITE.tideShiftMin;   // minutes to shift the tide station to this launch
+const CUR_SHIFT_MIN  = SITE.curShiftMin;
+const MIN = 60000;
+
+function unpack(start, deltas, vals, scale, shift){
+  const out = new Array(vals.length);
+  let t = start;
+  for (let i = 0; i < vals.length; i++){
+    if (i > 0) t += deltas[i-1];
+    out[i] = { t: (t + shift) * MIN, v: vals[i] / scale };
+  }
+  return out;
+}
+const TIDE = unpack(RAW.tideStart, RAW.tideDt, RAW.tideV, 100, TIDE_SHIFT_MIN);
+TIDE.forEach((p, i) => { p.type = ((i % 2 === 0) === (RAW.tideFirstType === "H")) ? "H" : "L"; });
+const CUR = unpack(RAW.curStart, RAW.curDt, RAW.curV, 100, CUR_SHIFT_MIN);
+CUR.forEach(p => { p.type = Math.abs(p.v) < 0.05 ? "slack" : (p.v > 0 ? "flood" : "ebb"); });
+const RANGE = [Math.max(TIDE[0].t, CUR[0].t), Math.min(TIDE[TIDE.length-1].t, CUR[CUR.length-1].t)];
+
+function bracket(arr, t){
+  let lo = 0, hi = arr.length - 1;
+  if (t < arr[0].t || t > arr[hi].t) return null;
+  while (hi - lo > 1){ const mid = (lo + hi) >> 1; if (arr[mid].t <= t) lo = mid; else hi = mid; }
+  return [arr[lo], arr[hi]];
+}
+function tideAt(t){
+  const b = bracket(TIDE, t); if (!b) return null;
+  const [a, c] = b, f = (t - a.t) / (c.t - a.t);
+  return a.v + (c.v - a.v) * (1 - Math.cos(Math.PI * f)) / 2;
+}
+function curAt(t){
+  const b = bracket(CUR, t); if (!b) return null;
+  const [a, c] = b, f = (t - a.t) / (c.t - a.t);
+  return (a.type === "slack") ? c.v * Math.sin(Math.PI / 2 * f) : a.v * Math.cos(Math.PI / 2 * f);
+}
+const NWS_GRID  = "https://api.weather.gov/gridpoints/" + SITE.nwsGrid;
+const NWS_ALERT = "https://api.weather.gov/alerts/active?point=" + SITE.lat + "," + SITE.lon;
+const COOPS = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter";
+
+const WATER_S = {"id":"8518750","name":"The Battery","mile":0,"source":"noaa"};      // downriver of this launch
+const WATER_N = {"id":"8518962","name":"Turkey Point","mile":100,"source":"noaa"};      // upriver of it
+const WATER_NEAR = "south";  // "south", "north", or null to interpolate
+const WATER_ALL = [{"id":"8518750","name":"The Battery","mile":0,"source":"noaa"},{"id":"8518962","name":"Turkey Point","mile":100,"source":"noaa"},{"id":"8518979","name":"Coxsackie","mile":126,"source":"noaa"},{"id":"01359139","name":"Albany","mile":145,"source":"usgs"}];  // every gauge on the river, for a last resort
+const SITE_RIVER_MILE = SITE.riverMile;
+
+const LAT = SITE.lat, LON = SITE.lon;
+const RAD = Math.PI / 180, DAY_MS = 86400000, J1970 = 2440588, J2000 = 2451545;
+const OBL = RAD * 23.4397;                       // obliquity of the ecliptic
+
+const toJulian   = ms => ms / DAY_MS - 0.5 + J1970;
+const fromJulian = j  => (j + 0.5 - J1970) * DAY_MS;
+const toDays     = ms => toJulian(ms) - J2000;
+
+const rightAscension = (l, b) => Math.atan2(Math.sin(l) * Math.cos(OBL) - Math.tan(b) * Math.sin(OBL), Math.cos(l));
+const declination    = (l, b) => Math.asin(Math.sin(b) * Math.cos(OBL) + Math.cos(b) * Math.sin(OBL) * Math.sin(l));
+const altitudeOf  = (H, phi, dec) => Math.asin(Math.sin(phi) * Math.sin(dec) + Math.cos(phi) * Math.cos(dec) * Math.cos(H));
+const siderealTime = (d, lw) => RAD * (280.16 + 360.9856235 * d) - lw;
+
+const solarMeanAnomaly = d => RAD * (357.5291 + 0.98560028 * d);
+function eclipticLongitude(M){
+  const C = RAD * (1.9148 * Math.sin(M) + 0.02 * Math.sin(2 * M) + 0.0003 * Math.sin(3 * M));
+  return M + C + RAD * 102.9372 + Math.PI;
+}
+function sunCoords(d){
+  const M = solarMeanAnomaly(d), L = eclipticLongitude(M);
+  return {dec: declination(L, 0), ra: rightAscension(L, 0)};
+}
+
+const J0 = 0.0009;
+const approxTransit = (Ht, lw, n) => J0 + (Ht + lw) / (2 * Math.PI) + n;
+const solarTransitJ = (ds, M, L) => J2000 + ds + 0.0053 * Math.sin(M) - 0.0069 * Math.sin(2 * L);
+const hourAngleFor = (h, phi, d) => Math.acos((Math.sin(h) - Math.sin(phi) * Math.sin(d)) / (Math.cos(phi) * Math.cos(d)));
+
+function sunTimes(ms){
+  const lw = RAD * -LON, phi = RAD * LAT, d = toDays(ms);
+  const n = Math.round(d - J0 - lw / (2 * Math.PI));
+  const ds = approxTransit(0, lw, n);
+  const M = solarMeanAnomaly(ds), L = eclipticLongitude(M), dec = declination(L, 0);
+  const Jnoon = solarTransitJ(ds, M, L);
+  const out = {};
+  for (const [deg, riseName, setName] of [[-0.833, "sunrise", "sunset"], [-6, "dawn", "dusk"]]){
+    const w = hourAngleFor(deg * RAD, phi, dec);
+    if (isNaN(w)){ out[riseName] = out[setName] = null; continue; }
+    const Jset = solarTransitJ(approxTransit(w, lw, n), M, L);
+    out[setName]  = fromJulian(Jset);
+    out[riseName] = fromJulian(Jnoon - (Jset - Jnoon));
+  }
+  return out;
+}
+
+function moonCoords(d){
+  const L = RAD * (218.316 + 13.176396 * d),
+        M = RAD * (134.963 + 13.064993 * d),
+        F = RAD * (93.272  + 13.229350 * d),
+        l = L + RAD * 6.289 * Math.sin(M),
+        b = RAD * 5.128 * Math.sin(F);
+  return {ra: rightAscension(l, b), dec: declination(l, b), dist: 385001 - 20905 * Math.cos(M)};
+}
+
+function moonIllumination(ms){
+  const d = toDays(ms), s = sunCoords(d), m = moonCoords(d), sdist = 149598000;
+  const phi = Math.acos(Math.sin(s.dec) * Math.sin(m.dec) + Math.cos(s.dec) * Math.cos(m.dec) * Math.cos(s.ra - m.ra));
+  const inc = Math.atan2(sdist * Math.sin(phi), m.dist - sdist * Math.cos(phi));
+  const angle = Math.atan2(Math.cos(s.dec) * Math.sin(s.ra - m.ra),
+                Math.sin(s.dec) * Math.cos(m.dec) - Math.cos(s.dec) * Math.sin(m.dec) * Math.cos(s.ra - m.ra));
+  return {fraction: (1 + Math.cos(inc)) / 2,
+          phase: 0.5 + 0.5 * inc * (angle < 0 ? -1 : 1) / Math.PI};
+}
+
+function moonAltitude(ms){
+  const lw = RAD * -LON, phi = RAD * LAT, d = toDays(ms);
+  const c = moonCoords(d), H = siderealTime(d, lw) - c.ra;
+  const h = altitudeOf(H, phi, c.dec);
+  return h + RAD * 0.017 / Math.tan(h + RAD * 10.26 / (h / RAD + 5.10));   // refraction
+}
+
+function moonTimes(dayStartMs){
+  const hc = 0.133 * RAD;
+  let h0 = moonAltitude(dayStartMs) - hc, rise, set;
+  for (let i = 1; i <= 24; i += 2){
+    const h1 = moonAltitude(dayStartMs + i * 3600e3) - hc;
+    const h2 = moonAltitude(dayStartMs + (i + 1) * 3600e3) - hc;
+    const a = (h0 + h2) / 2 - h1, b = (h2 - h0) / 2;
+    const xe = -b / (2 * a), ye = (a * xe + b) * xe + h1;
+    const disc = b * b - 4 * a * h1;
+    let roots = 0, x1 = 0, x2 = 0;
+    if (disc >= 0){
+      const dx = Math.sqrt(disc) / (Math.abs(a) * 2);
+      x1 = xe - dx; x2 = xe + dx;
+      if (Math.abs(x1) <= 1) roots++;
+      if (Math.abs(x2) <= 1) roots++;
+      if (x1 < -1) x1 = x2;
+    }
+    if (roots === 1){ if (h0 < 0) rise = i + x1; else set = i + x1; }
+    else if (roots === 2){ rise = i + (ye < 0 ? x2 : x1); set = i + (ye < 0 ? x1 : x2); }
+    if (rise !== undefined && set !== undefined) break;
+    h0 = h2;
+  }
+  return {rise: rise !== undefined ? dayStartMs + rise * 3600e3 : null,
+          set:  set  !== undefined ? dayStartMs + set  * 3600e3 : null};
+}
+
+function skyFor(t){
+  const t0 = dayStartNY(t);
+  const s = sunTimes(t0 + 12 * 3600e3);        // local midday picks the right day
+  const m = moonTimes(t0);
+  const ill = moonIllumination(t);
+  return {sunrise:s.sunrise, sunset:s.sunset, dawn:s.dawn, dusk:s.dusk,
+          moonrise:m.rise, moonset:m.set, phase:ill.phase, lit:Math.round(ill.fraction * 100)};
+}
+
+let WX = {status:"loading", grid:null, alerts:null, water:null};
+
+const kmhToMph = v => v * 0.621371;
+const cToF = v => v * 9 / 5 + 32;
+
+function isoDurMs(d){
+  const m = /^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?)?$/.exec(d);
+  return m ? ((+m[1] || 0) * 86400 + (+m[2] || 0) * 3600 + (+m[3] || 0) * 60) * 1000 : 3600e3;
+}
+function valueAt(series, t){
+  if (!series || !series.values) return null;
+  for (const v of series.values){
+    const [start, dur] = v.validTime.split("/");
+    const s0 = Date.parse(start);
+    if (t >= s0 && t < s0 + isoDurMs(dur)) return v.value;
+  }
+  return null;
+}
+
+function precipWord(series){
+  const first = Array.isArray(series) ? series.find(x => x && x.weather) : null;
+  if (!first) return null;
+  const happening = ["definite","likely","occasional","frequent","numerous","widespread"]
+    .includes(first.coverage);
+  const raw = first.weather.replace(/_/g, " ").replace("rain showers", "rain");
+  const heavy = first.intensity === "heavy";
+  const DOING = {rain:"raining", drizzle:"drizzling", snow:"snowing", sleet:"sleeting",
+                 fog:"foggy", haze:"hazy", thunderstorms:"thunderstorms about"};
+  const ADJ = {rain:"wet", drizzle:"wet", snow:"snowy", sleet:"icy",
+               fog:"foggy", haze:"hazy", thunderstorms:"stormy"};
+  return {happening, heavy, text: happening
+    ? (heavy ? "heavy " + raw : (DOING[raw] || raw))
+    : "a chance of " + raw,
+    noun: happening ? (heavy ? "heavy " + raw : raw) : "a chance of " + raw,
+    adj: ADJ[raw] || raw};
+}
+
+const SKY_WORDS = [[12,"Clear"],[37,"Mostly clear"],[62,"Partly cloudy"],[87,"Mostly cloudy"],[101,"Overcast"]];
+const skyWord = pct => (SKY_WORDS.find(x => pct <= x[0]) || SKY_WORDS[4])[1];
+
+function conditionsAt(t){
+  if (!WX.grid) return null;
+  const g = WX.grid, at = k => valueAt(g[k], t);
+  const tempC = at("temperature");
+  if (tempC == null) return null;
+  const feelsC = at("apparentTemperature");
+  const windKmh = at("windSpeed"), gustKmh = at("windGust");
+  const sky = at("skyCover");
+  return {
+    airF: Math.round(cToF(tempC)),
+    feelsF: feelsC == null ? null : Math.round(cToF(feelsC)),
+    windMph: windKmh == null ? null : Math.round(kmhToMph(windKmh)),
+    windGustMph: gustKmh == null ? null : Math.round(kmhToMph(gustKmh)),
+    windFromDeg: at("windDirection"),
+    skyPct: sky, skyText: sky == null ? null : skyWord(sky),
+    wx: precipWord(at("weather")),
+    precipPct: at("probabilityOfPrecipitation"),
+    stormPct: at("probabilityOfThunder"),
+    waterF: WX.water ? Math.round(WX.water.f) : null
+  };
+}
+
+async function getJSON(url){
+  const r = await fetch(url);
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  return r.json();
+}
+const USGS = "https://waterservices.usgs.gov/nwis/iv/";
+const waterURL = st => st.source === "usgs"
+  ? USGS + "?format=json&sites=" + st.id + "&parameterCd=00010&period=P1D"
+  : COOPS + "?product=water_temperature&application=coldspringpaddling"
+    + "&range=24&interval=h&station=" + st.id + "&time_zone=gmt&units=english&format=json";
+
+const WATER_KEY = "hc.water.";
+const WATER_KEEP_MS = 7 * 24 * 60 * 60 * 1000;
+
+function cacheWater(st, r){
+  try {
+    localStorage.setItem(WATER_KEY + st.id, JSON.stringify({f: r.f, t: r.t}));
+  } catch (e) {}
+}
+
+function cachedWater(st, now, anyAge){
+  try {
+    const v = JSON.parse(localStorage.getItem(WATER_KEY + st.id));
+    if (!v || !isFinite(v.f) || !isFinite(v.t)) return null;
+    const age = (now == null ? Date.now() : now) - v.t;
+    if (age < 0) return null;
+    return (anyAge || age < WATER_KEEP_MS) ? {f: v.f, t: v.t} : null;
+  } catch (e) { return null; }
+}
+
+const AGE_MILES_PER_DAY = 20;
+const waterCost = (st, t, now) =>
+  Math.abs(st.mile - SITE_RIVER_MILE)
+  + Math.max(0, (now - t) / 86400000) * AGE_MILES_PER_DAY;
+
+function ago(t, now){
+  const m = Math.round(((now == null ? Date.now() : now) - t) / 60000);
+  if (m < 60) return (m <= 1 ? "a minute" : m + " minutes") + " ago";
+  const h = Math.round(m / 60);
+  if (h < 36) return (h === 1 ? "an hour" : h + " hours") + " ago";
+  return Math.round(h / 24) + " days ago";
+}
+
+function readWater(res){
+  if (res.status !== "fulfilled") return null;
+  const body = res.value;
+  let rows = null, toF = f => f;
+  let when = s => Date.parse(String(s).replace(" ", "T") + "Z");
+  if (body && Array.isArray(body.data)){
+    rows = body.data.map(r => ({v: r.v, t: r.t}));
+  } else if (body && body.value && Array.isArray(body.value.timeSeries)){
+    const ts = body.value.timeSeries[0];
+    const vs = ts && ts.values && ts.values[0] && ts.values[0].value;
+    if (!Array.isArray(vs)) return null;
+    rows = vs.map(r => ({v: r.value, t: r.dateTime}));
+    toF = c => c * 9 / 5 + 32;
+    when = t => Date.parse(t);
+  }
+  if (!rows) return null;
+  for (let i = rows.length - 1; i >= 0; i--){
+    const f = toF(parseFloat(rows[i].v));
+    const t = when(rows[i].t);
+    if (isFinite(f) && f > 20 && f < 95 && isFinite(t)) return {f, t};
+  }
+  return null;
+}
+
+function waterSub(w, now){
+  if (!w) return "";
+  if (w.from === "both") return "estimated";
+  let out = "from " + w.from;
+  if (!w.bracket){
+    const miles = Math.abs(w.st.mile - SITE_RIVER_MILE);
+    out += ", " + miles + " " + (miles === 1 ? "mile" : "miles")
+         + " " + (w.st.mile > SITE_RIVER_MILE ? "upriver" : "downriver");
+  }
+  if (w.kept || (now - w.at) > 3 * 3600000) out += ", " + ago(w.at, now);
+  return out;
+}
+
+function bestWater(live, now, anyAge){
+  const seen = {}, all = [];
+  for (const c of live){ seen[c.st.id] = true; all.push({st: c.st, f: c.f, t: c.t, kept: false}); }
+  for (const st of WATER_ALL){
+    if (seen[st.id]) continue;
+    const v = cachedWater(st, now, anyAge);
+    if (v) all.push({st, f: v.f, t: v.t, kept: true});
+  }
+  let best = null;
+  for (const c of all){
+    c.cost = waterCost(c.st, c.t, now);
+    if (!best || c.cost < best.cost) best = c;
+  }
+  if (!best) return null;
+  const own = (WATER_N && best.st.id === WATER_N.id) || (WATER_S && best.st.id === WATER_S.id);
+  return {f: best.f, from: best.st.name, st: best.st, at: best.t,
+          kept: best.kept, cost: best.cost, bracket: !!own};
+}
+
+async function loadConditions(){
+  const [grid, alerts, north, south] = await Promise.allSettled([
+    getJSON(NWS_GRID), getJSON(NWS_ALERT),
+    WATER_N ? getJSON(waterURL(WATER_N)) : Promise.reject(),
+    WATER_S ? getJSON(waterURL(WATER_S)) : Promise.reject()
+  ]);
+  WX.grid = grid.status === "fulfilled" ? grid.value.properties : null;
+  WX.alerts = alerts.status === "fulfilled" ? (alerts.value.features || []) : null;
+
+  const rn = readWater(north), rs = readWater(south);
+  const n = rn ? rn.f : null, sth = rs ? rs.f : null;
+  const fetched = {};
+  if (WATER_N) fetched[WATER_N.id] = true;
+  if (WATER_S) fetched[WATER_S.id] = true;
+  const prefStn = WATER_NEAR === "north" ? WATER_N : WATER_NEAR === "south" ? WATER_S : null;
+  const span = (WATER_N && WATER_S) ? WATER_N.mile - WATER_S.mile : 0;
+  const f = span > 0
+    ? Math.max(0, Math.min(1, (SITE_RIVER_MILE - WATER_S.mile) / span)) : 0;
+  if (rn) cacheWater(WATER_N, rn);
+  if (rs) cacheWater(WATER_S, rs);
+
+  const now = Date.now();
+  const live = [];
+  if (WATER_N && rn) live.push({st: WATER_N, f: rn.f, t: rn.t});
+  if (WATER_S && rs) live.push({st: WATER_S, f: rs.f, t: rs.t});
+
+  if (!prefStn && n != null && sth != null){
+    WX.water = {f: sth + (n - sth) * f, from: "both"};
+  } else {
+    WX.water = bestWater(live, now);
+    const floor = Math.min.apply(null,
+      WATER_ALL.map(st => Math.abs(st.mile - SITE_RIVER_MILE))) + AGE_MILES_PER_DAY;
+    if (!WX.water || WX.water.cost > floor){
+      const rest = WATER_ALL.filter(st => !fetched[st.id]);
+      const more = await Promise.allSettled(rest.map(st => getJSON(waterURL(st))));
+      more.forEach((res, i) => {
+        const r = readWater(res);
+        if (r){ cacheWater(rest[i], r); live.push({st: rest[i], f: r.f, t: r.t}); }
+      });
+      WX.water = bestWater(live, now) || WX.water;
+    }
+    if (!WX.water) WX.water = bestWater([], now, true);
+  }
+
+  WX.status = WX.grid ? "ok" : "failed";
+  render();
+}
+
+const COMPASS = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+const compass = deg => COMPASS[Math.round(((deg % 360) + 360) % 360 / 22.5) % 16];
+const dirWord = deg => {
+  const d = ((deg % 360) + 360) % 360;
+  return (d <= 90 || d >= 270) ? "north" : "south";
+};
+
+const FLOOD_TOWARD = SITE.floodToward, EBB_TOWARD = SITE.ebbToward;
+function windVsCurrent(windFromDeg, cv){
+  if (Math.abs(cv) < 0.15) return "slack";
+  const windToward = (windFromDeg + 180) % 360;
+  const curToward = cv > 0 ? FLOOD_TOWARD : EBB_TOWARD;
+  let d = Math.abs(windToward - curToward) % 360;
+  if (d > 180) d = 360 - d;
+  return d < 60 ? "aligned" : d > 120 ? "opposed" : "across";
+}
+
+const COLD_WATER_F = 62;
+function immersionLede(airF, waterF){
+  const base = "<b>Be safe! Always wear a life jacket and dress for immersion.</b>";
+  if (airF == null || waterF == null) return {urgent:false, html:base};
+  const combined = airF + waterF;
+  const cold = waterF < COLD_WATER_F;
+  const trips = cold || combined <= 120 || airF < 50;
+  const why = cold ? "the water is only " + waterF + "\u00B0F"
+            : airF < 50 && combined > 120 ? "the air is only " + airF + "\u00B0F"
+            : "the combined water + air temp is only " + combined + "\u00B0F";
+  return {urgent:trips, cold, html: base
+    + (trips ? " Consider wearing a wet or drysuit today, since " + why + "." : "")};
+}
+
+const MOONS = [[0.03,"New moon"],[0.22,"Waxing crescent"],[0.28,"First quarter"],
+               [0.47,"Waxing gibbous"],[0.53,"Full moon"],[0.72,"Waning gibbous"],
+               [0.78,"Last quarter"],[0.97,"Waning crescent"],[1.01,"New moon"]];
+const moonName = ph => (MOONS.find(m => ph < m[0]) || MOONS[MOONS.length-1])[1];
+
+const nextAfter = (arr, t, pred) => arr.find(p => p.t > t && (!pred || pred(p))) || null;
+const lastBefore = (arr, t, pred) => { let r = null; for (const p of arr){ if (p.t > t) break; if (!pred || pred(p)) r = p; } return r; };
+
+const fmtT = new Intl.DateTimeFormat("en-US", {hour:"numeric", minute:"2-digit", timeZone:TZ});
+const fmtTD = new Intl.DateTimeFormat("en-US", {weekday:"short", hour:"numeric", minute:"2-digit", timeZone:TZ});
+const fmtDate = new Intl.DateTimeFormat("en-US", {weekday:"long", month:"long", day:"numeric", timeZone:TZ});
+const fmtParts = new Intl.DateTimeFormat("en-CA", {year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit", hour12:false, timeZone:TZ});
+const fmtOff = new Intl.DateTimeFormat("en-US", {timeZone:TZ, timeZoneName:"longOffset"});
+
+function offsetMin(ms){
+  const s = fmtOff.formatToParts(new Date(ms)).find(p => p.type === "timeZoneName").value; // GMT-04:00
+  const m = /GMT([+-])(\d\d):(\d\d)/.exec(s);
+  return m ? (m[1] === "-" ? -1 : 1) * (+m[2] * 60 + +m[3]) : 0;
+}
+function nyParts(ms){
+  const p = {}; for (const x of fmtParts.formatToParts(new Date(ms))) p[x.type] = x.value;
+  return {y:+p.year, mo:+p.month, d:+p.day, h:+p.hour % 24, mi:+p.minute};
+}
+function fromNY(y, mo, d, h, mi){
+  const guess = Date.UTC(y, mo-1, d, h, mi);
+  let ms = guess - offsetMin(guess) * MIN;
+  ms = guess - offsetMin(ms) * MIN;
+  return ms;
+}
+function dayStartNY(ms){ const p = nyParts(ms); return fromNY(p.y, p.mo, p.d, 0, 0); }
+function dur(ms){
+  const m = Math.max(0, Math.round(ms / MIN)), h = Math.floor(m / 60);
+  return h ? h + "h " + String(m % 60).padStart(2, "0") + "m" : m + "m";
+}
+const pad = n => String(n).padStart(2, "0");
+
+let selected = Date.now();
+let live = true;
+const $ = id => document.getElementById(id);
+
+const whenEl = $("when");
+whenEl.addEventListener("input", () => {
+  const v = whenEl.value; if (!v) return;
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(v); if (!m) return;
+  selected = fromNY(+m[1], +m[2], +m[3], +m[4], +m[5]);
+  live = false; $("nowbtn").classList.remove("on"); render();
+});
+$("nowbtn").addEventListener("click", () => { live = true; selected = Date.now(); $("nowbtn").classList.add("on"); render(); });
+setInterval(() => { if (live){ selected = Date.now(); render(); } }, 30000);
+
+function setPicker(){
+  const p = nyParts(selected);
+  whenEl.value = p.y + "-" + pad(p.mo) + "-" + pad(p.d) + "T" + pad(p.h) + ":" + pad(p.mi);
+}
+
+const PAD = {l:42, r:16, t:24, b:24};
+const svgNS = "http://www.w3.org/2000/svg";
+function el(name, attrs, text){
+  const n = document.createElementNS(svgNS, name);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  if (text != null) n.textContent = text;
+  return n;
+}
+function axis(g, W, H, t0, t1, x){
+  for (let h = 0; h <= 24; h += 3){
+    const t = t0 + h * 60 * MIN; if (t > t1) break;
+    const xx = x(t);
+    g.appendChild(el("line", {x1:xx, y1:PAD.t, x2:xx, y2:H - PAD.b, stroke:"var(--line-2)", "stroke-width":1}));
+    const lbl = h === 0 ? "12a" : h === 12 ? "12p" : h < 12 ? h + "a" : (h - 12) + "p";
+    if (h < 24) g.appendChild(el("text", {x:xx + 3, y:H - PAD.b + 15, fill:"var(--muted)", "font-size":11, "font-family":"IBM Plex Mono, monospace"}, lbl));
+  }
+}
+function ghosts(svg, marks, W, H, x){
+  for (const m of marks){
+    const xx = x(m.t);
+    if (xx < PAD.l + 6 || xx > W - PAD.r - 6) continue;
+    svg.appendChild(el("line", {x1:xx, y1:PAD.t, x2:xx, y2:H - PAD.b, stroke:m.col,
+      "stroke-width":1, "stroke-dasharray":"2 4", opacity:.85}));
+    svg.appendChild(el("text", {x:xx, y:PAD.t - 6, fill:m.col, "font-size":10,
+      "text-anchor":"middle", "font-family":"Barlow Semi Condensed, sans-serif",
+      "letter-spacing":".05em", "font-weight":600}, m.label));
+  }
+}
+const tideMarks = (t0, t1) => TIDE.filter(p => p.t >= t0 && p.t <= t1)
+  .map(p => ({t:p.t, label:p.type === "H" ? "HIGH TIDE" : "LOW TIDE", col:"var(--river)"}));
+
+function marker(g, xx, H, label){
+  g.appendChild(el("line", {x1:xx, y1:PAD.t - 6, x2:xx, y2:H - PAD.b, stroke:"var(--ink)", "stroke-width":2}));
+  g.appendChild(el("circle", {cx:xx, cy:PAD.t - 8, r:3.5, fill:"var(--ink)"}));
+}
+
+function drawTide(t0, t1){
+  const svg = $("tideChart"), W = 720, H = 190;
+  svg.textContent = "";
+  const x = t => PAD.l + (t - t0) / (t1 - t0) * (W - PAD.l - PAD.r);
+  const lo = Math.min(...TIDE.filter(p => p.t > t0 - 9e7 && p.t < t1 + 9e7).map(p => p.v), 0) - 0.4;
+  const hi = Math.max(...TIDE.filter(p => p.t > t0 - 9e7 && p.t < t1 + 9e7).map(p => p.v), 1) + 0.4;
+  const y = v => PAD.t + (hi - v) / (hi - lo) * (H - PAD.t - PAD.b);
+
+  for (const v of [0, 1, 2, 3, 4]){
+    if (v < lo || v > hi) continue;
+    svg.appendChild(el("line", {x1:PAD.l, y1:y(v), x2:W - PAD.r, y2:y(v), stroke:"var(--line-2)", "stroke-width":1}));
+    svg.appendChild(el("text", {x:PAD.l - 7, y:y(v) + 4, fill:"var(--muted)", "font-size":11, "text-anchor":"end", "font-family":"IBM Plex Mono, monospace"}, v + "'"));
+  }
+  axis(svg, W, H, t0, t1, x);
+
+  let d = "", area = "";
+  for (let t = t0; t <= t1; t += 6 * MIN){
+    const v = tideAt(t); if (v == null) continue;
+    d += (d ? "L" : "M") + x(t).toFixed(1) + " " + y(v).toFixed(1);
+  }
+  if (d){
+    area = d + "L" + x(t1).toFixed(1) + " " + y(lo).toFixed(1) + "L" + x(t0).toFixed(1) + " " + y(lo).toFixed(1) + "Z";
+    svg.appendChild(el("path", {d:area, fill:"var(--river)", opacity:.10}));
+    svg.appendChild(el("path", {d:d, fill:"none", stroke:"var(--river)", "stroke-width":2.2, "stroke-linejoin":"round"}));
+  }
+  for (const p of TIDE){
+    if (p.t < t0 || p.t > t1) continue;
+    svg.appendChild(el("circle", {cx:x(p.t), cy:y(p.v), r:3, fill:"var(--river)"}));
+    const up = p.type === "H";
+    svg.appendChild(el("text", {
+      x:Math.min(Math.max(x(p.t), PAD.l + 16), W - PAD.r - 16), y:y(p.v) + (up ? -9 : 16),
+      fill:"var(--ink-2)", "font-size":11.5, "text-anchor":"middle", "font-family":"IBM Plex Mono, monospace"
+    }, (up ? "H " : "L ") + fmtT.format(p.t).replace(/\s/g, "").toLowerCase()));
+  }
+  const sv = tideAt(selected);
+  marker(svg, x(selected), H);
+  if (sv != null) svg.appendChild(el("circle", {cx:x(selected), cy:y(sv), r:5, fill:"var(--ink)", stroke:"var(--surface)", "stroke-width":2}));
+}
+
+function drawCur(t0, t1){
+  const svg = $("curChart"), W = 720, H = 150;
+  svg.textContent = "";
+  const x = t => PAD.l + (t - t0) / (t1 - t0) * (W - PAD.l - PAD.r);
+  const mx = Math.max(1, ...CUR.filter(p => p.t > t0 - 9e7 && p.t < t1 + 9e7).map(p => Math.abs(p.v))) + .25;
+  const y = v => PAD.t + (mx - v) / (2 * mx) * (H - PAD.t - PAD.b);
+
+  for (const v of [-1, 0, 1]){
+    const lv = v * Math.max(1, Math.round(mx - .25));
+    svg.appendChild(el("line", {x1:PAD.l, y1:y(lv), x2:W - PAD.r, y2:y(lv), stroke:v === 0 ? "var(--line)" : "var(--line-2)", "stroke-width":v === 0 ? 1.5 : 1}));
+    svg.appendChild(el("text", {x:PAD.l - 7, y:y(lv) + 4, fill:"var(--muted)", "font-size":11, "text-anchor":"end", "font-family":"IBM Plex Mono, monospace"}, v === 0 ? "slack" : Math.abs(lv) + "kt"));
+  }
+  axis(svg, W, H, t0, t1, x);
+  ghosts(svg, tideMarks(t0, t1), W, H, x);
+
+  let run = [], runSign = 0;
+  const flush = () => {
+    if (run.length > 1){
+      const pts = run.map(p => p[0].toFixed(1) + " " + p[1].toFixed(1)).join("L");
+      svg.appendChild(el("path", {
+        d:"M" + run[0][0].toFixed(1) + " " + y(0).toFixed(1) + "L" + pts + "L" + run[run.length-1][0].toFixed(1) + " " + y(0).toFixed(1) + "Z",
+        fill:runSign > 0 ? "var(--flood)" : "var(--ebb)", opacity:.22
+      }));
+    }
+    run = [];
+  };
+  let line = "";
+  for (let t = t0; t <= t1; t += 6 * MIN){
+    const v = curAt(t); if (v == null) continue;
+    const sg = v >= 0 ? 1 : -1;
+    if (sg !== runSign){ flush(); runSign = sg; }
+    run.push([x(t), y(v)]);
+    line += (line ? "L" : "M") + x(t).toFixed(1) + " " + y(v).toFixed(1);
+  }
+  flush();
+  if (line) svg.appendChild(el("path", {d:line, fill:"none", stroke:"var(--ink-2)", "stroke-width":1.6}));
+
+  for (const p of CUR){
+    if (p.t < t0 || p.t > t1 || p.type === "slack") continue;
+    svg.appendChild(el("text", {
+      x:Math.min(Math.max(x(p.t), PAD.l + 20), W - PAD.r - 20), y:y(p.v) + (p.v > 0 ? -7 : 15),
+      fill:p.v > 0 ? "var(--flood)" : "var(--ebb)", "font-size":11.5, "text-anchor":"middle",
+      "font-family":"IBM Plex Mono, monospace", "font-weight":500
+    }, Math.abs(p.v).toFixed(1)));
+  }
+  const cv = curAt(selected);
+  marker(svg, x(selected), H);
+  if (cv != null) svg.appendChild(el("circle", {cx:x(selected), cy:y(cv), r:5, fill:"var(--ink)", stroke:"var(--surface)", "stroke-width":2}));
+}
+
+function drawDial(v){
+  const svg = $("dial"); svg.textContent = "";
+  const dir = v > 0.05 ? 10 : v < -0.05 ? 190 : null;
+  const col = v > 0.05 ? "var(--flood)" : v < -0.05 ? "var(--ebb)" : "var(--muted)";
+  svg.appendChild(el("circle", {cx:50, cy:50, r:44, fill:"none", stroke:"var(--line)", "stroke-width":2}));
+  svg.appendChild(el("text", {x:50, y:15, "text-anchor":"middle", fill:"var(--muted)", "font-size":13, "font-family":"Barlow Semi Condensed, sans-serif"}, "N"));
+  if (dir == null){
+    svg.appendChild(el("line", {x1:24, y1:50, x2:76, y2:50, stroke:col, "stroke-width":5, "stroke-linecap":"round"}));
+    return;
+  }
+  const g = el("g", {transform:"rotate(" + dir + " 50 50)"});
+  g.appendChild(el("path", {d:"M50 14 L63 42 L50 35 L37 42 Z", fill:col}));
+  g.appendChild(el("line", {x1:50, y1:35, x2:50, y2:82, stroke:col, "stroke-width":5, "stroke-linecap":"round"}));
+  svg.appendChild(g);
+}
+
+const PADDLE_MPH = 3;               // a steady, unhurried recreational pace
+const MPS = 0.44704;
+const AIR_K = 0.5 * 1.225 * 0.8;    // air density / 2, times frontal area x Cd
+const HULL_K = 11.0;                // ~20 N of hull drag at 3 mph, typical rec kayak
+const PADDLE_POWER = (HULL_K + AIR_K) * Math.pow(PADDLE_MPH * MPS, 3);
+
+const headwindMph = (windFromDeg, windMph, bearing) =>
+  windMph * Math.cos((windFromDeg - bearing) * Math.PI / 180);
+
+function groundSpeedMph(currentMph, headMph){
+  const c = currentMph * MPS, w = headMph * MPS;
+  const excess = vw => {
+    const va = vw + c + w;
+    return (HULL_K * vw * Math.abs(vw) + AIR_K * va * Math.abs(va)) * vw - PADDLE_POWER;
+  };
+  let lo = 0, hi = 8;
+  for (let i = 0; i < 50; i++){ const mid = (lo + hi) / 2; excess(mid) > 0 ? hi = mid : lo = mid; }
+  return (lo + c) / MPS;              // over the ground, so it can go negative
+}
+
+function speedsFor(cv, w){
+  const curKt = cv * 1.15078;         // signed: positive is flooding, upriver
+  const wind = (w && w.windMph != null && w.windFromDeg != null) ? w : null;
+  const head = b => wind ? headwindMph(wind.windFromDeg, wind.windMph, b) : 0;
+  return {
+    up: groundSpeedMph(curKt, head(FLOOD_TOWARD)),
+    down: groundSpeedMph(-curKt, head(EBB_TOWARD)),
+    hasWind: !!wind
+  };
+}
+
+const LEVELS = ["stop", "warn", "caution", "fine", "good"];
+const worst = (a, b) => LEVELS.indexOf(a) < LEVELS.indexOf(b) ? a : b;
+
+const HEADLINE = {
+  stop:    "Severe conditions.",
+  warn:    "Very challenging conditions.",
+  caution: "A few things to be aware of.",
+  fine:    "Conditions below.",
+  good:    "Calm and glassy."
+};
+
+function goodHead(cv, w){
+  const temp = tempWord(feelsLike(w));
+  if (w.windMph != null && w.windMph < 5 && Math.abs(cv) < 0.4) return HEADLINE.good;
+  if (w.skyText) return temp + " and " + w.skyText.toLowerCase() + ".";
+  return temp + " out there.";
+}
+
+function pleasantEnough(w){
+  if (!w) return false;
+  if (w.wx && w.wx.happening) return false;                   // dry
+  if (w.precipPct != null && w.precipPct >= 30) return false;
+  if ((w.stormPct || 0) >= 20) return false;                  // low thunder risk
+  if (w.windMph == null || w.windMph >= 10) return false;     // light wind
+  if (w.airF == null || w.airF < 65 || feelsLike(w) < 65) return false;
+  if (w.waterF == null || w.waterF < 60) return false;
+  return true;
+}
+
+function plainHead(w){
+  if (!w) return HEADLINE.fine;
+  const temp = tempWord(feelsLike(w));
+  if (w.wx && w.wx.happening) return temp + " and " + w.wx.adj + ".";
+  if (w.precipPct != null && w.precipPct >= 30) return temp + ", rain possible.";
+  if (w.windMph != null && w.windMph >= 10) return temp + " and breezy.";
+  if (w.skyText) return temp + " and " + w.skyText.toLowerCase() + ".";
+  return temp + " out there.";
+}
+
+const tempWord = f => f == null ? null
+  : f < 40 ? "Cold" : f < 56 ? "Cool" : f < 72 ? "Mild" : f < 84 ? "Warm" : "Hot";
+
+function feelsLike(w){
+  if (!w || w.airF == null) return null;
+  let f = w.feelsF != null ? w.feelsF : w.airF;
+  if (w.wx && w.wx.happening) f -= 4;
+  if (w.windMph != null && w.windMph >= 15) f -= 4;
+  else if (w.windMph != null && w.windMph >= 10) f -= 2;
+  return f;
+}
+
+function sceneTail(w, includeWind, sunsetSoon, future){
+  if (!w) return "";
+  const bits = [];
+  const temp = tempWord(feelsLike(w));
+  if (temp) bits.push(temp.toLowerCase() + (future ? " air" : ""));
+  if (w.wx && w.wx.happening) bits.push(future ? w.wx.noun : w.wx.text);
+  else if (w.skyText) bits.push(w.skyText.toLowerCase() + (future ? " skies" : ""));
+  let out = bits.join(", ").replace(/, ([^,]*)$/, " and $1");
+  if (includeWind && w.windMph != null)
+    out += (out ? ", with " : "") + (w.windMph < 5 ? "barely any wind"
+      : w.windMph + " mph from the " + compass(w.windFromDeg));
+  let s = out ? (future ? "The forecast calls for " + out : "It is " + out) : "";
+  if (sunsetSoon){
+    const sun = (future ? "the sun will be going down soon" : "the sun is going down soon");
+    s += s ? ", and " + sun : sun.charAt(0).toUpperCase() + sun.slice(1);
+  }
+  return s ? s + "." : "";
+}
+
+function quietDay(cv, w, future, skipScene){
+  if (!w) return "";
+  const bits = [];
+  const temp = tempWord(feelsLike(w));
+  if (temp) bits.push(future ? temp.toLowerCase() + " air" : temp);
+  if (w.wx && w.wx.happening) bits.push(future ? w.wx.noun : w.wx.text);
+  else if (w.skyText) bits.push(w.skyText.toLowerCase() + (future ? " skies" : ""));
+  const extras = [];
+  if (w.windMph != null) extras.push(windWord(w.windMph).toLowerCase());
+  extras.push(Math.abs(cv) < 0.15 ? "the river nearly slack"
+    : "the current running " + dirWord(cv > 0 ? FLOOD_TOWARD : EBB_TOWARD));
+  let out = skipScene ? "" : bits.join(" and ");
+  out += (out ? ", with " : "") + extras.join(" and ");
+  out = future ? "The forecast calls for " + out + "."
+      : out.charAt(0).toUpperCase() + out.slice(1) + ".";
+  const lovely = !skipScene && (w.windMph == null || w.windMph < 8) && Math.abs(cv) < 0.4
+    && !(w.wx && w.wx.happening) && (w.airF == null || w.airF >= 60);
+  return lovely ? "About as easy as this river gets. " + out : out;
+}
+
+function scene(cv, w){
+  if (!w) return "";
+  const bits = [];
+  const temp = tempWord(feelsLike(w));
+  const wet = w.wx && w.wx.happening;
+  if (temp && wet) bits.push(temp.toLowerCase() + " and " + w.wx.text);
+  else if (temp && w.skyText) bits.push(temp.toLowerCase() + " and " + w.skyText.toLowerCase());
+  else if (temp) bits.push(temp.toLowerCase());
+  else if (w.skyText) bits.push(w.skyText.toLowerCase());
+  if (w.wx && !w.wx.happening) bits.push("with " + w.wx.text);
+
+  let out = bits.length ? bits[0].charAt(0).toUpperCase() + bits.slice(0).join(", ").slice(1) : "";
+  if (w.windMph != null){
+    const gust = w.windGustMph && w.windGustMph > w.windMph + 4 ? " gusting to " + w.windGustMph : "";
+    out += (out ? ", with " : "") + (w.windMph < 5 ? "barely any wind"
+      : w.windMph + " mph" + gust + " from the " + compass(w.windFromDeg));
+  }
+  return out ? out + ". " : "";
+}
+
+function stormOutlook(t, hours){
+  if (!WX.grid) return null;
+  let pct = 0, at = null;
+  for (let h = 0; h <= hours; h++){
+    const v = valueAt(WX.grid.probabilityOfThunder, t + h * 3600e3);
+    if (v != null && v > pct){ pct = v; at = t + h * 3600e3; }
+  }
+  return pct > 0 ? {pct, at, soon: at - t <= 2 * 3600e3} : null;
+}
+
+const isFuture = (t, now) => t > (now == null ? Date.now() : now) + 30 * MIN;
+
+function alertsAt(t){
+  return (WX.alerts || []).filter(a => {
+    const end = a.properties.ends || a.properties.expires;
+    return !end || t <= Date.parse(end);
+  });
+}
+
+function briefConcerns(t, cv, w, sky, now){
+  const out = [];
+  const future = isFuture(t, now);
+  const sp = speedsFor(cv, w);
+  const wind = w && w.windMph != null ? w.windMph : null;
+  const gust = w && w.windGustMph != null ? w.windGustMph : null;
+
+  const alerts = alertsAt(t);
+  const severe = alerts.filter(a => ["Extreme","Severe"].includes(a.properties.severity));
+  if (severe.length) out.push({level:"stop", key:"alert", rank:0,
+    say: severe.length > 1 ? "The Weather Service has " + severe.length + " warnings out for this stretch."
+       : "The Weather Service has a " + severe[0].properties.event + " out for this stretch."});
+  else if (alerts.length) out.push({level:"warn", key:"advisory", rank:8,
+    say: alerts.length > 1 ? "There are " + alerts.length + " advisories out for this stretch, too."
+       : "There is a " + alerts[0].properties.event + " out for this stretch, too."});
+
+  if (wind != null){
+    const hard = Math.max(sp.up, sp.down) < 1.2;
+    if (wind >= 25 || (gust != null && gust >= 35)) out.push({level:"stop", key:"wind", rank:1,
+      say: future ? "The forecast has it really blowing."
+                  : "It is really blowing out there today."});
+    else if (wind >= 15 || (gust != null && gust >= 25)) out.push({level:"warn", key:"wind", rank:1,
+      say: future ? "The forecast has it blowing pretty good."
+                  : "It is blowing pretty good out there today."});
+    if (hard && wind >= 12) out.push({level:"warn", key:"noprogress", rank:2,
+      head:"You would barely move.",
+      say:"You would be working hard for very little ground, whichever way you turned."});
+  }
+
+  if (w && w.airF != null && w.waterF != null){
+    const imm = immersionLede(w.airF, w.waterF);
+    if (imm.urgent){
+      const gap = w.airF - w.waterF;
+      const cold = (w.airF < 50 && w.waterF >= COLD_WATER_F)
+        ? {head:"Cold air.",
+           say: future
+             ? "Be careful: the air is forecast to be cold enough that getting wet "
+               + "will chill you fast."
+             : "Be careful: the air is cold enough that getting wet will chill you fast."}
+        : gap >= 15
+        ? {head:"Warm air, cold water.",
+           say: future
+             ? "Be careful: the water is cold today and will not have warmed much by then, "
+               + "whatever the air does."
+             : "Be careful: the water is still cold, despite the warm air."}
+        : w.waterF < 55
+          ? {head:"Cold water.",
+             say: future
+               ? "Be careful: the water is cold, and the air is not forecast to be much warmer."
+               : "Be careful: the water is cold, and the air is not much warmer."}
+          : {head:"Cold water.",
+             say:"Be careful: the water is cold enough to matter if you end up in it."};
+      out.push({level:"caution", key:"cold", rank:1, head:cold.head, say:cold.say});
+    }
+  }
+
+  const ahead = stormOutlook(t, 6);
+  const stormPct = Math.max((w && w.stormPct) || 0, ahead ? ahead.pct : 0);
+  if (stormPct >= 20) out.push({level: stormPct >= 50 ? "warn" : "caution", key:"storm", rank:1,
+    head:"Possible thunderstorms.",
+    say:(future ? "There is thunder in the forecast around then. "
+                : "There is thunder in the forecast for the next few hours. ")
+      + "Worth checking the radar before you set out, and knowing where you could land "
+      + "if one comes over."});
+
+  if (wind != null && wind >= 12 && windVsCurrent(w.windFromDeg, cv) === "opposed"
+      && Math.abs(cv) >= 0.5) out.push({level:"caution", key:"chop", rank:3,
+    head: future ? "Likely choppy." : "Choppy out there.",
+    say:"The wind is " + (future ? "forecast to run" : "running")
+      + " straight into the current, which piles the water up into short steep chop.",
+    alt:"It is " + (future ? "forecast to run" : "running")
+      + " straight into the current, which piles the water up into short steep chop.",
+    soft:" The splashy kind rather than the frightening kind, if you are dressed for it."});
+
+  if (sky && sky.sunset != null && sky.sunrise != null){
+    const left = sky.sunset - t;
+    const dark = (sky.dusk != null && t > sky.dusk) || (sky.dawn != null && t < sky.dawn);
+    const moonUp = sky.moonrise != null && sky.moonset != null
+      && ((sky.moonrise < sky.moonset) ? (t > sky.moonrise && t < sky.moonset) : (t > sky.moonrise || t < sky.moonset));
+    const moonVisible = moonUp && sky.lit >= 80
+      && w && w.skyPct != null && w.skyPct <= 40;
+    if (dark) out.push({level:"warn", key:"dark", rank:1,
+      head: future ? "It will be dark out." : "It is dark out.",
+      say:"A white light is required after dark \u2014 at minimum one you can hold up "
+        + "in time for another boat to see you."
+        + (moonVisible ? " There is a bright moon up for company." : "")});
+    else if (left <= 0) out.push({level:"caution", key:"dusk", rank:1,
+      head: future ? "The sun will be down." : "The sun is down.",
+      say:"There is a little usable light left, but it is going fast. A white light "
+        + "is required from sunset on."});
+    else if (left < 90 * MIN) out.push({level:"caution", key:"light", rank:1,
+      head:"Not much daylight left.",
+      say:"Getting back, landing and carrying out all take longer than you think in the dark."});
+  }
+  return {concerns:out, speeds:sp};
+}
+
+function speedNote(cv, w, sp, future){
+  const n = sp.up, s = sp.down;
+  if (n < 1.5 && s < 1.5) return (future ? "It would be" : "It is")
+    + " slow going whichever way you turn.";
+  if (Math.abs(n - s) >= 1){
+    const up = dirWord(FLOOD_TOWARD), down = dirWord(EBB_TOWARD);
+    const easy = n > s ? up : down, hard = n > s ? down : up;
+    return "Heading " + easy + " is the easy half. The paddle back " + hard
+      + " is the one to leave time for.";
+  }
+  return "";
+}
+
+const windWord = mph => mph == null ? null
+  : mph < 5 ? "Very light wind" : mph < 10 ? "Light wind"
+  : mph < 15 ? "Moderate wind" : mph < 25 ? "Strong wind" : "Very strong wind";
+
+function directionOutlook(bearing, curFor, w, speed){
+  const lines = [];
+  const wind = w && w.windMph != null && w.windFromDeg != null ? w : null;
+  let head = 0;
+  if (wind){
+    head = headwindMph(wind.windFromDeg, wind.windMph, bearing);
+    const word = windWord(wind.windMph);
+    const sideways = wind.windMph > 0 && Math.abs(head) / wind.windMph < 0.4;
+    lines.push(wind.windMph < 4 ? word
+      : word + (sideways ? " across you" : head > 0 ? " in your face" : " at your back"));
+  }
+
+  const kt = Math.abs(curFor);
+  lines.push(kt < 0.15 ? "Current slack, no help either way"
+    : kt < 0.6 ? (curFor > 0 ? "Current helping you a little" : "Current holding you back a little")
+    : (curFor > 0 ? "Current giving you a real push" : "Current pushing against you"));
+
+  if (wind && wind.windMph >= 12 && Math.abs(curFor) >= 0.5
+      && windVsCurrent(wind.windFromDeg, curFor * (bearing === FLOOD_TOWARD ? 1 : -1)) === "opposed"){
+    const sideways = Math.abs(head) / wind.windMph < 0.4;
+    lines.push(sideways
+      ? "Choppy water hitting you side-on, which is the tippy direction"
+      : head > 0
+        ? "Choppy water, and you are heading into the waves — expect spray in your face"
+        : "Choppy water, and the waves come from behind — you may surf a little, and steering is harder");
+  }
+  return {lines, speed};
+}
+
+function briefFacts(t, cv, w, sky){
+  const f = [];
+  if (w && w.windMph != null) f.push(["wind", w.windMph + " mph " + compass(w.windFromDeg)
+    + (w.windGustMph && w.windGustMph > w.windMph + 4 ? ", gusts " + w.windGustMph : "")]);
+  f.push(["current", Math.abs(cv) < 0.15 ? "slack"
+    : Math.abs(cv).toFixed(1) + " kt " + (cv > 0 ? "flooding north" : "ebbing south")]);
+  if (w && w.airF != null) f.push(["air", w.airF + "\u00B0F"]);
+  if (w && w.waterF != null) f.push(["water", w.waterF + "\u00B0F"]);
+  if (w && (w.wx || w.skyText)) f.push(["sky", w.wx && w.wx.happening ? w.wx.text
+    : (w.skyText || "").toLowerCase()]);
+  if (sky && sky.sunset != null) f.push([t < sky.sunset ? "sunset" : "sunrise",
+    fmtT.format(t < sky.sunset ? sky.sunset : sky.sunrise).replace(/\s/g, "").toLowerCase()]);
+  return f;
+}
+
+function riverAhead(t, cv, future){
+  const slack = nextAfter(CUR, t, p => p.type === "slack");
+  if (!slack) return "";
+  const after = nextAfter(CUR, slack.t, p => p.type !== "slack");
+  const turnsTo = after ? dirWord(after.v > 0 ? FLOOD_TOWARD : EBB_TOWARD) : null;
+
+  if (Math.abs(cv) < 0.15)
+    return after
+      ? "The river " + (future ? "will be slack then" : "is slack right now")
+        + " \u2014 the " + (after.v > 0 ? "flood" : "ebb")
+        + " fills in over the next hour or so and will be running " + turnsTo
+        + " hard by " + fmtT.format(after.t) + "."
+      : "The river " + (future ? "will be slack then." : "is slack right now.");
+
+  const running = dirWord(cv > 0 ? FLOOD_TOWARD : EBB_TOWARD);
+  return "The " + (cv > 0 ? "flood" : "ebb")
+    + (future ? " will have about " : " has about ") + dur(slack.t - t)
+    + (future ? " left in it, going slack around " : " left in it and goes slack around ")
+    + fmtT.format(slack.t)
+    + (turnsTo ? (future ? ", then turning " : ", then turns ") + turnsTo : "")
+    + ". If you are heading " + running + ", that is your window.";
+}
+
+function buildBrief(t, cv, w, sky, now){
+  const safety = immersionLede(w && w.airF, w && w.waterF);
+  const future = isFuture(t, now);
+  const {concerns: raw, speeds} = briefConcerns(t, cv, w, sky, now);
+  const concerns = raw.slice().sort((a, b) =>
+    LEVELS.indexOf(a.level) - LEVELS.indexOf(b.level) || (a.rank || 1) - (b.rank || 1));
+  const level = concerns.length ? concerns[0].level
+    : (pleasantEnough(w) ? "good" : "fine");
+
+  const note = level === "stop" ? "" : speedNote(cv, w, speeds, future);
+  const outlook = {
+    up: directionOutlook(FLOOD_TOWARD, cv, w, speeds.up),
+    down: directionOutlook(EBB_TOWARD, -cv, w, speeds.down)
+  };
+  if (!concerns.length){
+    const head = level === "good" ? goodHead(cv, w) : plainHead(w);
+    const body = w ? quietDay(cv, w, future, head !== HEADLINE.good)
+      : "There is no weather reading right now, so this is the tide and current alone.";
+    return {level, head, body, ahead: riverAhead(t, cv, future),
+      speeds, note, outlook, safety, facts: briefFacts(t, cv, w, sky)};
+  }
+
+  const lead = concerns[0];
+  const rest = concerns.slice(1)
+    .filter(c => level !== "stop" || LEVELS.indexOf(c.level) <= LEVELS.indexOf("warn"));
+  const second = rest.slice().sort((a, b) => (a.rank || 1) - (b.rank || 1))[0];
+  const official = rest.find(c => c.key === "alert" || c.key === "advisory");
+  const shown = [lead, second, official].filter(Boolean)
+    .filter((c, i, a) => a.indexOf(c) === i).slice(0, 3);
+
+  const said = [];
+  let windNamed = false, lastNamedWind = false, lastNamedWater = false;
+  for (const c of shown){
+    let line = (c.alt && lastNamedWind) ? c.alt : c.say;
+    if (c === lead && level === c.level && LEVELS.indexOf(level) >= LEVELS.indexOf("caution"))
+      line += (c.soft || "");
+    said.push(line);
+    lastNamedWind = c.key === "wind" || c.key === "noprogress";
+    lastNamedWater = c.key === "cold";
+    windNamed = windNamed || lastNamedWind;
+  }
+  const sunsetSoon = sky && sky.sunset != null && sky.sunset > t && sky.sunset - t < 90 * MIN;
+  const tail = lastNamedWater ? "" : sceneTail(w, false, sunsetSoon, future);
+
+  return {level, head: lead.head || HEADLINE[level],
+    body:[...said, tail].filter(Boolean).join(" "),
+    ahead: riverAhead(t, cv, future),
+    speeds, note, outlook, safety, facts: briefFacts(t, cv, w, sky)};
+}
+
+(function mailLink(){
+  const a = $("feedbackLink");
+  if (!a || !a.dataset || !a.dataset.u) return;
+  const addr = a.dataset.u + String.fromCharCode(64) + a.dataset.d;
+  a.href = "mailto:" + addr + "?subject=" + encodeURIComponent(SITE.name + " conditions");
+  a.textContent = addr;
+})();
+
+document.addEventListener("click", e => {
+  const d = $("allLocs");
+  if (d && d.open && !d.contains(e.target)) d.open = false;
+});
+document.addEventListener("keydown", e => {
+  const d = $("allLocs");
+  if (e.key === "Escape" && d && d.open) d.open = false;
+});
+
+function drawAlerts(t){
+  const a = alertsAt(t);
+  if (!a || !a.length){ $("alerts").innerHTML = ""; return; }
+  $("alerts").innerHTML = a.map(f => {
+    const p = f.properties;
+    const sev = (p.severity === "Extreme" || p.severity === "Severe") ? "severe" : "moderate";
+    const ends = p.ends || p.expires;
+    const when = ends ? "In effect until " + fmtTD.format(Date.parse(ends)) : "In effect now";
+    return '<div class="alert ' + sev + '"><div class="hd">' + p.event + "</div>"
+      + '<div class="meta">' + when
+      + ' <a href="' + (p.uri || "https://alerts.weather.gov/") + '" target="_blank" rel="noopener">Read the full alert &#8599;</a></div></div>';
+  }).join("");
+}
+
+function drawWeather(t, cv){
+  drawAlerts(t);
+  const card = $("wxCard"), w = conditionsAt(t);
+  const future = isFuture(t);
+  $("wxWhen").innerHTML = future ? "forecast &middot; " : "";
+  $("wxAnswer").hidden = true;
+  const set = (id, v) => { $(id).textContent = v; };
+  const sub = (id, v) => { $(id).innerHTML = v; };
+
+  if (!w){
+    card.classList.add("nodata");
+    const why = WX.status === "loading" ? "Loading conditions…"
+      : WX.status === "failed" ? "Could not reach the weather service. Everything below works without it."
+      : "No forecast reaches this far ahead. The tide and current below are still exact.";
+    $("wxAnswer").hidden = false;
+    $("wxAnswer").className = "answer mute";
+    $("wxAnswerText").innerHTML = why;
+    $("wxBands").innerHTML = "";
+    $("alerts").innerHTML = "";
+    for (const id of ["wxWind", "wxSky", "wxAir", "wxWater"]) set(id, "—");
+    for (const id of ["wxWindSub", "wxSkySub", "wxAirSub", "wxWaterSub"]) sub(id, "");
+    $("windArrow").textContent = "";
+    return;
+  }
+  card.classList.remove("nodata");
+  $("wxAnswer").hidden = true;
+
+  set("wxWind", w.windMph == null ? "—" : w.windMph);
+  sub("wxWindSub", (w.windFromDeg == null ? "" : "from the " + compass(w.windFromDeg))
+    + (w.windGustMph ? "<br><em>gusting " + w.windGustMph + "</em>" : ""));
+  const arrow = $("windArrow"); arrow.textContent = "";
+  if (w.windFromDeg != null){
+    const g = el("g", {transform:"rotate(" + ((w.windFromDeg + 180) % 360) + " 12 12)"});
+    g.appendChild(el("path", {d:"M12 3 L17 13 L12 10.6 L7 13 Z", fill:"var(--ink-2)"}));
+    g.appendChild(el("line", {x1:12, y1:10.6, x2:12, y2:21, stroke:"var(--ink-2)", "stroke-width":2, "stroke-linecap":"round"}));
+    arrow.appendChild(g);
+  }
+
+  const raining = w.wx && w.wx.happening;
+  set("wxSky", raining ? w.wx.text.charAt(0).toUpperCase() + w.wx.text.slice(1)
+                       : (w.skyText || "\u2014"));
+  sub("wxSkySub", (raining && w.skyText ? w.skyText.toLowerCase()
+      : w.precipPct == null ? "" : w.precipPct + "% chance of rain")
+    + (w.stormPct >= 10 ? "<br><em>" + w.stormPct + "% thunderstorms</em>" : ""));
+  set("wxAir", w.airF);
+  sub("wxAirSub", w.feelsF == null ? "" : "feels like " + w.feelsF + "&deg;");
+  set("wxWater", w.waterF == null ? "—" : w.waterF);
+  sub("wxWaterSub", w.waterF == null || !WX.water ? ""
+    : (future && !WX.water.kept && WX.water.bracket !== false) ? "today&rsquo;s reading"
+    : waterSub(WX.water, Date.now()));
+
+  $("wxAnswer").className = "answer";
+  $("wxAnswerText").innerHTML = "";
+
+  const bands = [];
+  if (w.stormPct >= 30) bands.push({cls:"warn", lead:"Thunderstorms possible.",
+    text:w.stormPct + "% chance " + (future ? "around then" : "right now")
+      + ". Worth keeping an eye on the sky and having somewhere in mind to get off the water."});
+  $("wxBands").innerHTML = bands.map(b =>
+    '<div class="answer ' + b.cls + '"><p><b>' + b.lead + "</b> " + b.text + "</p></div>").join("");
+}
+
+function drawSky(t){
+  const k = skyFor(t);
+  const hm = ms => ms == null ? "—" : fmtT.format(ms).replace(/\s/g, "").toLowerCase();
+  const left = k.sunset == null ? null : k.sunset - t;
+
+  $("skyLeft").textContent = left != null && left > 0 ? dur(left) : "—";
+  $("skyLeftSub").innerHTML = left != null && left > 0
+    ? "until sunset at " + fmtT.format(k.sunset)
+      + (k.dusk ? "<br><em>usable light to " + hm(k.dusk) + "</em>" : "")
+    : (k.sunrise && t < k.sunrise ? "sun is not up yet" : "<em>after dark</em>");
+
+  $("skySun").textContent = hm(k.sunrise) + " – " + hm(k.sunset);
+  $("skySunSub").innerHTML = "rise &ndash; set"
+    + (k.sunrise && k.sunset ? "<br><em>" + dur(k.sunset - k.sunrise) + " of daylight</em>" : "");
+
+  $("skyMoon").textContent = moonName(k.phase);
+  $("skyMoonSub").innerHTML = k.lit + "% lit<br><em>"
+    + (k.moonrise ? "rises " + hm(k.moonrise) : "no rise today")
+    + (k.moonset ? ", sets " + hm(k.moonset) : "") + "</em>";
+
+  const bands = [];
+  if (left != null && left > 0 && left < 90 * MIN) bands.push({cls:"warn", lead:"Not much daylight left.",
+    text:dur(left) + " until sunset"
+      + (k.dusk ? ", and usable light until about " + hm(k.dusk) : "")
+      + ". Allow for getting back, landing and carrying out — all of which take longer in the dark."});
+  $("skyBands").innerHTML = bands.map(b =>
+    '<div class="answer ' + b.cls + '"><p><b>' + b.lead + "</b> " + b.text + "</p></div>").join("");
+}
+
+function drawBrief(t, cv){
+  const w = conditionsAt(t), sky = skyFor(t);
+  const b = buildBrief(t, cv, w, sky);
+  $("briefSafety").className = "safety" + (b.safety.urgent ? "" : " plain");
+  $("briefSafety").innerHTML = b.safety.html;
+  $("brief").className = "brief " + b.level;
+  $("briefHead").textContent = b.head;
+  $("briefBody").innerHTML = b.body;
+
+  const mph = v => v <= 0.05 ? "none" : v.toFixed(1) + " mph";
+  for (const dir of ["up", "down"]){
+    const o = b.outlook[dir];
+    $("exp" + dir.charAt(0).toUpperCase() + dir.slice(1)).innerHTML =
+      o.lines.map(l => "<li>" + l + "</li>").join("");
+    $("sp" + dir.charAt(0).toUpperCase() + dir.slice(1)).textContent = mph(o.speed);
+  }
+}
+
+function render(){
+  setPicker();
+  const t = selected;
+  const inRange = t >= RANGE[0] && t <= RANGE[1];
+  $("outofrange").style.display = inRange ? "none" : "block";
+  if (!inRange){
+    $("outofrange").innerHTML = "<b>No prediction data for that time.</b> This page carries NOAA predictions from 1 Jan 2026 through 31 Dec 2028. Pick a date in that range.";
+    return;
+  }
+
+  const nowMs = Date.now();
+  $("stamp").innerHTML = live
+    ? '<span class="now-dot"></span> Live &mdash; ' + fmtDate.format(t) + ", " + fmtT.format(t) + " ET"
+    : "Planning for " + fmtDate.format(t) + ", " + fmtT.format(t) + " ET &nbsp;&middot;&nbsp; now is " + fmtT.format(nowMs);
+
+  
+  const cv = curAt(t);
+  const cls = cv > 0.15 ? "flood" : cv < -0.15 ? "ebb" : "slack";
+  const knots = Math.abs(cv).toFixed(2);
+  $("curSpeed").textContent = knots;
+  $("curSpeed").className = "num state-" + cls;
+  $("curMph").textContent = "\u2248 " + (knots * 1.15078).toFixed(2) + " mph";
+  $("curCaption").innerHTML = cls === "slack"
+    ? '<b class="state-slack">Slack water</b>'
+    : cls === "flood"
+      ? '<b class="state-flood">Flooding</b> &mdash; running ' + dirWord(FLOOD_TOWARD) + ', upriver toward Riverdale.'
+      : '<b class="state-ebb">Ebbing</b> &mdash; running ' + dirWord(EBB_TOWARD) + ', downriver toward the George Washington Bridge.';
+  drawDial(cv);
+  const cn = nextAfter(CUR, t);
+  $("curNext").innerHTML = cn
+    ? "Next: <b>" + (cn.type === "slack" ? "slack water" : "max " + cn.type + " " + Math.abs(cn.v).toFixed(1) + " kt")
+      + "</b> at <span class='num'>" + fmtT.format(cn.t) + "</span> &middot; in " + dur(cn.t - t)
+    : "";
+
+  const tv = tideAt(t);
+  const tn = nextAfter(TIDE, t), tp = lastBefore(TIDE, t);
+  const rising = tn && tn.type === "H";
+  $("tideHt").textContent = tv.toFixed(1);
+  let phase = "";
+  if (tp && tn) phase = Math.round((t - tp.t) / (tn.t - tp.t) * 100) + "% of the way from " + (tp.type === "H" ? "high" : "low") + " to " + (tn.type === "H" ? "high" : "low");
+  $("tideCaption").innerHTML = "<b>" + (rising ? "Rising" : "Falling") + "</b> &mdash; " + phase + ".";
+  $("tideNext").innerHTML = tn
+    ? "Next: <b>" + (tn.type === "H" ? "high" : "low") + " tide " + tn.v.toFixed(1) + " ft</b> at <span class='num'>"
+      + fmtT.format(tn.t) + "</span> &middot; in " + dur(tn.t - t)
+    : "";
+
+  const t0 = dayStartNY(t), t1 = dayStartNY(t0 + 36 * 3600e3);
+  drawBrief(t, cv);
+  drawTide(t0, t1);
+  drawCur(t0, t1);
+  drawWeather(t, cv);
+  drawSky(t);
+
+  const ev = [];
+  for (const p of TIDE){
+    if (p.t < t || p.t > t1) continue;
+    ev.push({t:p.t, kind:"tide", what:(p.type === "H" ? "High tide" : "Low tide"), amt:p.v.toFixed(1) + " ft", col:"var(--river)"});
+      }
+  for (const p of CUR){
+    if (p.t < t || p.t > t1) continue;
+    ev.push({
+      t:p.t, kind:"cur",
+      what:p.type === "slack" ? "Slack water" : (p.type === "flood" ? "Max flood, upriver" : "Max ebb, downriver"),
+      amt:p.type === "slack" ? "0.0 kt" : Math.abs(p.v).toFixed(1) + " kt",
+      col:p.type === "slack" ? "var(--muted)" : (p.type === "flood" ? "var(--flood)" : "var(--ebb)")
+    });
+  }
+  const sky = skyFor(t0);
+  for (const [key, what] of [["dawn","First light"], ["sunrise","Sunrise"],
+                             ["sunset","Sunset"], ["dusk","Last usable light"]]){
+    const at = sky[key];
+    if (at != null && at >= t && at <= t1) ev.push({t:at, kind:"sun", what:what, amt:"sun", col:"var(--sun)"});
+  }
+  for (const [key, what] of [["moonrise","Moonrise"], ["moonset","Moonset"]]){
+    const at = sky[key];
+    if (at != null && at >= t && at <= t1) ev.push({t:at, kind:"moon", what:what,
+      amt:sky.lit + "% lit", col:"var(--moon)"});
+  }
+
+  ev.sort((a, b) => a.t - b.t);
+  const ol = $("timeline");
+  ol.textContent = "";
+  if (!ev.length) ol.innerHTML = '<li class="empty">Nothing left today &mdash; step forward to tomorrow to plan.</li>';
+  for (const e of ev.filter(e => e.t >= t)){
+    const li = document.createElement("li");
+    const nextDay = dayStartNY(e.t) !== t0
+      ? ' <span style="color:var(--muted);font-size:13px">' + new Intl.DateTimeFormat("en-US", {weekday:"short", timeZone:TZ}).format(e.t) + "</span>"
+      : "";
+    li.innerHTML = '<span class="t">' + fmtT.format(e.t).replace(" ", "") + '</span>'
+      + '<span class="pip" style="background:' + e.col + '"></span>'
+      + '<span class="what">' + e.what + nextDay + "</span>"
+      + '<span class="amt">' + e.amt + " &middot; " + dur(e.t - t) + "</span>";
+    ol.appendChild(li);
+  }
+  const sameDay = dayStartNY(nowMs) === t0;
+  $("restHead").textContent = sameDay ? "Rest of the Day" : "Rest of That Day";
+  $("restDate").textContent = fmtDate.format(t);
+}
+render();
+
+loadConditions();
+setInterval(loadConditions, 10 * 60 * 1000);
+</script>
+</body>
+</html>

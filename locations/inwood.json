@@ -1,0 +1,36 @@
+{
+  "slug": "inwood",
+  "primary": false,
+  "name": "Inwood",
+  "state": "New York",
+  "title": "Hudson River Paddling Conditions Near Inwood, NY",
+  "blurb": "The north end of Manhattan, at Dyckman Street, with the Palisades directly across and Spuyten Duyvil Creek just upriver.",
+  "lat": 40.8697,
+  "lon": -73.9345,
+  "riverMile": 12,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "8518902",
+    "label": "NOAA 8518902 Dyckman Street",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station 8518902 at the Dyckman Street ferry slip, a few hundred yards from the launch.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "HUR0611",
+    "bin": 16,
+    "label": "NOAA HUR0611_16 George Washington Bridge",
+    "shiftMin": 0,
+    "floodToward": 10,
+    "ebbToward": 203,
+    "upriverTo": "Riverdale",
+    "downriverTo": "the George Washington Bridge",
+    "note": "Current from NOAA station HUR0611_16 (George Washington Bridge), about a mile and a half downriver, at the 14 ft bin nearest the surface.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=HUR0611_16"
+  },
+  "nws": {
+    "grid": "OKX/35,49"
+  },
+  "features": []
+}
