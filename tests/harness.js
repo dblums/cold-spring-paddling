@@ -8,7 +8,23 @@ const EXPORTS = ["SITE","WX","sunTimes","moonTimes","moonIllumination","moonAlti
   "tideAt","curAt","TIDE","CUR","HIGHS","LOWS","RANGE","fromNY","nyParts","dayStartNY",
   "dur","compass","windVsCurrent","immersionLede","groundSpeedMph","headwindMph","speedsFor","buildBrief","speedNote","directionOutlook","windWord","briefConcerns","LEVELS","HEADLINE","scene","quietDay","riverAhead","pleasantEnough","plainHead","goodHead","COLD_WATER_F","briefFacts","feelsLike","tempWord","precipWord","PADDLE_POWER",
   "blockedAt","muddyAt","nearestIn","conditionsAt","valueAt","isoDurMs","skyWord",
-  "PADDLE_MPH","TRESTLE_MIN","MUD_MIN","TIDE_SHIFT_MIN","CUR_SHIFT_MIN","MIN"];
+  "PADDLE_MPH","TRESTLE_MIN","MUD_MIN","TIDE_SHIFT_MIN","CUR_SHIFT_MIN","MIN",
+  "readWater","cacheWater","cachedWater","ago","WATER_KEEP_MS","WATER_KEY",
+  "WATER_S","WATER_N","WATER_NEAR"];
+
+/* The page keeps the last good water reading here. The real thing can be
+   missing or refuse to write, which the page swallows - so the tests get a
+   working one and check the swallowing separately. */
+function memStore(){
+  const m = new Map();
+  return {
+    getItem: k => (m.has(k) ? m.get(k) : null),
+    setItem: (k, v) => { m.set(k, String(v)); },
+    removeItem: k => { m.delete(k); },
+    clear: () => m.clear(),
+    get size(){ return m.size; }
+  };
+}
 
 function stubEl(){
   const el = {
@@ -40,6 +56,7 @@ function load(site){
   const m = /<script>\n([\s\S]*?)<\/script>/.exec(html);
   if (!m) throw new Error("no <script> found in index.html");
   const els = {};
+  const store = memStore();
   const ctx = vm.createContext({
     document:{
       getElementById:id => (els[id] = els[id] || stubEl()),
@@ -49,6 +66,7 @@ function load(site){
       addEventListener(){}, removeEventListener(){},
       querySelector:() => null, querySelectorAll:() => []
     },
+    localStorage: store,
     setInterval:() => {}, setTimeout:() => {},
     fetch:() => Promise.reject(new Error("network disabled in tests")),
     console, Intl, Date, Math, JSON, Promise, Error,
@@ -59,6 +77,6 @@ function load(site){
   const grab = "\n;globalThis.__T={};" +
     EXPORTS.map(n => `try{globalThis.__T.${n}=${n}}catch(e){}`).join("");
   vm.runInContext(m[1] + grab, ctx, {filename:"index.html<script>"});
-  return {T: ctx.__T, els};
+  return {T: ctx.__T, els, store};
 }
-module.exports = {load, sites, pageFor, pageSlug};
+module.exports = {load, sites, pageFor, pageSlug, memStore};

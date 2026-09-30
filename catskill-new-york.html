@@ -932,7 +932,46 @@ const USGS = "https://waterservices.usgs.gov/nwis/iv/";
 const waterURL = st => st.source === "usgs"
   ? USGS + "?format=json&sites=" + st.id + "&parameterCd=00010&period=P1D"
   : COOPS + "?product=water_temperature&application=coldspringpaddling"
-    + "&range=24&interval=h&station=" + st.id + "&time_zone=lst_ldt&units=english&format=json";
+    + "&range=24&interval=h&station=" + st.id + "&time_zone=gmt&units=english&format=json";
+
+/* The last good reading from each gauge, kept so an outage does not blank the
+   tile. Albany is the only sensor above Coxsackie and it belongs to USGS,
+   which rate-limits - Watervliet and Albany have nothing else to reach for,
+   and a 503 leaves them showing a dash. The river does not swing much in a
+   day, so a recent reading is still worth having; a week out it is dropped
+   rather than shown, and the tile always says how old it is either way.
+
+   Keyed by station, not by page: every launch is on the same origin, so a
+   reading fetched at Cold Spring is there for Yonkers too. Storage can be
+   absent or refuse to write, and none of this is worth an exception. */
+const WATER_KEY = "hc.water.";
+const WATER_KEEP_MS = 7 * 24 * 60 * 60 * 1000;
+
+function cacheWater(st, r){
+  try {
+    localStorage.setItem(WATER_KEY + st.id, JSON.stringify({f: r.f, t: r.t}));
+  } catch (e) {}
+}
+
+function cachedWater(st, now){
+  try {
+    const v = JSON.parse(localStorage.getItem(WATER_KEY + st.id));
+    if (!v || !isFinite(v.f) || !isFinite(v.t)) return null;
+    const age = (now == null ? Date.now() : now) - v.t;
+    // a stamp in the future means a clock disagreement, not a fresh reading
+    return (age >= 0 && age < WATER_KEEP_MS) ? {f: v.f, t: v.t} : null;
+  } catch (e) { return null; }
+}
+
+/* Coarsest unit that is still true. A reader deciding what to wear wants to
+   know whether this is from this morning or from last Tuesday. */
+function ago(t, now){
+  const m = Math.round(((now == null ? Date.now() : now) - t) / 60000);
+  if (m < 60) return (m <= 1 ? "a minute" : m + " minutes") + " ago";
+  const h = Math.round(m / 60);
+  if (h < 36) return (h === 1 ? "an hour" : h + " hours") + " ago";
+  return Math.round(h / 24) + " days ago";
+}
 
 /* Two shapes, because the only live gauge above Coxsackie belongs to USGS
    rather than NOAA: CO-OPS gives {data:[{t,v}]} in Fahrenheit, USGS gives a
@@ -940,7 +979,12 @@ const waterURL = st => st.source === "usgs"
 function readWater(res){
   if (res.status !== "fulfilled") return null;
   const body = res.value;
+  /* when() turns each shape's stamp into an epoch: CO-OPS is asked for gmt and
+     hands back "2026-09-30 17:30" with no zone marker, USGS gives ISO 8601
+     with an offset. Getting this wrong would only show up as a stale reading
+     looking fresh, or a fresh one being thrown away, in some other timezone. */
   let rows = null, toF = f => f;
+  let when = s => Date.parse(String(s).replace(" ", "T") + "Z");
   if (body && Array.isArray(body.data)){
     rows = body.data.map(r => ({v: r.v, t: r.t}));
   } else if (body && body.value && Array.isArray(body.value.timeSeries)){
@@ -949,12 +993,14 @@ function readWater(res){
     if (!Array.isArray(vs)) return null;
     rows = vs.map(r => ({v: r.value, t: r.dateTime}));
     toF = c => c * 9 / 5 + 32;
+    when = t => Date.parse(t);
   }
   if (!rows) return null;
   // newest usable reading, working back from the end
   for (let i = rows.length - 1; i >= 0; i--){
     const f = toF(parseFloat(rows[i].v));
-    if (isFinite(f) && f > 20 && f < 95) return {f, t: rows[i].t};
+    const t = when(rows[i].t);
+    if (isFinite(f) && f > 20 && f < 95 && isFinite(t)) return {f, t};
   }
   return null;
 }
@@ -981,6 +1027,8 @@ async function loadConditions(){
   /* "both" means the two gauges were genuinely interpolated; anything else is
      one gauge's own reading and gets named. The tile used to call every
      non-fallback number an estimate, which was a measurement at Watervliet. */
+  if (rn) cacheWater(WATER_N, rn);
+  if (rs) cacheWater(WATER_S, rs);
   WX.water =
       pref != null ? {f: pref, from: prefStn.name}
     : (!prefStn && n != null && sth != null)
@@ -988,6 +1036,17 @@ async function loadConditions(){
     : n != null ? {f: n, from: WATER_N.name}
     : sth != null ? {f: sth, from: WATER_S.name}
     : null;
+
+  /* Live first. A current reading from the far gauge beats a day-old one from
+     the near gauge, so the cache is reached for only when nothing came back at
+     all - and then the freshest stamp wins, since a couple of river miles
+     matter less than a couple of days. */
+  if (!WX.water){
+    const kept = [[WATER_N, cachedWater(WATER_N)], [WATER_S, cachedWater(WATER_S)]]
+      .filter(p => p[0] && p[1])
+      .sort((a, b) => b[1].t - a[1].t)[0];
+    if (kept) WX.water = {f: kept[1].f, from: kept[0].name, at: kept[1].t};
+  }
 
   WX.status = WX.grid ? "ok" : "failed";
   render();
@@ -1870,10 +1929,12 @@ function drawWeather(t, cv){
   set("wxAir", w.airF);
   sub("wxAirSub", w.feelsF == null ? "" : "feels like " + w.feelsF + "&deg;");
   set("wxWater", w.waterF == null ? "—" : w.waterF);
-  // name the gauge, or say so plainly when there wasn't one to name
-  sub("wxWaterSub", w.waterF == null ? ""
+  /* Name the gauge, and date it when the reading is a kept one - that matters
+     more than the future-view wording, which would call a three-day-old number
+     today's. */
+  sub("wxWaterSub", w.waterF == null || !WX.water ? ""
+    : WX.water.at ? "from " + WX.water.from + ", " + ago(WX.water.at)
     : future ? "today&rsquo;s reading"
-    : !WX.water ? ""
     : WX.water.from === "both" ? "estimated"
     : "from " + WX.water.from);
 

@@ -564,6 +564,93 @@ group("URL structure");
        declared && declared[1] === cname, `${cname} vs ${declared && declared[1]}`);
   }
 }
+/* The kept water reading.
+
+   Albany is the only water sensor above Coxsackie and it belongs to USGS,
+   which rate-limits: three reloads in a minute was enough to get 503s back and
+   leave Watervliet showing a dash. A reading is kept for a week so an outage
+   degrades to an older number rather than to nothing, and the tile dates it. */
+{
+  const {T, store} = load(ALL.find(s => s.slug === "watervliet") || ALL[0]);
+  const {readWater, cacheWater, cachedWater, ago, WATER_KEEP_MS} = T;
+  const HOUR = 3600e3, DAY = 24 * HOUR;
+  const st = {id: "TESTSTN", name: "Test"};
+  const fresh = r => ({status: "fulfilled", value: r});
+
+  ok("a reading is kept for a week", WATER_KEEP_MS === 7 * DAY, String(WATER_KEEP_MS));
+
+  /* CO-OPS is asked for gmt precisely so this stamp can be parsed. Ask for
+     lst_ldt again and every age silently shifts by the reader's offset from
+     the station - five hours in London, a day's worth by Sydney. */
+  const coops = readWater(fresh({data: [
+    {t: "2026-09-30 16:30", v: "64.0"}, {t: "2026-09-30 17:30", v: "66.4"}]}));
+  ok("CO-OPS: takes the newest row", coops && coops.f === 66.4, JSON.stringify(coops));
+  ok("CO-OPS: reads the stamp as UTC",
+     coops && coops.t === Date.parse("2026-09-30T17:30:00Z"),
+     coops && new Date(coops.t).toISOString());
+  const built = fs.readFileSync(pageFor(ALL[0]), "utf8");
+  ok("the page asks CO-OPS for gmt, which is what makes that parse right",
+     built.includes("time_zone=gmt") && !built.includes("time_zone=lst_ldt"));
+
+  const usgs = readWater(fresh({value: {timeSeries: [{values: [{value: [
+    {dateTime: "2026-09-30T12:30:00.000-05:00", value: "18.1"}]}]}]}}));
+  ok("USGS: converts Celsius to Fahrenheit",
+     usgs && Math.abs(usgs.f - 64.58) < 0.01, JSON.stringify(usgs));
+  ok("USGS: reads the stamp with its offset",
+     usgs && usgs.t === Date.parse("2026-09-30T12:30:00.000-05:00"));
+  ok("USGS: -999999 is not a temperature",
+     readWater(fresh({value: {timeSeries: [{values: [{value: [
+       {dateTime: "2026-09-30T12:30:00.000-05:00", value: "-999999"}]}]}]}})) === null);
+  ok("a failed fetch reads as no reading",
+     readWater({status: "rejected", reason: new Error("503")}) === null);
+
+  // round trip, and the edges of the week
+  store.clear();
+  const now = Date.parse("2026-09-30T18:00:00Z");
+  cacheWater(st, {f: 61.2, t: now - 3 * HOUR});
+  const got = cachedWater(st, now);
+  ok("a kept reading comes back", got && got.f === 61.2, JSON.stringify(got));
+
+  cacheWater(st, {f: 55, t: now - 6 * DAY});
+  ok("six days old is still offered", cachedWater(st, now) !== null);
+  cacheWater(st, {f: 55, t: now - 8 * DAY});
+  ok("eight days old is dropped", cachedWater(st, now) === null);
+  cacheWater(st, {f: 55, t: now - WATER_KEEP_MS - 1});
+  ok("a week and a minute is dropped", cachedWater(st, now) === null);
+
+  /* A stamp ahead of now means the two clocks disagree, not that the river
+     reported early. Left alone it would read as fresh forever. */
+  cacheWater(st, {f: 55, t: now + 2 * HOUR});
+  ok("a reading stamped in the future is dropped", cachedWater(st, now) === null);
+
+  store.clear();
+  ok("an unseen gauge has nothing kept", cachedWater(st, now) === null);
+  store.setItem("hc.water.TESTSTN", "{not json");
+  ok("corrupt storage reads as nothing kept", cachedWater(st, now) === null);
+  store.setItem("hc.water.TESTSTN", JSON.stringify({f: "warm", t: now}));
+  ok("a non-numeric temperature is not offered", cachedWater(st, now) === null);
+
+  /* Private windows and blocked site data throw on access. The tile losing a
+     fallback is fine; the page dying before it renders the tide is not. */
+  const boom = {getItem(){ throw new Error("denied"); },
+                setItem(){ throw new Error("denied"); }};
+  const real = store.getItem, realSet = store.setItem;
+  store.getItem = boom.getItem; store.setItem = boom.setItem;
+  let threw = false;
+  try { cacheWater(st, {f: 60, t: now}); cachedWater(st, now); } catch (e) { threw = true; }
+  ok("storage that refuses to answer does not break the page", !threw);
+  store.getItem = real; store.setItem = realSet;
+
+  ok("ago: minutes", ago(now - 20 * 60e3, now) === "20 minutes ago", ago(now - 20 * 60e3, now));
+  ok("ago: an hour", ago(now - 62 * 60e3, now) === "an hour ago", ago(now - 62 * 60e3, now));
+  ok("ago: the last minute before the hour", ago(now - 59 * 60e3, now) === "59 minutes ago",
+     ago(now - 59 * 60e3, now));
+  ok("ago: hours", ago(now - 3 * HOUR, now) === "3 hours ago", ago(now - 3 * HOUR, now));
+  ok("ago: days", ago(now - 3 * DAY, now) === "3 days ago", ago(now - 3 * DAY, now));
+  ok("ago: never says hours past a day and a half",
+     !/hours/.test(ago(now - 2 * DAY, now)), ago(now - 2 * DAY, now));
+}
+
 ok("exactly one site is primary", ALL.filter(s => s.primary).length === 1);
 
 console.log(`\n${pass} passed, ${fail} failed`);
