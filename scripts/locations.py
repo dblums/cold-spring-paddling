@@ -77,11 +77,24 @@ def water_pair(site):
     above = [s for s in WATER_STATIONS if s["mile"] > mile]
     south = max(below, key=lambda s: s["mile"]) if below else None
     north = min(above, key=lambda s: s["mile"]) if above else None
-    near = [s for s in (north, south) if s and abs(s["mile"] - mile) <= NEAR_MILES]
-    if near:
-        pick = near[0]          # north first in the list, so upriver wins a tie
-        return (None, pick) if pick is north else (pick, None)
     return south, north
+
+
+def water_near(site):
+    """Which of the pair is close enough to use on its own: "south", "north" or
+    None for interpolate between them.
+
+    Both are always kept. An earlier version dropped the far one, and when
+    Turkey Point went dark for a day the three launches sitting on it had no
+    water temperature at all - a preference had been turned into a dependency.
+    Prefer the near gauge, fall back to the far one."""
+    south, north = water_pair(site)
+    mile = site["riverMile"]
+    # north first, so upriver wins a tie: in spring it runs the colder of the two
+    for name, st in (("north", north), ("south", south)):
+        if st and abs(st["mile"] - mile) <= NEAR_MILES:
+            return name
+    return None
 
 
 def load():

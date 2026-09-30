@@ -102,28 +102,44 @@ def water_fields(site):
     - which was true only for the Highlands. At Hudson, Turkey Point is
     DOWNriver, so the page was telling readers the opposite of the fact."""
     south, north = L.water_pair(site)
+    near = L.water_near(site)
     # the gauges are not all NOAA's - the one at Albany is USGS - so name the
     # agency per station rather than assuming
     who = lambda st: ("USGS " if st.get("source") == "usgs" else "NOAA ") + st["name"]
-    if south and north:
+    if near:
+        one = north if near == "north" else south
+        other = south if near == "north" else north
+        way = "upriver" if near == "north" else "downriver"
+        miles = abs(one["mile"] - site["riverMile"])
+        unit = "mile" if miles == 1 else "miles"
+        tail = "." if miles <= L.NEAR_MILES else " \u2014 the nearest sensor on the river."
+        note = f"Water temperature comes from {who(one)}, {miles} {unit} {way}{tail}"
+        if other:
+            note = note[:-1] + f", or {who(other)} when that gauge is out."
+    elif south and north:
         note = ("Water temperature has no nearby sensor &mdash; it is estimated between "
                 f"{who(south)}, downriver, and {who(north)}, up.")
     elif north or south:
+        # nothing on one side: the launch is past the end of the sensors
         one = north or south
         way = "upriver" if north else "downriver"
         miles = abs(one["mile"] - site["riverMile"])
         unit = "mile" if miles == 1 else "miles"
-        # Two different reasons for one station. Near: the second was dropped
-        # deliberately. Far: there is no second, because the launch is past the
-        # end of the sensors - and then the distance deserves saying out loud.
         tail = "." if miles <= L.NEAR_MILES else " \u2014 the nearest sensor on the river."
         note = (f"Water temperature comes from {who(one)}, {miles} {unit} {way}{tail}")
     else:
         note = "Water temperature has no nearby sensor."
+    # The card header used to say "NOAA water temp" on every page, which was
+    # wrong at Watervliet the moment Albany - a USGS gauge - became its only
+    # source. Name whichever agencies can actually supply this launch.
+    agency = "/".join(sorted({"NOAA" if st.get("source") != "usgs" else "USGS"
+                              for st in (south, north) if st}))
     return {
         "WATER_S_JSON": json.dumps(south, separators=(",", ":")) if south else "null",
         "WATER_N_JSON": json.dumps(north, separators=(",", ":")) if north else "null",
+        "WATER_NEAR": json.dumps(near),
         "WATER_NOTE": note,
+        "WATER_AGENCY": agency or "no",
     }
 
 
@@ -141,14 +157,16 @@ def locnav(site, sites):
     near = []
     if i > 0:
         d = ordered[i - 1]
-        near.append(f'<a href="{L.href(d)}">{d["name"]}<em>downriver</em></a>')
+        near.append(f'<a href="{L.href(d)}">{d["name"]}</a>')
     if i < len(ordered) - 1:
         u = ordered[i + 1]
-        near.append(f'<a href="{L.href(u)}">{u["name"]}<em>upriver</em></a>')
+        near.append(f'<a href="{L.href(u)}">{u["name"]}</a>')
     # the menu runs downriver to up, so it reads as a trip up the Hudson
+    # the river mile leads, right-aligned, so the column reads as a trip upriver
     items = "".join(
-        (f'      <span class="here">{s["name"]}</span>\n' if s["slug"] == site["slug"]
-         else f'      <a href="{L.href(s)}">{s["name"]}</a>\n')
+        (f'      <span class="here"><i>{s["riverMile"]}</i>{s["name"]}</span>\n'
+         if s["slug"] == site["slug"]
+         else f'      <a href="{L.href(s)}"><i>{s["riverMile"]}</i>{s["name"]}</a>\n')
         for s in ordered)
     return ('  <nav class="locnav">\n'
             '    <span class="label">Nearby locations</span>\n'

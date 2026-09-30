@@ -78,10 +78,9 @@ body{
 .locnav a{
   color:var(--river); text-underline-offset:3px; font-weight:500;
 }
-.locnav a{display:inline-flex; align-items:baseline; gap:5px}
-.locnav a em{font-style:normal; font-size:11.5px; font-weight:500; letter-spacing:.06em;
-  text-transform:uppercase; color:var(--muted)}
-.locnav a + a::before, .alllocs::before{content:"|"; margin-right:9px; color:var(--line)}
+/* Scoped to direct children: an unscoped a + a put a separator in front of
+   every item in the dropdown too. */
+.locnav > a + a::before, .alllocs::before{content:"|"; margin-right:9px; color:var(--line)}
 
 /* All locations: a <details> rather than a script, so it works before the page
    has run anything and keyboard users get it for free. */
@@ -101,8 +100,13 @@ body{
   display:flex; flex-direction:column;
 }
 .alllocs .menu a, .alllocs .menu .here{
+  display:flex; align-items:baseline; gap:9px;
   padding:6px 10px; border-radius:6px; font-size:14px; white-space:nowrap;
   text-decoration:none;
+}
+.alllocs .menu i{
+  font-style:normal; flex:0 0 2.1em; text-align:right;
+  font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--muted);
 }
 .alllocs .menu a{color:var(--ink)}
 .alllocs .menu a:hover{background:var(--surface-2); color:var(--river)}
@@ -470,7 +474,7 @@ footer .label{margin-bottom:-2px}
   <section class="card" id="wxCard">
     <div class="card-head">
       <h2>Weather &amp; Water</h2>
-      <span class="station"><span id="wxWhen"></span><a href="{{NWS_LINK}}" target="_blank" rel="noopener">{{NWS_LABEL}} &#8599;</a> &middot; NOAA water temp</span>
+      <span class="station"><span id="wxWhen"></span><a href="{{NWS_LINK}}" target="_blank" rel="noopener">{{NWS_LABEL}} &#8599;</a> &middot; {{WATER_AGENCY}} water temp</span>
     </div>
     <div class="alerts" id="alerts"></div>
     <div class="tiles w">
@@ -679,8 +683,9 @@ const COOPS = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter";
    launch it was chosen for. Either end can be null at the ends of the river,
    and then the one reading we have is used as-is rather than extrapolating a
    gradient past the last measurement. */
-const WATER_S = {{WATER_S_JSON}};   // downriver of this launch
-const WATER_N = {{WATER_N_JSON}};   // upriver of it
+const WATER_S = {{WATER_S_JSON}};      // downriver of this launch
+const WATER_N = {{WATER_N_JSON}};      // upriver of it
+const WATER_NEAR = {{WATER_NEAR}};  // "south", "north", or null to interpolate
 const SITE_RIVER_MILE = SITE.riverMile;
 
 /* ---------- sun and moon ----------
@@ -926,14 +931,23 @@ async function loadConditions(){
 
   const rn = readWater(north), rs = readWater(south);
   const n = rn ? rn.f : null, sth = rs ? rs.f : null;
-  // linear by river mile between whichever two stations bracket this launch
+  /* A near gauge is a preference, not a dependency. Use it when it is
+     reporting; otherwise fall back to the far one rather than showing nothing,
+     which is what happened for a day when Turkey Point went out. */
+  const pref = WATER_NEAR === "north" ? n : WATER_NEAR === "south" ? sth : null;
+  const prefStn = WATER_NEAR === "north" ? WATER_N : WATER_NEAR === "south" ? WATER_S : null;
   const span = (WATER_N && WATER_S) ? WATER_N.mile - WATER_S.mile : 0;
   const f = span > 0
     ? Math.max(0, Math.min(1, (SITE_RIVER_MILE - WATER_S.mile) / span)) : 0;
-  WX.water = (n != null && sth != null)
-      ? {f: sth + (n - sth) * f, from:"both"}
-    : n != null ? {f:n, from:WATER_N.name}
-    : sth != null ? {f:sth, from:WATER_S.name}
+  /* "both" means the two gauges were genuinely interpolated; anything else is
+     one gauge's own reading and gets named. The tile used to call every
+     non-fallback number an estimate, which was a measurement at Watervliet. */
+  WX.water =
+      pref != null ? {f: pref, from: prefStn.name}
+    : (!prefStn && n != null && sth != null)
+        ? {f: sth + (n - sth) * f, from: "both"}
+    : n != null ? {f: n, from: WATER_N.name}
+    : sth != null ? {f: sth, from: WATER_S.name}
     : null;
 
   WX.status = WX.grid ? "ok" : "failed";
@@ -1835,7 +1849,12 @@ function drawWeather(t, cv){
   set("wxAir", w.airF);
   sub("wxAirSub", w.feelsF == null ? "" : "feels like " + w.feelsF + "&deg;");
   set("wxWater", w.waterF == null ? "—" : w.waterF);
-  sub("wxWaterSub", w.waterF == null ? "" : (future ? "today&rsquo;s reading" : "estimated"));
+  // name the gauge, or say so plainly when there wasn't one to name
+  sub("wxWaterSub", w.waterF == null ? ""
+    : future ? "today&rsquo;s reading"
+    : !WX.water ? ""
+    : WX.water.from === "both" ? "estimated"
+    : "from " + WX.water.from);
 
   $("wxAnswer").className = "answer";
   $("wxAnswerText").innerHTML = "";

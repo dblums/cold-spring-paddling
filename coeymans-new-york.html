@@ -93,10 +93,9 @@ body{
 .locnav a{
   color:var(--river); text-underline-offset:3px; font-weight:500;
 }
-.locnav a{display:inline-flex; align-items:baseline; gap:5px}
-.locnav a em{font-style:normal; font-size:11.5px; font-weight:500; letter-spacing:.06em;
-  text-transform:uppercase; color:var(--muted)}
-.locnav a + a::before, .alllocs::before{content:"|"; margin-right:9px; color:var(--line)}
+/* Scoped to direct children: an unscoped a + a put a separator in front of
+   every item in the dropdown too. */
+.locnav > a + a::before, .alllocs::before{content:"|"; margin-right:9px; color:var(--line)}
 
 /* All locations: a <details> rather than a script, so it works before the page
    has run anything and keyboard users get it for free. */
@@ -116,8 +115,13 @@ body{
   display:flex; flex-direction:column;
 }
 .alllocs .menu a, .alllocs .menu .here{
+  display:flex; align-items:baseline; gap:9px;
   padding:6px 10px; border-radius:6px; font-size:14px; white-space:nowrap;
   text-decoration:none;
+}
+.alllocs .menu i{
+  font-style:normal; flex:0 0 2.1em; text-align:right;
+  font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--muted);
 }
 .alllocs .menu a{color:var(--ink)}
 .alllocs .menu a:hover{background:var(--surface-2); color:var(--river)}
@@ -458,43 +462,43 @@ img{max-width:100%}
   </header>
   <nav class="locnav">
     <span class="label">Nearby locations</span>
-    <a href="stuyvesant-new-york.html">Stuyvesant<em>downriver</em></a> <a href="schodack-landing-new-york.html">Schodack Landing<em>upriver</em></a>
+    <a href="stuyvesant-new-york.html">Stuyvesant</a> <a href="schodack-landing-new-york.html">Schodack Landing</a>
     <details class="alllocs" id="allLocs">
       <summary>All 33 locations</summary>
       <div class="menu">
-      <a href="lower-manhattan-new-york.html">Lower Manhattan</a>
-      <a href="midtown-manhattan-new-york.html">Midtown Manhattan</a>
-      <a href="yonkers-new-york.html">Yonkers</a>
-      <a href="hastings-on-hudson-new-york.html">Hastings-on-Hudson</a>
-      <a href="irvington-new-york.html">Irvington</a>
-      <a href="nyack-new-york.html">Nyack</a>
-      <a href="ossining-new-york.html">Ossining</a>
-      <a href="croton-point-new-york.html">Croton Point</a>
-      <a href="verplanck-new-york.html">Verplanck</a>
-      <a href="peekskill-new-york.html">Peekskill</a>
-      <a href="fort-montgomery-new-york.html">Fort Montgomery</a>
-      <a href="cold-spring-new-york.html">Cold Spring</a>
-      <a href="cornwall-on-hudson-new-york.html">Cornwall-on-Hudson</a>
-      <a href="beacon-new-york.html">Beacon</a>
-      <a href="newburgh-new-york.html">Newburgh</a>
-      <a href="chelsea-new-york.html">Chelsea</a>
-      <a href="new-hamburg-new-york.html">New Hamburg</a>
-      <a href="poughkeepsie-new-york.html">Poughkeepsie</a>
-      <a href="staatsburg-new-york.html">Staatsburg</a>
-      <a href="kingston-new-york.html">Kingston</a>
-      <a href="east-kingston-new-york.html">East Kingston</a>
-      <a href="ulster-landing-new-york.html">Ulster Landing</a>
-      <a href="tivoli-new-york.html">Tivoli</a>
-      <a href="germantown-new-york.html">Germantown</a>
-      <a href="catskill-new-york.html">Catskill</a>
-      <a href="hudson-new-york.html">Hudson</a>
-      <a href="coxsackie-new-york.html">Coxsackie</a>
-      <a href="stuyvesant-new-york.html">Stuyvesant</a>
-      <span class="here">Coeymans</span>
-      <a href="schodack-landing-new-york.html">Schodack Landing</a>
-      <a href="papscanee-island-new-york.html">Papscanee Island</a>
-      <a href="albany-new-york.html">Albany</a>
-      <a href="watervliet-new-york.html">Watervliet</a>
+      <a href="lower-manhattan-new-york.html"><i>2</i>Lower Manhattan</a>
+      <a href="midtown-manhattan-new-york.html"><i>4</i>Midtown Manhattan</a>
+      <a href="yonkers-new-york.html"><i>18</i>Yonkers</a>
+      <a href="hastings-on-hudson-new-york.html"><i>22</i>Hastings-on-Hudson</a>
+      <a href="irvington-new-york.html"><i>25</i>Irvington</a>
+      <a href="nyack-new-york.html"><i>29</i>Nyack</a>
+      <a href="ossining-new-york.html"><i>33</i>Ossining</a>
+      <a href="croton-point-new-york.html"><i>36</i>Croton Point</a>
+      <a href="verplanck-new-york.html"><i>41</i>Verplanck</a>
+      <a href="peekskill-new-york.html"><i>44</i>Peekskill</a>
+      <a href="fort-montgomery-new-york.html"><i>47</i>Fort Montgomery</a>
+      <a href="cold-spring-new-york.html"><i>54</i>Cold Spring</a>
+      <a href="cornwall-on-hudson-new-york.html"><i>58</i>Cornwall-on-Hudson</a>
+      <a href="beacon-new-york.html"><i>61</i>Beacon</a>
+      <a href="newburgh-new-york.html"><i>61</i>Newburgh</a>
+      <a href="chelsea-new-york.html"><i>65</i>Chelsea</a>
+      <a href="new-hamburg-new-york.html"><i>67</i>New Hamburg</a>
+      <a href="poughkeepsie-new-york.html"><i>76</i>Poughkeepsie</a>
+      <a href="staatsburg-new-york.html"><i>85</i>Staatsburg</a>
+      <a href="kingston-new-york.html"><i>92</i>Kingston</a>
+      <a href="east-kingston-new-york.html"><i>95</i>East Kingston</a>
+      <a href="ulster-landing-new-york.html"><i>97</i>Ulster Landing</a>
+      <a href="tivoli-new-york.html"><i>101</i>Tivoli</a>
+      <a href="germantown-new-york.html"><i>106</i>Germantown</a>
+      <a href="catskill-new-york.html"><i>112</i>Catskill</a>
+      <a href="hudson-new-york.html"><i>117</i>Hudson</a>
+      <a href="coxsackie-new-york.html"><i>124</i>Coxsackie</a>
+      <a href="stuyvesant-new-york.html"><i>127</i>Stuyvesant</a>
+      <span class="here"><i>132</i>Coeymans</span>
+      <a href="schodack-landing-new-york.html"><i>135</i>Schodack Landing</a>
+      <a href="papscanee-island-new-york.html"><i>142</i>Papscanee Island</a>
+      <a href="albany-new-york.html"><i>146</i>Albany</a>
+      <a href="watervliet-new-york.html"><i>152</i>Watervliet</a>
       </div>
     </details>
   </nav>
@@ -533,7 +537,7 @@ img{max-width:100%}
   <section class="card" id="wxCard">
     <div class="card-head">
       <h2>Weather &amp; Water</h2>
-      <span class="station"><span id="wxWhen"></span><a href="https://forecast.weather.gov/MapClick.php?lat=42.4733&amp;lon=-73.7897" target="_blank" rel="noopener">NWS ALY &#8599;</a> &middot; NOAA water temp</span>
+      <span class="station"><span id="wxWhen"></span><a href="https://forecast.weather.gov/MapClick.php?lat=42.4733&amp;lon=-73.7897" target="_blank" rel="noopener">NWS ALY &#8599;</a> &middot; NOAA/USGS water temp</span>
     </div>
     <div class="alerts" id="alerts"></div>
     <div class="tiles w">
@@ -643,7 +647,7 @@ img{max-width:100%}
       <span class="label">Important note</span>
       <p>Tides and currents are predictions, not observations. Wind, waves, runoff, storm surge and other factors can affect actual conditions. Weather is sourced from the National Weather Service. Use your own judgment and paddle at your own risk.</p>
     </div>
-    <p>Current from NOAA station HUR0617_9. Flood and ebb headings are the river’s own axis here. Tide from NOAA station 8518989 at Castleton, about four miles upriver. Both are predictions, baked into this page and good through 31&nbsp;Dec&nbsp;2028; values between NOAA&rsquo;s published points are interpolated. Weather and alerts come live from the National Weather Service grid covering Coeymans. Water temperature comes from NOAA Coxsackie, 6 miles downriver. Sun and moon are computed rather than fetched, and agree with the US Naval Observatory to within a couple of minutes.</p>
+    <p>Current from NOAA station HUR0617_9. Flood and ebb headings are the river’s own axis here. Tide from NOAA station 8518989 at Castleton, about four miles upriver. Both are predictions, baked into this page and good through 31&nbsp;Dec&nbsp;2028; values between NOAA&rsquo;s published points are interpolated. Weather and alerts come live from the National Weather Service grid covering Coeymans. Water temperature comes from NOAA Coxsackie, 6 miles downriver, or USGS Albany when that gauge is out. Sun and moon are computed rather than fetched, and agree with the US Naval Observatory to within a couple of minutes.</p>
     <p><a href="https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=HUR0617_9" target="_blank" rel="noopener">NOAA currents &#8599;</a> &nbsp; <a href="https://tidesandcurrents.noaa.gov/stationhome.html?id=8518989" target="_blank" rel="noopener">NOAA tides &#8599;</a></p>
     <div class="colophon">
       <p>Site and photos by Dan Blumberg.</p>
@@ -718,8 +722,9 @@ const COOPS = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter";
    launch it was chosen for. Either end can be null at the ends of the river,
    and then the one reading we have is used as-is rather than extrapolating a
    gradient past the last measurement. */
-const WATER_S = {"id":"8518979","name":"Coxsackie","mile":126,"source":"noaa"};   // downriver of this launch
-const WATER_N = null;   // upriver of it
+const WATER_S = {"id":"8518979","name":"Coxsackie","mile":126,"source":"noaa"};      // downriver of this launch
+const WATER_N = {"id":"01359139","name":"Albany","mile":145,"source":"usgs"};      // upriver of it
+const WATER_NEAR = "south";  // "south", "north", or null to interpolate
 const SITE_RIVER_MILE = SITE.riverMile;
 
 /* ---------- sun and moon ----------
@@ -965,14 +970,23 @@ async function loadConditions(){
 
   const rn = readWater(north), rs = readWater(south);
   const n = rn ? rn.f : null, sth = rs ? rs.f : null;
-  // linear by river mile between whichever two stations bracket this launch
+  /* A near gauge is a preference, not a dependency. Use it when it is
+     reporting; otherwise fall back to the far one rather than showing nothing,
+     which is what happened for a day when Turkey Point went out. */
+  const pref = WATER_NEAR === "north" ? n : WATER_NEAR === "south" ? sth : null;
+  const prefStn = WATER_NEAR === "north" ? WATER_N : WATER_NEAR === "south" ? WATER_S : null;
   const span = (WATER_N && WATER_S) ? WATER_N.mile - WATER_S.mile : 0;
   const f = span > 0
     ? Math.max(0, Math.min(1, (SITE_RIVER_MILE - WATER_S.mile) / span)) : 0;
-  WX.water = (n != null && sth != null)
-      ? {f: sth + (n - sth) * f, from:"both"}
-    : n != null ? {f:n, from:WATER_N.name}
-    : sth != null ? {f:sth, from:WATER_S.name}
+  /* "both" means the two gauges were genuinely interpolated; anything else is
+     one gauge's own reading and gets named. The tile used to call every
+     non-fallback number an estimate, which was a measurement at Watervliet. */
+  WX.water =
+      pref != null ? {f: pref, from: prefStn.name}
+    : (!prefStn && n != null && sth != null)
+        ? {f: sth + (n - sth) * f, from: "both"}
+    : n != null ? {f: n, from: WATER_N.name}
+    : sth != null ? {f: sth, from: WATER_S.name}
     : null;
 
   WX.status = WX.grid ? "ok" : "failed";
@@ -1856,7 +1870,12 @@ function drawWeather(t, cv){
   set("wxAir", w.airF);
   sub("wxAirSub", w.feelsF == null ? "" : "feels like " + w.feelsF + "&deg;");
   set("wxWater", w.waterF == null ? "—" : w.waterF);
-  sub("wxWaterSub", w.waterF == null ? "" : (future ? "today&rsquo;s reading" : "estimated"));
+  // name the gauge, or say so plainly when there wasn't one to name
+  sub("wxWaterSub", w.waterF == null ? ""
+    : future ? "today&rsquo;s reading"
+    : !WX.water ? ""
+    : WX.water.from === "both" ? "estimated"
+    : "from " + WX.water.from);
 
   $("wxAnswer").className = "answer";
   $("wxAnswerText").innerHTML = "";

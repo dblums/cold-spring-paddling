@@ -2,7 +2,7 @@
 const {load, sites, pageFor, pageSlug} = require("./harness.js");
 const fs = require("fs");
 const ALL = sites();
-const ALL_WATER = ["The Battery", "Turkey Point", "Coxsackie"];
+const ALL_WATER = ["The Battery", "Turkey Point", "Coxsackie", "Albany"];
 const ALL_WATER_MILES = [0, 100, 126];
 const {T} = load();          // the root site, for the bulk of the assertions
 const MIN = 60000, HOUR = 3600000;
@@ -350,59 +350,61 @@ for (const site of ALL){
        /rel="noopener"/.test(tag), tag.slice(0, 120));
   }
 
-  /* Water temperature is interpolated between the two NOAA stations bracketing
-     the launch. Those used to be global constants picked for Cold Spring, so
-     Hudson - north of Turkey Point - clamped to a single reading while the
-     footer told readers Turkey Point was UPriver of them. It is downriver. */
+  /* Water temperature: both bracketing stations are always carried, and
+     WATER_NEAR says whether one is close enough to prefer. Preferring is not
+     depending - when Turkey Point went dark for a day, the launches that had
+     dropped their far station showed nothing at all. */
   const ws = /const WATER_S = ({[^}]*}|null)/.exec(html)[1];
   const wn = /const WATER_N = ({[^}]*}|null)/.exec(html)[1];
+  const wnear = /const WATER_NEAR = ("[a-z]+"|null)/.exec(html)[1];
   const wSouth = ws === "null" ? null : JSON.parse(ws);
   const wNorth = wn === "null" ? null : JSON.parse(wn);
-  ok(`${site.name}: has a water station downriver or is at the mouth`,
-     wSouth === null || wSouth.mile <= site.riverMile, `${wSouth && wSouth.mile} vs ${site.riverMile}`);
-  ok(`${site.name}: has a water station upriver or is at the head`,
-     wNorth === null || wNorth.mile > site.riverMile, `${wNorth && wNorth.mile} vs ${site.riverMile}`);
-  if (wSouth && wNorth){
-    ok(`${site.name}: the launch sits between its two water stations`,
-       wSouth.mile <= site.riverMile && site.riverMile <= wNorth.mile,
-       `${wSouth.mile} <= ${site.riverMile} <= ${wNorth.mile}`);
-    // the footer must name the stations it actually uses, on the correct sides
-    const note = (/Water temperature[^<]*/.exec(html) || [""])[0];
-    const who = w => (w.source === "usgs" ? "USGS " : "NOAA ") + w.name;
-    ok(`${site.name}: the note names its downriver station`,
-       note.includes(who(wSouth) + ", downriver"), note.slice(0, 130));
-    ok(`${site.name}: the note names its upriver station`,
-       note.includes(who(wNorth) + ", up"), note.slice(0, 130));
-    ok(`${site.name}: the note names no other station`,
-       !ALL_WATER.some(w => w !== wSouth.name && w !== wNorth.name && note.includes(w)), note.slice(0, 130));
-  } else if (wSouth || wNorth){
-    /* One station means it was close enough that a second would add arithmetic
-       rather than accuracy. Say which one, how far, and which way. */
-    const one = wNorth || wSouth;
+  const near = wnear === "null" ? null : JSON.parse(wnear);
+  const note = (/Water temperature[^<]*/.exec(html) || [""])[0];
+  const who = w => (w.source === "usgs" ? "USGS " : "NOAA ") + w.name;
+
+  ok(`${site.name}: has at least one water station`, !!(wSouth || wNorth));
+  if (wSouth) ok(`${site.name}: downriver station is downriver`, wSouth.mile <= site.riverMile);
+  if (wNorth) ok(`${site.name}: upriver station is upriver`, wNorth.mile > site.riverMile);
+
+  if (near){
+    const one = near === "north" ? wNorth : wSouth;
+    const other = near === "north" ? wSouth : wNorth;
     const away = Math.abs(one.mile - site.riverMile);
-    const note = (/Water temperature[^<]*/.exec(html) || [""])[0];
-    /* One station has two causes: it was close enough to drop the other, or
-       the launch is past the end of the sensors and there is no other. Albany
-       is the second - Coxsackie is the northernmost sensor on the river. */
-    const onlyOne = !ALL_WATER_MILES.some(m => (m > site.riverMile) !== (one.mile > site.riverMile));
-    ok(`${site.name}: a lone station is nearby, or is the last one on the river`,
-       away <= 12 || onlyOne, `${away} mi, onlyOne=${onlyOne}`);
-    ok(`${site.name}: a distant lone station says so`,
-       away <= 12 || /nearest sensor on the river/.test(note), note.slice(0, 130));
-    ok(`${site.name}: the note names the station`, note.includes(one.name), note.slice(0, 130));
+    ok(`${site.name}: the preferred station is the near one`,
+       away <= 12 || !other, `${away} mi`);
+    ok(`${site.name}: the note names the preferred station`, note.includes(who(one)), note.slice(0,140));
     ok(`${site.name}: the note gives the distance`,
-       note.includes(`${away} ${away === 1 ? "mile" : "miles"}`), note.slice(0, 130));
-    // the gauges are not all NOAA's
-    ok(`${site.name}: the note names the right agency`,
-       note.includes((one.source === "usgs" ? "USGS " : "NOAA ") + one.name), note.slice(0, 130));
+       note.includes(`${away} ${away === 1 ? "mile" : "miles"}`), note.slice(0,140));
     ok(`${site.name}: the note gives the direction`,
-       note.includes(wNorth ? "upriver" : "downriver"), note.slice(0, 130));
-    ok(`${site.name}: the note names no other station`,
-       !ALL_WATER.some(w => w !== one.name && note.includes(w)), note.slice(0, 130));
-    // interpolating needs two; with one, the page must not claim a range
-    ok(`${site.name}: the note claims no interpolation`,
-       !/estimated between/.test(note), note.slice(0, 130));
+       note.includes(near === "north" ? "upriver" : "downriver"), note.slice(0,140));
+    // the fallback must be named, or it is a dependency pretending to be a preference
+    if (other)
+      ok(`${site.name}: the note names the fallback gauge`,
+         note.includes(who(other)) && /when that gauge is out/.test(note), note.slice(0,140));
+    ok(`${site.name}: a preferred station claims no interpolation`,
+       !/estimated between/.test(note), note.slice(0,140));
+  } else if (wSouth && wNorth){
+    ok(`${site.name}: the launch sits between its two stations`,
+       wSouth.mile <= site.riverMile && site.riverMile <= wNorth.mile);
+    ok(`${site.name}: the note names its downriver station`,
+       note.includes(who(wSouth) + ", downriver"), note.slice(0,140));
+    ok(`${site.name}: the note names its upriver station`,
+       note.includes(who(wNorth) + ", up"), note.slice(0,140));
   }
+  /* The card header names the agency, and it was hardcoded to NOAA until
+     Albany - a USGS gauge - became the only source at Watervliet. */
+  const agency = (/&middot; ([A-Z/]+) water temp/.exec(html) || [,""])[1];
+  const agencies = [...new Set([wSouth, wNorth].filter(Boolean)
+                      .map(w => w.source === "usgs" ? "USGS" : "NOAA"))].sort();
+  ok(`${site.name}: the header names every agency it can draw on`,
+     agencies.every(a => agency.split("/").includes(a)), `${agency} vs ${agencies}`);
+  ok(`${site.name}: the header claims no agency it does not use`,
+     agency.split("/").every(a => agencies.includes(a)), `${agency} vs ${agencies}`);
+
+  ok(`${site.name}: the note names no unrelated station`,
+     !ALL_WATER.some(w => w !== (wSouth && wSouth.name) && w !== (wNorth && wNorth.name)
+                          && note.includes(w)), note.slice(0,140));
 
   // cross-links to the other launches
   for (const other of ALL) if (other.slug !== site.slug)
