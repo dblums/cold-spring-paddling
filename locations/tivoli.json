@@ -1,0 +1,36 @@
+{
+  "slug": "tivoli",
+  "primary": false,
+  "name": "Tivoli",
+  "state": "New York",
+  "title": "Hudson River Paddling Conditions Near Tivoli, NY",
+  "blurb": "Tivoli Bays sit behind the railroad embankment just south of the launch \u2014 North Bay is a cattail marsh reached under a trestle, South Bay open water. The main river here is quiet and the banks are mostly undeveloped.",
+  "lat": 42.0597,
+  "lon": -73.9238,
+  "riverMile": 101,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "8518964",
+    "label": "NOAA 8518964 Tivoli",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station 8518964 at Tivoli, under half a mile from the launch.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "ACT3771",
+    "bin": 1,
+    "label": "NOAA ACT3771_1 Saugerties",
+    "shiftMin": 0,
+    "floodToward": 8,
+    "ebbToward": 188,
+    "upriverTo": "Saugerties",
+    "downriverTo": "Kingston",
+    "note": "Current from NOAA station ACT3771_1 (Saugerties), under a mile from the launch. Flood and ebb headings are the river\u2019s own axis here.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=ACT3771_1"
+  },
+  "nws": {
+    "grid": "ALY/71,35"
+  },
+  "features": []
+}

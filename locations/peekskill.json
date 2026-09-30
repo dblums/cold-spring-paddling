@@ -1,0 +1,36 @@
+{
+  "slug": "peekskill",
+  "primary": false,
+  "name": "Peekskill",
+  "state": "New York",
+  "title": "Hudson River Paddling Conditions Near Peekskill, NY",
+  "blurb": "At the southern gate of the Highlands, where the river narrows and turns. Annsville Creek is just north, and the current picks up as the channel tightens toward Bear Mountain.",
+  "lat": 41.2856,
+  "lon": -73.9322,
+  "riverMile": 44,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "8518949",
+    "label": "NOAA 8518949 Peekskill",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station 8518949 at Peekskill, a few hundred yards from the launch.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "ACT3711",
+    "bin": 1,
+    "label": "NOAA ACT3711_1 Peekskill",
+    "shiftMin": 0,
+    "floodToward": 0,
+    "ebbToward": 180,
+    "upriverTo": "Bear Mountain",
+    "downriverTo": "Croton Point",
+    "note": "Current from NOAA station ACT3711_1 at Peekskill, under a mile from the launch. Flood and ebb headings are the river\u2019s own axis here.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=ACT3711_1"
+  },
+  "nws": {
+    "grid": "OKX/32,68"
+  },
+  "features": []
+}

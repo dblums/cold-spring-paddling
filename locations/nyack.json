@@ -1,0 +1,36 @@
+{
+  "slug": "nyack",
+  "primary": false,
+  "name": "Nyack",
+  "state": "New York",
+  "title": "Hudson River Paddling Conditions Near Nyack, NY",
+  "blurb": "On the Tappan Zee, where the Hudson is three miles wide and behaves more like a bay than a river. Little shelter and a long fetch, so wind matters here more than current does.",
+  "lat": 41.09,
+  "lon": -73.918,
+  "riverMile": 29,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "8518919",
+    "label": "NOAA 8518919 Tarrytown",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station 8518919 at Tarrytown, about two and a half miles across the river.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "HUR0502",
+    "bin": 10,
+    "label": "NOAA HUR0502_10 Tappan Zee Bridge",
+    "shiftMin": 0,
+    "floodToward": 356,
+    "ebbToward": 175,
+    "upriverTo": "Haverstraw",
+    "downriverTo": "Irvington",
+    "note": "Current from NOAA station HUR0502_10 (Tappan Zee Bridge), about two and a half miles from the launch, at the 5 ft bin nearest the surface.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=HUR0502_10"
+  },
+  "nws": {
+    "grid": "OKX/34,59"
+  },
+  "features": []
+}

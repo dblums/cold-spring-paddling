@@ -1,0 +1,36 @@
+{
+  "slug": "newburgh",
+  "primary": false,
+  "name": "Newburgh",
+  "state": "New York",
+  "title": "Hudson River Paddling Conditions Near Newburgh, NY",
+  "blurb": "Across the river from Beacon, at the northern gate of the Highlands. The tide here runs a few minutes ahead of the Beacon side and about half a foot lower.",
+  "lat": 41.4981,
+  "lon": -74.0056,
+  "riverMile": 61,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "8518935",
+    "label": "NOAA 8518935 Newburgh",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station 8518935 at Newburgh, beside the launch.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "HUR0506",
+    "bin": 7,
+    "label": "NOAA HUR0506_7 Newburgh-Beacon",
+    "shiftMin": 0,
+    "floodToward": 350,
+    "ebbToward": 171,
+    "upriverTo": "Marlboro",
+    "downriverTo": "Storm King",
+    "note": "Current from NOAA station HUR0506_7 (Newburgh Beacon Bridge), about a mile and a half from the launch, at the 4 ft bin nearest the surface.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=HUR0506_7"
+  },
+  "nws": {
+    "grid": "OKX/28,77"
+  },
+  "features": []
+}
