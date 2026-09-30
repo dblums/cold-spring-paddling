@@ -903,7 +903,7 @@ const waterURL = st => st.source === "usgs"
 
 /* The last good reading from each gauge, kept so an outage does not blank the
    tile. Albany is the only sensor above Coxsackie and it belongs to USGS,
-   which rate-limits - Watervliet and Albany have nothing else to reach for,
+   which rate-limits - Troy and Albany have nothing else to reach for,
    and a 503 leaves them showing a dash. The river does not swing much in a
    day, so a recent reading is still worth having; a week out it is dropped
    rather than shown, and the tile always says how old it is either way.
@@ -943,9 +943,9 @@ function cachedWater(st, now, anyAge){
 
    Twenty sits inside that range. The exact number barely matters - it only
    decides between two candidates that are already close - but it does settle
-   the case this exists for: at Watervliet a three-hour-old Albany reading
-   seven miles off (cost 9) beats a live Coxsackie twenty-six miles away
-   (cost 26), which is the right call. */
+   the case this exists for: at Troy a three-hour-old Albany reading eight
+   miles off (cost 10) beats a live Coxsackie twenty-seven miles away
+   (cost 27), which is the right call. */
 const AGE_MILES_PER_DAY = 20;
 const waterCost = (st, t, now) =>
   Math.abs(st.mile - SITE_RIVER_MILE)
@@ -1053,7 +1053,7 @@ async function loadConditions(){
     ? Math.max(0, Math.min(1, (SITE_RIVER_MILE - WATER_S.mile) / span)) : 0;
   /* "both" means the two gauges were genuinely interpolated; anything else is
      one gauge's own reading and gets named. The tile used to call every
-     non-fallback number an estimate, which was a measurement at Watervliet. */
+     non-fallback number an estimate, which was a measurement at Troy. */
   if (rn) cacheWater(WATER_N, rn);
   if (rs) cacheWater(WATER_S, rs);
 
@@ -1072,7 +1072,7 @@ async function loadConditions(){
     WX.water = bestWater(live, now);
     /* Nothing usable from this launch's own two gauges. Rather than show a
        dash, reach for the rest of the river - three extra requests, made only
-       in the case that used to leave Watervliet and Albany blank. */
+       in the case that used to leave Troy and Albany blank. */
     const floor = Math.min.apply(null,
       WATER_ALL.map(st => Math.abs(st.mile - SITE_RIVER_MILE))) + AGE_MILES_PER_DAY;
     if (!WX.water || WX.water.cost > floor){

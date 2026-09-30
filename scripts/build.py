@@ -130,7 +130,7 @@ def water_fields(site):
     else:
         note = "Water temperature has no nearby sensor."
     # The card header used to say "NOAA water temp" on every page, which was
-    # wrong at Watervliet the moment Albany - a USGS gauge - became its only
+    # wrong at Troy the moment Albany - a USGS gauge - became its only
     # source. Name whichever agencies can actually supply this launch.
     agency = "/".join(sorted({"NOAA" if st.get("source") != "usgs" else "USGS"
                               for st in (south, north) if st}))
@@ -417,6 +417,43 @@ def write_cname():
     print(f"  {'CNAME':14} -> {'/CNAME':28} {L.DOMAIN}")
 
 
+def write_redirects(sites):
+    """A small page at each URL that has moved.
+
+    GitHub Pages serves static files and cannot answer with a 301, so the next
+    best thing is a page that says where the launch went, points a canonical
+    link at it, and sends the reader on. The meta refresh is what moves a
+    person; the canonical link is what moves a search result. Both are needed -
+    the refresh alone leaves the old URL competing with the new one.
+
+    noindex is deliberately absent: it would tell a crawler to drop the page
+    before it follows the canonical, which loses whatever the old URL had
+    earned rather than passing it on."""
+    by_slug = {s["slug"]: s for s in sites}
+    for old_file, slug in L.REDIRECTS.items():
+        site = by_slug.get(slug)
+        if not site:
+            raise SystemExit(f"redirect {old_file} points at unknown slug {slug!r}")
+        url = L.page_url(site)
+        page = f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Moved to {site['name']}</title>
+<link rel="canonical" href="{url}">
+<meta http-equiv="refresh" content="0; url={L.page_file(site)}">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<p>This page is now <a href="{L.page_file(site)}">{site['title']}</a>.</p>
+</body>
+</html>
+"""
+        with open(os.path.join(L.ROOT, old_file), "w") as f:
+            f.write(page)
+        print(f"  {'redirect':14} -> /{old_file:<27} {L.page_file(site)}")
+
+
 def main():
     wanted = set(sys.argv[1:])
     sites = L.load()
@@ -427,6 +464,7 @@ def main():
         render(site, sites)
     if not wanted:
         write_thanks()
+        write_redirects(sites)
         write_cname()
 
 

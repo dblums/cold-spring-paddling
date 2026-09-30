@@ -393,7 +393,7 @@ for (const site of ALL){
        note.includes(who(wNorth) + ", up"), note.slice(0,140));
   }
   /* The card header names the agency, and it was hardcoded to NOAA until
-     Albany - a USGS gauge - became the only source at Watervliet. */
+     Albany - a USGS gauge - became the only source at Troy. */
   const agency = (/&middot; ([A-Z/]+) water temp/.exec(html) || [,""])[1];
   const agencies = [...new Set([wSouth, wNorth].filter(Boolean)
                       .map(w => w.source === "usgs" ? "USGS" : "NOAA"))].sort();
@@ -568,10 +568,10 @@ group("URL structure");
 
    Albany is the only water sensor above Coxsackie and it belongs to USGS,
    which rate-limits: three reloads in a minute was enough to get 503s back and
-   leave Watervliet showing a dash. A reading is kept for a week so an outage
+   leave Troy showing a dash. A reading is kept for a week so an outage
    degrades to an older number rather than to nothing, and the tile dates it. */
 {
-  const {T, store} = load(ALL.find(s => s.slug === "watervliet") || ALL[0]);
+  const {T, store} = load(ALL.find(s => s.slug === "troy") || ALL[0]);
   const {readWater, cacheWater, cachedWater, ago, WATER_KEEP_MS} = T;
   const HOUR = 3600e3, DAY = 24 * HOUR;
   const st = {id: "TESTSTN", name: "Test"};
@@ -667,7 +667,7 @@ group("URL structure");
    deciding what to wear. So it widens to the rest of the river rather than
    give up, and states the provenance of whatever it lands on. */
 {
-  const {T, store} = load(ALL.find(s => s.slug === "watervliet") || ALL[0]);
+  const {T, store} = load(ALL.find(s => s.slug === "troy") || ALL[0]);
   const {bestWater, waterSub, waterCost, WATER_ALL, AGE_MILES_PER_DAY, cacheWater} = T;
   const HOUR = 3600e3, DAY = 24 * HOUR, now = Date.parse("2026-09-30T18:00:00Z");
   const mile = T.SITE.riverMile;
@@ -681,7 +681,7 @@ group("URL structure");
   ok("age adds to the cost",
      waterCost(albany, now - DAY, now) > waterCost(albany, now, now));
 
-  /* The case this exists for. Albany is 7 miles from Watervliet and is the
+  /* The case this exists for. Albany is 8 miles from Troy and is the
      only gauge above Coxsackie; when it is late, a three-hour-old reading from
      it still beats a live one 26 miles downriver. */
   store.clear();
@@ -721,7 +721,7 @@ group("URL structure");
      waterSub(near, now) === "from Albany", waterSub(near, now));
   const far = bestWater([{st: cox, f: 66, t: now}], now);
   ok("a gauge off the rest of the river gets its distance",
-     waterSub(far, now) === "from Coxsackie, 26 miles downriver", waterSub(far, now));
+     waterSub(far, now) === "from Coxsackie, 27 miles downriver", waterSub(far, now));
   ok("a far gauge is not called one of this launch's own", far.bracket === false);
   ok("distance names the direction the gauge actually lies",
      waterSub(bestWater([{st: bat, f: 70, t: now}], now), now).includes("downriver"));
@@ -764,6 +764,45 @@ group("URL structure");
     .concat(srcScript.match(/^[ \t]*\/\/[^\n]*\n/gm) || [])
     .reduce((n, c) => n + c.length, 0);
   ok("stripping removes a worthwhile amount", removed > 8000, `${removed} bytes per page`);
+}
+
+/* Pages that moved. Watervliet became Troy, and the file it used to be
+   served from is still a live URL at the domain - in somebody's history, in a
+   search result. Left alone it would go on serving the old page's conditions
+   forever, because nothing in the build removes a launch page it stopped
+   emitting. */
+{
+  const path = require("path");
+  const src = fs.readFileSync(path.join(__dirname, "..", "scripts", "locations.py"), "utf8");
+  const SITE_URL = "https://" + /^DOMAIN = "([^"]+)"/m.exec(src)[1];
+  const block = /REDIRECTS = \{([\s\S]*?)\}/.exec(src);
+  ok("the registry declares its moved pages", !!block);
+  const pairs = [...(block ? block[1].matchAll(/"([^"]+)":\s*"([^"]+)"/g) : [])];
+
+  for (const [, oldFile, slug] of pairs){
+    const site = ALL.find(s => s.slug === slug);
+    ok(`redirect ${oldFile} points at a launch that exists`, !!site, slug);
+    if (!site) continue;
+    const dest = pageSlug(site) + ".html";
+    ok(`redirect ${oldFile} does not shadow a live page`,
+       !ALL.some(s => pageSlug(s) + ".html" === oldFile));
+
+    const f = path.join(__dirname, "..", oldFile);
+    ok(`the build wrote ${oldFile}`, fs.existsSync(f));
+    if (!fs.existsSync(f)) continue;
+    const html = fs.readFileSync(f, "utf8");
+    // the refresh moves a person, the canonical moves a search result
+    ok(`${oldFile} sends the reader to ${dest}`,
+       new RegExp(`http-equiv="refresh"[^>]*url=${dest.replace(/\./g, "\\.")}`).test(html));
+    ok(`${oldFile} points its canonical at the new page`,
+       html.includes(`rel="canonical" href="${SITE_URL}/${dest}"`), SITE_URL + "/" + dest);
+    ok(`${oldFile} also links it, for anyone the refresh does not carry`,
+       html.includes(`href="${dest}"`));
+    /* noindex here would have a crawler drop the page before following the
+       canonical, throwing away what the old URL earned instead of passing it on. */
+    ok(`${oldFile} is not noindexed`, !/noindex/.test(html));
+    ok(`${oldFile} stays small`, html.length < 2048, `${html.length} bytes`);
+  }
 }
 
 ok("exactly one site is primary", ALL.filter(s => s.primary).length === 1);

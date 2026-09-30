@@ -1,0 +1,36 @@
+{
+  "slug": "troy",
+  "primary": false,
+  "name": "Troy",
+  "state": "New York",
+  "title": "Hudson River Paddling Conditions Near Troy, NY",
+  "blurb": "The Ingalls Avenue launch, a quarter mile below the federal dam — the top of the tidal Hudson. Above the dam the river is locked and the tide stops.",
+  "lat": 42.7474,
+  "lon": -73.6852,
+  "riverMile": 153,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "TEC1603",
+    "label": "NOAA TEC1603 Troy",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station TEC1603, which NOAA calls Troy, about two miles downriver.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "HUR0618",
+    "bin": 8,
+    "label": "NOAA HUR0618_8 Port of Albany",
+    "shiftMin": 0,
+    "floodToward": 14,
+    "ebbToward": 194,
+    "upriverTo": "the federal dam",
+    "downriverTo": "Watervliet",
+    "note": "Current from NOAA station HUR0618_8 (Port of Albany), nine miles downriver — the nearest one on the river. Flood and ebb headings are the river’s own axis here, not the station’s: the river runs more nearly north at Troy than it does at Albany.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=HUR0618_8"
+  },
+  "nws": {
+    "grid": "ALY/74,68"
+  },
+  "features": []
+}
