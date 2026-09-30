@@ -1,0 +1,36 @@
+{
+  "slug": "cornwall-on-hudson",
+  "primary": false,
+  "name": "Cornwall-on-Hudson",
+  "state": "New York",
+  "title": "Hudson River Paddling Conditions Near Cornwall-on-Hudson, NY",
+  "blurb": "In the bay behind Storm King, at the northern gate of the Highlands. Sheltered compared with the reach south of it.",
+  "lat": 41.4444,
+  "lon": -74.0,
+  "riverMile": 58,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "8518935",
+    "label": "NOAA 8518935 Newburgh",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station 8518935 at Newburgh, about four miles upriver.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "HUR0506",
+    "bin": 7,
+    "label": "NOAA HUR0506_7 Newburgh-Beacon",
+    "shiftMin": 0,
+    "floodToward": 335,
+    "ebbToward": 155,
+    "upriverTo": "Newburgh",
+    "downriverTo": "Storm King",
+    "note": "Current from NOAA station HUR0506_7. Flood and ebb headings are the river\u2019s own axis here.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=HUR0506_7"
+  },
+  "nws": {
+    "grid": "OKX/28,75"
+  },
+  "features": []
+}

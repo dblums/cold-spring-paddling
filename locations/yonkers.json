@@ -1,0 +1,36 @@
+{
+  "slug": "yonkers",
+  "primary": false,
+  "name": "Yonkers",
+  "state": "New York",
+  "title": "Hudson River Paddling Conditions Near Yonkers, NY",
+  "blurb": "The Beczak launch on the lower river, where the Palisades rise straight out of the water on the far shore. Tidal current runs hard here and there is barge traffic.",
+  "lat": 40.9381,
+  "lon": -73.9028,
+  "riverMile": 18,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "8530095",
+    "label": "NOAA 8530095 Alpine",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station 8530095 at Alpine, about a mile across the river.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "ACT3676",
+    "bin": 1,
+    "label": "NOAA ACT3676_1 Mount St. Vincent",
+    "shiftMin": 0,
+    "floodToward": 7,
+    "ebbToward": 190,
+    "upriverTo": "Hastings-on-Hudson",
+    "downriverTo": "Spuyten Duyvil",
+    "note": "Current from NOAA station ACT3676_1.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=ACT3676_1"
+  },
+  "nws": {
+    "grid": "OKX/35,53"
+  },
+  "features": []
+}

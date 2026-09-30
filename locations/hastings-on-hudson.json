@@ -1,0 +1,36 @@
+{
+  "slug": "hastings-on-hudson",
+  "primary": false,
+  "name": "Hastings-on-Hudson",
+  "state": "New York",
+  "title": "Hudson River Paddling Conditions Near Hastings-on-Hudson, NY",
+  "blurb": "Kinnally Cove, a small launch beneath the Palisades. The river is about a mile wide here and open to wind from the south.",
+  "lat": 40.9975,
+  "lon": -73.8844,
+  "riverMile": 22,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "8530095",
+    "label": "NOAA 8530095 Alpine",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station 8530095 at Alpine, about four miles across and downriver.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "ACT3681",
+    "bin": 1,
+    "label": "NOAA ACT3681_1 Dobbs Ferry",
+    "shiftMin": 0,
+    "floodToward": 7,
+    "ebbToward": 187,
+    "upriverTo": "Irvington",
+    "downriverTo": "Yonkers",
+    "note": "Current from NOAA station ACT3681_1. Flood and ebb headings are the river\u2019s own axis here.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=ACT3681_1"
+  },
+  "nws": {
+    "grid": "OKX/35,55"
+  },
+  "features": []
+}

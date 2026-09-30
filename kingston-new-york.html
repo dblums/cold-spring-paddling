@@ -93,9 +93,36 @@ body{
 .locnav a{
   color:var(--river); text-underline-offset:3px; font-weight:500;
 }
-.locnav a + a{margin-left:4px}
-.locnav .soon{color:var(--muted)}
-.locnav .soon::before{content:"|"; margin-right:8px; color:var(--line)}
+.locnav a{display:inline-flex; align-items:baseline; gap:5px}
+.locnav a em{font-style:normal; font-size:11.5px; font-weight:500; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--muted)}
+.locnav a + a::before, .alllocs::before{content:"|"; margin-right:9px; color:var(--line)}
+
+/* All locations: a <details> rather than a script, so it works before the page
+   has run anything and keyboard users get it for free. */
+.alllocs{position:relative; display:inline-flex; align-items:baseline}
+.alllocs > summary{
+  list-style:none; cursor:pointer; color:var(--river); font-weight:500;
+  display:inline-flex; align-items:center; gap:5px;
+}
+.alllocs > summary::-webkit-details-marker{display:none}
+.alllocs > summary::after{content:"\25BE"; font-size:10px; color:var(--muted)}
+.alllocs[open] > summary::after{content:"\25B4"}
+.alllocs .menu{
+  position:absolute; z-index:40; top:calc(100% + 8px); left:0;
+  min-width:210px; max-height:min(62vh, 430px); overflow-y:auto;
+  padding:6px; background:var(--surface); border:1px solid var(--line);
+  border-radius:10px; box-shadow:var(--shadow);
+  display:flex; flex-direction:column;
+}
+.alllocs .menu a, .alllocs .menu .here{
+  padding:6px 10px; border-radius:6px; font-size:14px; white-space:nowrap;
+  text-decoration:none;
+}
+.alllocs .menu a{color:var(--ink)}
+.alllocs .menu a:hover{background:var(--surface-2); color:var(--river)}
+.alllocs .menu .here{color:var(--muted); font-weight:600}
+@media (max-width:520px){ .alllocs .menu{left:auto; right:0} }
 
 .hero h1{
   position:absolute; z-index:1; left:clamp(16px,3.4vw,26px); right:clamp(16px,3.4vw,26px);
@@ -429,7 +456,48 @@ img{max-width:100%}
   <header class="hero hero-plain">
     <h1>Hudson River Paddling Conditions Near Kingston, NY</h1>
   </header>
-  <nav class="locnav"><span class="label">Other Locations</span> <a href="lower-manhattan-new-york.html">Lower Manhattan</a> <a href="midtown-manhattan-new-york.html">Midtown Manhattan</a> <a href="nyack-new-york.html">Nyack</a> <a href="croton-point-new-york.html">Croton Point</a> <a href="peekskill-new-york.html">Peekskill</a> <a href="cold-spring-new-york.html">Cold Spring</a> <a href="beacon-new-york.html">Beacon</a> <a href="newburgh-new-york.html">Newburgh</a> <a href="new-hamburg-new-york.html">New Hamburg</a> <a href="poughkeepsie-new-york.html">Poughkeepsie</a> <a href="tivoli-new-york.html">Tivoli</a> <a href="hudson-new-york.html">Hudson</a> <a href="coxsackie-new-york.html">Coxsackie</a> <a href="albany-new-york.html">Albany</a> <span class="soon">More locations coming soon</span></nav>
+  <nav class="locnav">
+    <span class="label">Nearby locations</span>
+    <a href="staatsburg-new-york.html">Staatsburg<em>downriver</em></a> <a href="east-kingston-new-york.html">East Kingston<em>upriver</em></a>
+    <details class="alllocs" id="allLocs">
+      <summary>All 33 locations</summary>
+      <div class="menu">
+      <a href="lower-manhattan-new-york.html">Lower Manhattan</a>
+      <a href="midtown-manhattan-new-york.html">Midtown Manhattan</a>
+      <a href="yonkers-new-york.html">Yonkers</a>
+      <a href="hastings-on-hudson-new-york.html">Hastings-on-Hudson</a>
+      <a href="irvington-new-york.html">Irvington</a>
+      <a href="nyack-new-york.html">Nyack</a>
+      <a href="ossining-new-york.html">Ossining</a>
+      <a href="croton-point-new-york.html">Croton Point</a>
+      <a href="verplanck-new-york.html">Verplanck</a>
+      <a href="peekskill-new-york.html">Peekskill</a>
+      <a href="fort-montgomery-new-york.html">Fort Montgomery</a>
+      <a href="cold-spring-new-york.html">Cold Spring</a>
+      <a href="cornwall-on-hudson-new-york.html">Cornwall-on-Hudson</a>
+      <a href="beacon-new-york.html">Beacon</a>
+      <a href="newburgh-new-york.html">Newburgh</a>
+      <a href="chelsea-new-york.html">Chelsea</a>
+      <a href="new-hamburg-new-york.html">New Hamburg</a>
+      <a href="poughkeepsie-new-york.html">Poughkeepsie</a>
+      <a href="staatsburg-new-york.html">Staatsburg</a>
+      <span class="here">Kingston</span>
+      <a href="east-kingston-new-york.html">East Kingston</a>
+      <a href="ulster-landing-new-york.html">Ulster Landing</a>
+      <a href="tivoli-new-york.html">Tivoli</a>
+      <a href="germantown-new-york.html">Germantown</a>
+      <a href="catskill-new-york.html">Catskill</a>
+      <a href="hudson-new-york.html">Hudson</a>
+      <a href="coxsackie-new-york.html">Coxsackie</a>
+      <a href="stuyvesant-new-york.html">Stuyvesant</a>
+      <a href="coeymans-new-york.html">Coeymans</a>
+      <a href="schodack-landing-new-york.html">Schodack Landing</a>
+      <a href="papscanee-island-new-york.html">Papscanee Island</a>
+      <a href="albany-new-york.html">Albany</a>
+      <a href="watervliet-new-york.html">Watervliet</a>
+      </div>
+    </details>
+  </nav>
 
 
   <div class="timebar">
@@ -1708,6 +1776,17 @@ function buildBrief(t, cv, w, sky, now){
   a.href = "mailto:" + addr + "?subject=" + encodeURIComponent(SITE.name + " conditions");
   a.textContent = addr;
 })();
+
+/* <details> stays open until you click the summary again, which feels broken
+   for something shaped like a menu. */
+document.addEventListener("click", e => {
+  const d = $("allLocs");
+  if (d && d.open && !d.contains(e.target)) d.open = false;
+});
+document.addEventListener("keydown", e => {
+  const d = $("allLocs");
+  if (e.key === "Escape" && d && d.open) d.open = false;
+});
 
 /* ---------- weather, alerts, water ---------- */
 function drawAlerts(t){

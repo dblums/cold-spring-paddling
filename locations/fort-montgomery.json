@@ -1,0 +1,36 @@
+{
+  "slug": "fort-montgomery",
+  "primary": false,
+  "name": "Fort Montgomery",
+  "state": "New York",
+  "title": "Hudson River Paddling Conditions Near Fort Montgomery, NY",
+  "blurb": "Popolopen Creek and Mine Dock Park, under the Bear Mountain Bridge. The river is deep and narrow through here and the current runs accordingly.",
+  "lat": 41.3275,
+  "lon": -73.9842,
+  "riverMile": 47,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "8518949",
+    "label": "NOAA 8518949 Peekskill",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station 8518949 at Peekskill, about four miles downriver.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "HUR0504",
+    "bin": 24,
+    "label": "NOAA HUR0504_24 Bear Mountain Bridge",
+    "shiftMin": 0,
+    "floodToward": 0,
+    "ebbToward": 180,
+    "upriverTo": "West Point",
+    "downriverTo": "Peekskill",
+    "note": "Current from NOAA station HUR0504_24.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=HUR0504_24"
+  },
+  "nws": {
+    "grid": "OKX/30,70"
+  },
+  "features": []
+}

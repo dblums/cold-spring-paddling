@@ -1,0 +1,36 @@
+{
+  "slug": "irvington",
+  "primary": false,
+  "name": "Irvington",
+  "state": "New York",
+  "title": "Hudson River Paddling Conditions Near Irvington, NY",
+  "blurb": "Scenic Hudson Park at the southern end of the Tappan Zee, where the river begins to widen. Piermont Marsh sits across the water.",
+  "lat": 41.0417,
+  "lon": -73.8739,
+  "riverMile": 25,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "8518919",
+    "label": "NOAA 8518919 Tarrytown",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station 8518919 at Tarrytown, about two and a half miles upriver.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "HUR0502",
+    "bin": 10,
+    "label": "NOAA HUR0502_10 Tappan Zee Bridge",
+    "shiftMin": 0,
+    "floodToward": 356,
+    "ebbToward": 175,
+    "upriverTo": "Tarrytown",
+    "downriverTo": "Hastings-on-Hudson",
+    "note": "Current from NOAA station HUR0502_10.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=HUR0502_10"
+  },
+  "nws": {
+    "grid": "OKX/35,57"
+  },
+  "features": []
+}

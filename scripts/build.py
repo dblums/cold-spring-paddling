@@ -128,15 +128,38 @@ def water_fields(site):
 
 
 def locnav(site, sites):
-    others = [s for s in sites if s["slug"] != site["slug"]]
-    if not others:
+    """The two launches either side of this one, then everything else behind a
+    disclosure.
+
+    Listing them all side by side worked at three and was a wall at thirty. The
+    two a reader actually wants are the ones immediately up and down the river
+    from where they are standing - the rest is a menu, not a nav."""
+    ordered = sorted(sites, key=lambda s: s["riverMile"])
+    if len(ordered) < 2:
         return ""
-    links = " ".join(f'<a href="{L.href(s)}">{s["name"]}</a>' for s in others)
-    # says the registry is going to grow, which is the whole premise of the
-    # build - two launches on their own read like the site is finished
-    soon = '<span class="soon">More locations coming soon</span>'
-    return (f'  <nav class="locnav"><span class="label">Other Locations</span> '
-            f'{links} {soon}</nav>\n')
+    i = next(n for n, s in enumerate(ordered) if s["slug"] == site["slug"])
+    near = []
+    if i > 0:
+        d = ordered[i - 1]
+        near.append(f'<a href="{L.href(d)}">{d["name"]}<em>downriver</em></a>')
+    if i < len(ordered) - 1:
+        u = ordered[i + 1]
+        near.append(f'<a href="{L.href(u)}">{u["name"]}<em>upriver</em></a>')
+    # the menu runs downriver to up, so it reads as a trip up the Hudson
+    items = "".join(
+        (f'      <span class="here">{s["name"]}</span>\n' if s["slug"] == site["slug"]
+         else f'      <a href="{L.href(s)}">{s["name"]}</a>\n')
+        for s in ordered)
+    return ('  <nav class="locnav">\n'
+            '    <span class="label">Nearby locations</span>\n'
+            f'    {" ".join(near)}\n'
+            '    <details class="alllocs" id="allLocs">\n'
+            f'      <summary>All {len(ordered)} locations</summary>\n'
+            '      <div class="menu">\n'
+            f'{items}'
+            '      </div>\n'
+            '    </details>\n'
+            '  </nav>\n')
 
 
 def render(site, sites):

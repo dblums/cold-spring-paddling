@@ -1,0 +1,36 @@
+{
+  "slug": "watervliet",
+  "primary": false,
+  "name": "Watervliet",
+  "state": "New York",
+  "title": "Hudson River Paddling Conditions Near Watervliet, NY",
+  "blurb": "The last tidal water below the federal dam at Troy. Above the dam the river is locked and the tide stops.",
+  "lat": 42.7297,
+  "lon": -73.6981,
+  "riverMile": 152,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "TEC1603",
+    "label": "NOAA TEC1603 Troy",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station TEC1603 at Troy, about a mile upriver.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "HUR0618",
+    "bin": 8,
+    "label": "NOAA HUR0618_8 Port of Albany",
+    "shiftMin": 0,
+    "floodToward": 21,
+    "ebbToward": 198,
+    "upriverTo": "Troy",
+    "downriverTo": "Albany",
+    "note": "Current from NOAA station HUR0618_8.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=HUR0618_8"
+  },
+  "nws": {
+    "grid": "ALY/73,67"
+  },
+  "features": []
+}

@@ -1,0 +1,36 @@
+{
+  "slug": "east-kingston",
+  "primary": false,
+  "name": "East Kingston",
+  "state": "New York",
+  "title": "Hudson River Paddling Conditions Near East Kingston, NY",
+  "blurb": "Charles Rider Park, just under the Kingston-Rhinecliff Bridge. A quiet launch a few miles above the Rondout.",
+  "lat": 41.9728,
+  "lon": -73.955,
+  "riverMile": 95,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "8518962",
+    "label": "NOAA 8518962 Turkey Point",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station 8518962 at Turkey Point, about three miles upriver.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "HUR0612",
+    "bin": 8,
+    "label": "NOAA HUR0612_8 Kingston-Rhinecliff Bridge",
+    "shiftMin": 0,
+    "floodToward": 11,
+    "ebbToward": 192,
+    "upriverTo": "Ulster Landing",
+    "downriverTo": "Kingston",
+    "note": "Current from NOAA station HUR0612_8.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=HUR0612_8"
+  },
+  "nws": {
+    "grid": "ALY/70,31"
+  },
+  "features": []
+}

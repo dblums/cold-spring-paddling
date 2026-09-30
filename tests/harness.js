@@ -44,7 +44,10 @@ function load(site){
     document:{
       getElementById:id => (els[id] = els[id] || stubEl()),
       createElement:() => stubEl(),
-      createElementNS:() => stubEl()
+      createElementNS:() => stubEl(),
+      // the page wires up document-level listeners for the locations menu
+      addEventListener(){}, removeEventListener(){},
+      querySelector:() => null, querySelectorAll:() => []
     },
     setInterval:() => {}, setTimeout:() => {},
     fetch:() => Promise.reject(new Error("network disabled in tests")),

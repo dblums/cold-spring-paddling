@@ -1,0 +1,36 @@
+{
+  "slug": "catskill",
+  "primary": false,
+  "name": "Catskill",
+  "state": "New York",
+  "title": "Hudson River Paddling Conditions Near Catskill, NY",
+  "blurb": "RamsHorn-Livingston Sanctuary, a tidal swamp reached up Catskill Creek from the river. Sheltered water when the Hudson is not.",
+  "lat": 42.2003,
+  "lon": -73.8667,
+  "riverMile": 112,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "8518974",
+    "label": "NOAA 8518974 Hudson",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station 8518974 at Hudson, about five miles upriver.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "ACT3781",
+    "bin": 1,
+    "label": "NOAA ACT3781_1 Catskill",
+    "shiftMin": 0,
+    "floodToward": 17,
+    "ebbToward": 197,
+    "upriverTo": "Hudson",
+    "downriverTo": "Germantown",
+    "note": "Current from NOAA station ACT3781_1. Flood and ebb headings are the river\u2019s own axis here.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=ACT3781_1"
+  },
+  "nws": {
+    "grid": "ALY/71,42"
+  },
+  "features": []
+}

@@ -1,0 +1,36 @@
+{
+  "slug": "coeymans",
+  "primary": false,
+  "name": "Coeymans",
+  "state": "New York",
+  "title": "Hudson River Paddling Conditions Near Coeymans, NY",
+  "blurb": "Where Hannacroix Creek meets the Hudson, on a working stretch of river with a deepwater port opposite.",
+  "lat": 42.4733,
+  "lon": -73.7897,
+  "riverMile": 132,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "8518989",
+    "label": "NOAA 8518989 Castleton",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station 8518989 at Castleton, about four miles upriver.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "HUR0617",
+    "bin": 9,
+    "label": "NOAA HUR0617_9 Castleton-on-Hudson",
+    "shiftMin": 0,
+    "floodToward": 357,
+    "ebbToward": 177,
+    "upriverTo": "Schodack Landing",
+    "downriverTo": "New Baltimore",
+    "note": "Current from NOAA station HUR0617_9. Flood and ebb headings are the river\u2019s own axis here.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=HUR0617_9"
+  },
+  "nws": {
+    "grid": "ALY/72,55"
+  },
+  "features": []
+}

@@ -1,0 +1,36 @@
+{
+  "slug": "ossining",
+  "primary": false,
+  "name": "Ossining",
+  "state": "New York",
+  "title": "Hudson River Paddling Conditions Near Ossining, NY",
+  "blurb": "Louis Engel Waterfront Park, at the northern end of the Tappan Zee. Croton Point reaches out across the river a few miles north.",
+  "lat": 41.1564,
+  "lon": -73.87,
+  "riverMile": 33,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "8518919",
+    "label": "NOAA 8518919 Tarrytown",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station 8518919 at Tarrytown, about five miles downriver.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "ACT3696",
+    "bin": 1,
+    "label": "NOAA ACT3696_1 Ossining",
+    "shiftMin": 0,
+    "floodToward": 339,
+    "ebbToward": 159,
+    "upriverTo": "Croton Point",
+    "downriverTo": "Tarrytown",
+    "note": "Current from NOAA station ACT3696_1. Flood and ebb headings are the river\u2019s own axis here.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=ACT3696_1"
+  },
+  "nws": {
+    "grid": "OKX/35,63"
+  },
+  "features": []
+}

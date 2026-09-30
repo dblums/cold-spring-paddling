@@ -1,0 +1,36 @@
+{
+  "slug": "schodack-landing",
+  "primary": false,
+  "name": "Schodack Landing",
+  "state": "New York",
+  "title": "Hudson River Paddling Conditions Near Schodack Landing, NY",
+  "blurb": "Schodack Island State Park, with campsites along the peninsula and Schodack Creek running behind it.",
+  "lat": 42.5003,
+  "lon": -73.7761,
+  "riverMile": 135,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "8518989",
+    "label": "NOAA 8518989 Castleton",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station 8518989 at Castleton, about two miles upriver.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "HUR0617",
+    "bin": 9,
+    "label": "NOAA HUR0617_9 Castleton-on-Hudson",
+    "shiftMin": 0,
+    "floodToward": 51,
+    "ebbToward": 233,
+    "upriverTo": "Papscanee Island",
+    "downriverTo": "Coeymans",
+    "note": "Current from NOAA station HUR0617_9.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=HUR0617_9"
+  },
+  "nws": {
+    "grid": "ALY/72,56"
+  },
+  "features": []
+}

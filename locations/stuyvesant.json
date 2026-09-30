@@ -1,0 +1,36 @@
+{
+  "slug": "stuyvesant",
+  "primary": false,
+  "name": "Stuyvesant",
+  "state": "New York",
+  "title": "Hudson River Paddling Conditions Near Stuyvesant, NY",
+  "blurb": "See Park at Stuyvesant Landing, on the east bank above the state park islands.",
+  "lat": 42.3886,
+  "lon": -73.7847,
+  "riverMile": 127,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "8518979",
+    "label": "NOAA 8518979 Coxsackie",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station 8518979 at Coxsackie, about two and a half miles downriver.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "HUR0616",
+    "bin": 8,
+    "label": "NOAA HUR0616_8 Houghtaling Island",
+    "shiftMin": 0,
+    "floodToward": 17,
+    "ebbToward": 197,
+    "upriverTo": "New Baltimore",
+    "downriverTo": "Coxsackie",
+    "note": "Current from NOAA station HUR0616_8. Flood and ebb headings are the river\u2019s own axis here.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=HUR0616_8"
+  },
+  "nws": {
+    "grid": "ALY/73,51"
+  },
+  "features": []
+}

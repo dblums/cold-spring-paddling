@@ -1,0 +1,36 @@
+{
+  "slug": "chelsea",
+  "primary": false,
+  "name": "Chelsea",
+  "state": "New York",
+  "title": "Hudson River Paddling Conditions Near Chelsea, NY",
+  "blurb": "A small ramp on the east bank between Beacon and New Hamburg, opposite the Roseton generating station.",
+  "lat": 41.555,
+  "lon": -73.9694,
+  "riverMile": 65,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "8518939",
+    "label": "NOAA 8518939 New Hamburg",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station 8518939 at New Hamburg, about two miles upriver.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "HUR0507",
+    "bin": 12,
+    "label": "NOAA HUR0507_12 Roseton",
+    "shiftMin": 0,
+    "floodToward": 39,
+    "ebbToward": 213,
+    "upriverTo": "New Hamburg",
+    "downriverTo": "Beacon",
+    "note": "Current from NOAA station HUR0507_12.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=HUR0507_12"
+  },
+  "nws": {
+    "grid": "ALY/73,12"
+  },
+  "features": []
+}

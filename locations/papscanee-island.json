@@ -1,0 +1,36 @@
+{
+  "slug": "papscanee-island",
+  "primary": false,
+  "name": "Papscanee Island",
+  "state": "New York",
+  "title": "Hudson River Paddling Conditions Near Papscanee Island, NY",
+  "blurb": "A nature preserve on an island that has not been an island since the channel was filled. Quiet water below Albany.",
+  "lat": 42.5836,
+  "lon": -73.7531,
+  "riverMile": 142,
+  "banner": null,
+  "bannerAlt": null,
+  "tide": {
+    "station": "8518989",
+    "label": "NOAA 8518989 Castleton",
+    "shiftMin": 0,
+    "note": "Tide from NOAA station 8518989 at Castleton, about three and a half miles downriver.",
+    "cardNote": "Unless you plan on landing on a beach or poking into a shallow creek, tide is likely not very important to you."
+  },
+  "current": {
+    "station": "HUR0618",
+    "bin": 8,
+    "label": "NOAA HUR0618_8 Port of Albany",
+    "shiftMin": 0,
+    "floodToward": 348,
+    "ebbToward": 168,
+    "upriverTo": "Albany",
+    "downriverTo": "Schodack Landing",
+    "note": "Current from NOAA station HUR0618_8. Flood and ebb headings are the river\u2019s own axis here.",
+    "link": "https://tidesandcurrents.noaa.gov/noaacurrents/predictions.html?id=HUR0618_8"
+  },
+  "nws": {
+    "grid": "ALY/73,60"
+  },
+  "features": []
+}

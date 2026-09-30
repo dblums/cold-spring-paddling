@@ -288,8 +288,22 @@ for (const site of ALL){
   ok(`${site.name}: shows its own station labels`,
      html.includes(site.tide.label) && html.includes(site.current.label));
   eq(`${site.name}: current shift`, S.CUR_SHIFT_MIN, site.current.shiftMin);
-  ok(`${site.name}: has three years of tides`, S.TIDE.length > 4000 && S.TIDE.length < 4500);
-  ok(`${site.name}: has three years of currents`, S.CUR.length > 8000 && S.CUR.length < 9000);
+  /* Cover 2026 through 2028. Counting points instead was calibrated on the
+     Highlands and failed upriver, where NOAA publishes more current events per
+     day - which is a fact about the river, not a fault in the data. */
+  /* Compare instants, not year labels: the last event of 2028 in New York
+     falls on 1 Jan 2029 in UTC, which is correct and not worth arguing with. */
+  const START = Date.UTC(2026, 0, 2), END = Date.UTC(2028, 11, 30);
+  for (const [what, arr] of [["tide", S.TIDE], ["current", S.CUR]]){
+    ok(`${site.name}: ${what} data starts by 2 Jan 2026`, arr[0].t <= START,
+       new Date(arr[0].t).toISOString().slice(0,10));
+    ok(`${site.name}: ${what} data runs past 30 Dec 2028`, arr[arr.length-1].t >= END,
+       new Date(arr[arr.length-1].t).toISOString().slice(0,10));
+  }
+  ok(`${site.name}: tide events are plausibly twice-daily`,
+     S.TIDE.length > 3 * 365 * 3 && S.TIDE.length < 3 * 365 * 5, `${S.TIDE.length}`);
+  ok(`${site.name}: current events are plausibly a few times daily`,
+     S.CUR.length > 3 * 365 * 5 && S.CUR.length < 3 * 365 * 12, `${S.CUR.length}`);
   ok(`${site.name}: tide alternates high/low`,
      S.TIDE.every((p,i) => i===0 || p.type !== S.TIDE[i-1].type));
   ok(`${site.name}: flood and ebb headings are roughly opposite`,
@@ -307,7 +321,7 @@ for (const site of ALL){
   eq(`${site.name}: trestle constant ${hasMarsh ? "present" : "absent"}`, S.TRESTLE_MIN !== undefined, hasMarsh);
   /* Every station reference on a page must be THIS launch's station. The tide
      link was hardcoded to 8518934 and so pointed Hudson readers at Beacon. */
-  const tideLink = (/stationhome\.html\?id=(\d+)/.exec(html) || [])[1];
+  const tideLink = (/stationhome\.html\?id=([A-Za-z0-9]+)/.exec(html) || [])[1];
   const curLink = (/noaacurrents\/predictions\.html\?id=([A-Z0-9_]+)/.exec(html) || [])[1];
   eq(`${site.name}: tide link points at its own station`, tideLink, site.tide.station);
   eq(`${site.name}: current link points at its own station`, curLink,

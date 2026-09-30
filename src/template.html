@@ -78,9 +78,36 @@ body{
 .locnav a{
   color:var(--river); text-underline-offset:3px; font-weight:500;
 }
-.locnav a + a{margin-left:4px}
-.locnav .soon{color:var(--muted)}
-.locnav .soon::before{content:"|"; margin-right:8px; color:var(--line)}
+.locnav a{display:inline-flex; align-items:baseline; gap:5px}
+.locnav a em{font-style:normal; font-size:11.5px; font-weight:500; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--muted)}
+.locnav a + a::before, .alllocs::before{content:"|"; margin-right:9px; color:var(--line)}
+
+/* All locations: a <details> rather than a script, so it works before the page
+   has run anything and keyboard users get it for free. */
+.alllocs{position:relative; display:inline-flex; align-items:baseline}
+.alllocs > summary{
+  list-style:none; cursor:pointer; color:var(--river); font-weight:500;
+  display:inline-flex; align-items:center; gap:5px;
+}
+.alllocs > summary::-webkit-details-marker{display:none}
+.alllocs > summary::after{content:"\25BE"; font-size:10px; color:var(--muted)}
+.alllocs[open] > summary::after{content:"\25B4"}
+.alllocs .menu{
+  position:absolute; z-index:40; top:calc(100% + 8px); left:0;
+  min-width:210px; max-height:min(62vh, 430px); overflow-y:auto;
+  padding:6px; background:var(--surface); border:1px solid var(--line);
+  border-radius:10px; box-shadow:var(--shadow);
+  display:flex; flex-direction:column;
+}
+.alllocs .menu a, .alllocs .menu .here{
+  padding:6px 10px; border-radius:6px; font-size:14px; white-space:nowrap;
+  text-decoration:none;
+}
+.alllocs .menu a{color:var(--ink)}
+.alllocs .menu a:hover{background:var(--surface-2); color:var(--river)}
+.alllocs .menu .here{color:var(--muted); font-weight:600}
+@media (max-width:520px){ .alllocs .menu{left:auto; right:0} }
 
 .hero h1{
   position:absolute; z-index:1; left:clamp(16px,3.4vw,26px); right:clamp(16px,3.4vw,26px);
@@ -1728,6 +1755,17 @@ function buildBrief(t, cv, w, sky, now){
   a.href = "mailto:" + addr + "?subject=" + encodeURIComponent(SITE.name + " conditions");
   a.textContent = addr;
 })();
+
+/* <details> stays open until you click the summary again, which feels broken
+   for something shaped like a menu. */
+document.addEventListener("click", e => {
+  const d = $("allLocs");
+  if (d && d.open && !d.contains(e.target)) d.open = false;
+});
+document.addEventListener("keydown", e => {
+  const d = $("allLocs");
+  if (e.key === "Escape" && d && d.open) d.open = false;
+});
 
 /* ---------- weather, alerts, water ---------- */
 function drawAlerts(t){
