@@ -10,6 +10,7 @@ const EXPORTS = ["SITE","WX","sunTimes","moonTimes","moonIllumination","moonAlti
   "blockedAt","muddyAt","nearestIn","conditionsAt","valueAt","isoDurMs","skyWord",
   "PADDLE_MPH","TRESTLE_MIN","MUD_MIN","TIDE_SHIFT_MIN","CUR_SHIFT_MIN","MIN",
   "readWater","cacheWater","cachedWater","ago","WATER_KEEP_MS","WATER_KEY",
+  "WATER_ALL","waterCost","bestWater","waterSub","AGE_MILES_PER_DAY",
   "WATER_S","WATER_N","WATER_NEAR"];
 
 /* The page keeps the last good water reading here. The real thing can be

@@ -651,6 +651,121 @@ group("URL structure");
      !/hours/.test(ago(now - 2 * DAY, now)), ago(now - 2 * DAY, now));
 }
 
+/* The nav separator lives inside the second link, so the link's underline
+   painted through the pipe - a stray underscore floating in front of the next
+   name. An atomic inline-level box is not underlined by its parent. */
+{
+  const css = fs.readFileSync(pageFor(ALL[0]), "utf8");
+  const rule = /\.locnav > a \+ a::before[^}]*}/.exec(css);
+  ok("the nav separator is its own box, so no underline paints through it",
+     rule && /display:\s*inline-block/.test(rule[0]), rule && rule[0].slice(0, 120));
+}
+
+/* Choosing between gauges, and saying which one won.
+
+   The page must never show a dash where a temperature belongs: the reader is
+   deciding what to wear. So it widens to the rest of the river rather than
+   give up, and states the provenance of whatever it lands on. */
+{
+  const {T, store} = load(ALL.find(s => s.slug === "watervliet") || ALL[0]);
+  const {bestWater, waterSub, waterCost, WATER_ALL, AGE_MILES_PER_DAY, cacheWater} = T;
+  const HOUR = 3600e3, DAY = 24 * HOUR, now = Date.parse("2026-09-30T18:00:00Z");
+  const mile = T.SITE.riverMile;
+  const stn = n => WATER_ALL.find(s => s.name === n);
+  const albany = stn("Albany"), cox = stn("Coxsackie"), bat = stn("The Battery");
+
+  ok("a day of age is priced in river miles", AGE_MILES_PER_DAY > 0 && AGE_MILES_PER_DAY < 60,
+     String(AGE_MILES_PER_DAY));
+  ok("a live gauge costs only its distance",
+     Math.abs(waterCost(albany, now, now) - Math.abs(albany.mile - mile)) < 0.01);
+  ok("age adds to the cost",
+     waterCost(albany, now - DAY, now) > waterCost(albany, now, now));
+
+  /* The case this exists for. Albany is 7 miles from Watervliet and is the
+     only gauge above Coxsackie; when it is late, a three-hour-old reading from
+     it still beats a live one 26 miles downriver. */
+  store.clear();
+  cacheWater(albany, {f: 61.4, t: now - 3 * HOUR});
+  let best = bestWater([{st: cox, f: 66.0, t: now}], now);
+  ok("a near stale gauge beats a far live one", best.from === "Albany", best.from);
+  ok("and it is flagged as kept", best.kept === true);
+
+  // but not indefinitely: five days out, the live one wins
+  store.clear();
+  cacheWater(albany, {f: 61.4, t: now - 5 * DAY});
+  best = bestWater([{st: cox, f: 66.0, t: now}], now);
+  ok("a far live gauge beats a badly stale near one", best.from === "Coxsackie", best.from);
+
+  // a live near gauge always wins
+  store.clear();
+  best = bestWater([{st: albany, f: 64, t: now}, {st: cox, f: 66, t: now}], now);
+  ok("the nearest live gauge wins", best.from === "Albany", best.from);
+  ok("a live reading is not marked kept", best.kept === false);
+
+  store.clear();
+  ok("nothing live and nothing kept yields nothing", bestWater([], now) === null);
+
+  /* Last resort. Every gauge quiet and the kept reading past its week is still
+     better than a dash, as long as the tile says how old it is. */
+  cacheWater(albany, {f: 58, t: now - 12 * DAY});
+  ok("an expired reading is not offered normally", bestWater([], now) === null);
+  const old = bestWater([], now, true);
+  ok("an expired reading is offered as a last resort", old && old.from === "Albany");
+  ok("and it is dated, not passed off as current",
+     /\d+ days ago/.test(waterSub(old, now)), waterSub(old, now));
+
+  // what the tile says
+  store.clear();
+  const near = bestWater([{st: albany, f: 64, t: now}], now);
+  ok("a launch's own gauge needs no distance - the footer explains it",
+     waterSub(near, now) === "from Albany", waterSub(near, now));
+  const far = bestWater([{st: cox, f: 66, t: now}], now);
+  ok("a gauge off the rest of the river gets its distance",
+     waterSub(far, now) === "from Coxsackie, 26 miles downriver", waterSub(far, now));
+  ok("a far gauge is not called one of this launch's own", far.bracket === false);
+  ok("distance names the direction the gauge actually lies",
+     waterSub(bestWater([{st: bat, f: 70, t: now}], now), now).includes("downriver"));
+  ok("a recent live reading is not cluttered with its age",
+     !/ago/.test(waterSub(near, now)), waterSub(near, now));
+  ok("a reading hours old says so",
+     /ago/.test(waterSub(bestWater([{st: albany, f: 64, t: now - 5 * HOUR}], now), now)));
+  ok("interpolation is still called an estimate",
+     waterSub({from: "both"}, now) === "estimated");
+}
+
+/* Comments are stripped from the shipped page. src/template.html stays
+   heavily commented - that is where the reasoning lives - but it was 20 KB of
+   every page, on 33 pages, downloaded by someone standing at a launch. The
+   danger is a careless strip eating the // in an https:// URL, so check the
+   URLs survived and that the source still has its comments. */
+{
+  const path = require("path");
+  const page = fs.readFileSync(pageFor(ALL[0]), "utf8");
+  const script = /<script>([\s\S]*?)<\/script>/.exec(page)[1];
+
+  ok("the shipped script has no line-leading block comments",
+     !/^[ \t]*\/\*/m.test(script),
+     (/^[ \t]*\/\*.*/m.exec(script) || [""])[0].slice(0, 80));
+  ok("the shipped script has no line-leading // comments",
+     !/^[ \t]*\/\//m.test(script),
+     (/^[ \t]*\/\/.*/m.exec(script) || [""])[0].slice(0, 80));
+
+  // the thing a naive strip breaks
+  for (const url of ["https://api.weather.gov", "https://api.tidesandcurrents.noaa.gov",
+                     "https://waterservices.usgs.gov"])
+    ok(`stripping left ${url} intact`, page.includes(url));
+
+  const src = fs.readFileSync(path.join(__dirname, "..", "src", "template.html"), "utf8");
+  ok("the source template keeps its comments", /^[ \t]*\/\*/m.test(src));
+  /* Not page-vs-source - the page carries baked tide and current arrays the
+     template does not. Measure what the strip removes from the script. */
+  const srcScript = /<script>([\s\S]*?)<\/script>/.exec(src)[1];
+  const removed = (srcScript.match(/^[ \t]*\/\*[\s\S]*?\*\/[ \t]*\n?/gm) || [])
+    .concat(srcScript.match(/^[ \t]*\/\/[^\n]*\n/gm) || [])
+    .reduce((n, c) => n + c.length, 0);
+  ok("stripping removes a worthwhile amount", removed > 8000, `${removed} bytes per page`);
+}
+
 ok("exactly one site is primary", ALL.filter(s => s.primary).length === 1);
 
 console.log(`\n${pass} passed, ${fail} failed`);

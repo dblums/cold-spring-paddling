@@ -140,6 +140,9 @@ def water_fields(site):
         "WATER_NEAR": json.dumps(near),
         "WATER_NOTE": note,
         "WATER_AGENCY": agency or "no",
+        # Every gauge on the river, so a page with both its own out can reach
+        # further rather than show a dash. Only fetched when it comes to that.
+        "WATER_ALL_JSON": json.dumps(L.WATER_STATIONS, separators=(",", ":")),
     }
 
 
@@ -178,6 +181,34 @@ def locnav(site, sites):
             '      </div>\n'
             '    </details>\n'
             '  </nav>\n')
+
+
+# Only comments that begin a line. A string literal cannot span a line break in
+# JavaScript, so a line whose first non-space characters are // or /* is a
+# comment and nothing else - no risk of eating the // in an https:// URL, which
+# a naive strip does. The one construct that could span lines is a template
+# literal; assert there are none rather than trust it.
+LEAD_BLOCK = re.compile(r"^[ \t]*/\*.*?\*/[ \t]*\n?", re.S | re.M)
+LEAD_LINE = re.compile(r"^[ \t]*//[^\n]*\n", re.M)
+BLANKS = re.compile(r"\n{3,}")
+
+
+def strip_comments(html):
+    """Drop the source comments from the shipped page.
+
+    src/template.html is heavily commented on purpose - that is where the
+    reasoning lives - but the reader on a phone at the launch does not need to
+    download it. This is 20 KB of every page, on 33 pages."""
+    def clean(m):
+        body = m.group(2)
+        if body.count("`") % 2:
+            raise SystemExit("template: a template literal spans lines; "
+                             "line-leading comment stripping is no longer safe")
+        body = LEAD_BLOCK.sub("", body)
+        body = LEAD_LINE.sub("", body)
+        return m.group(1) + BLANKS.sub("\n\n", body) + m.group(3)
+
+    return re.sub(r"(<script>)(.*?)(</script>)", clean, html, flags=re.S)
 
 
 def render(site, sites):
@@ -229,6 +260,8 @@ def render(site, sites):
     }
     for token, value in fields.items():
         html = html.replace("{{" + token + "}}", str(value))
+
+    html = strip_comments(html)
 
     left = re.findall(r"\{\{(\w+)\}\}", html)
     if left:

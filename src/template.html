@@ -79,8 +79,13 @@ body{
   color:var(--river); text-underline-offset:3px; font-weight:500;
 }
 /* Scoped to direct children: an unscoped a + a put a separator in front of
-   every item in the dropdown too. */
-.locnav > a + a::before, .alllocs::before{content:"|"; margin-right:9px; color:var(--line)}
+   every item in the dropdown too. inline-block keeps the link's underline from
+   painting through the separator and its margin, which read as a stray
+   underscore floating in front of the next name. */
+.locnav > a + a::before, .alllocs::before{
+  content:"|"; display:inline-block; margin-right:9px; color:var(--line);
+  text-decoration:none;
+}
 
 /* All locations: a <details> rather than a script, so it works before the page
    has run anything and keyboard users get it for free. */
@@ -686,6 +691,7 @@ const COOPS = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter";
 const WATER_S = {{WATER_S_JSON}};      // downriver of this launch
 const WATER_N = {{WATER_N_JSON}};      // upriver of it
 const WATER_NEAR = {{WATER_NEAR}};  // "south", "north", or null to interpolate
+const WATER_ALL = {{WATER_ALL_JSON}};  // every gauge on the river, for a last resort
 const SITE_RIVER_MILE = SITE.riverMile;
 
 /* ---------- sun and moon ----------
@@ -914,15 +920,36 @@ function cacheWater(st, r){
   } catch (e) {}
 }
 
-function cachedWater(st, now){
+function cachedWater(st, now, anyAge){
   try {
     const v = JSON.parse(localStorage.getItem(WATER_KEY + st.id));
     if (!v || !isFinite(v.f) || !isFinite(v.t)) return null;
     const age = (now == null ? Date.now() : now) - v.t;
     // a stamp in the future means a clock disagreement, not a fresh reading
-    return (age >= 0 && age < WATER_KEEP_MS) ? {f: v.f, t: v.t} : null;
+    if (age < 0) return null;
+    return (anyAge || age < WATER_KEEP_MS) ? {f: v.f, t: v.t} : null;
   } catch (e) { return null; }
 }
+
+/* Ranking one gauge against another, when the near one is quiet and the only
+   other is far off. Both errors are real and they trade against each other:
+   the river changes along its length, and it changes over the day.
+
+   Measured on The Battery and Coxsackie, 126 river miles apart, over 2026:
+
+     spring   0.70 F/day drift   0.0260 F/mile   ->  1 day == 27 miles
+     summer   0.52 F/day drift   0.0382 F/mile   ->  1 day == 14 miles
+     autumn   0.42 F/day drift   0.0126 F/mile   ->  1 day == 33 miles
+
+   Twenty sits inside that range. The exact number barely matters - it only
+   decides between two candidates that are already close - but it does settle
+   the case this exists for: at Watervliet a three-hour-old Albany reading
+   seven miles off (cost 9) beats a live Coxsackie twenty-six miles away
+   (cost 26), which is the right call. */
+const AGE_MILES_PER_DAY = 20;
+const waterCost = (st, t, now) =>
+  Math.abs(st.mile - SITE_RIVER_MILE)
+  + Math.max(0, (now - t) / 86400000) * AGE_MILES_PER_DAY;
 
 /* Coarsest unit that is still true. A reader deciding what to wear wants to
    know whether this is from this morning or from last Tuesday. */
@@ -966,6 +993,43 @@ function readWater(res){
   return null;
 }
 
+/* What the tile says under the number. */
+function waterSub(w, now){
+  if (!w) return "";
+  if (w.from === "both") return "estimated";
+  let out = "from " + w.from;
+  if (!w.bracket){
+    const miles = Math.abs(w.st.mile - SITE_RIVER_MILE);
+    out += ", " + miles + " " + (miles === 1 ? "mile" : "miles")
+         + " " + (w.st.mile > SITE_RIVER_MILE ? "upriver" : "downriver");
+  }
+  // a gauge reporting hourly is always a little behind; only say so once it matters
+  if (w.kept || (now - w.at) > 3 * 3600000) out += ", " + ago(w.at, now);
+  return out;
+}
+
+/* The best reading on offer, live or kept, by waterCost. Kept readings for
+   every gauge are worth considering and cost nothing to look at: storage is
+   shared across the site, so one fetched at Cold Spring is already here. */
+function bestWater(live, now, anyAge){
+  const seen = {}, all = [];
+  for (const c of live){ seen[c.st.id] = true; all.push({st: c.st, f: c.f, t: c.t, kept: false}); }
+  for (const st of WATER_ALL){
+    if (seen[st.id]) continue;
+    const v = cachedWater(st, now, anyAge);
+    if (v) all.push({st, f: v.f, t: v.t, kept: true});
+  }
+  let best = null;
+  for (const c of all){
+    c.cost = waterCost(c.st, c.t, now);
+    if (!best || c.cost < best.cost) best = c;
+  }
+  if (!best) return null;
+  const own = (WATER_N && best.st.id === WATER_N.id) || (WATER_S && best.st.id === WATER_S.id);
+  return {f: best.f, from: best.st.name, st: best.st, at: best.t,
+          kept: best.kept, cost: best.cost, bracket: !!own};
+}
+
 async function loadConditions(){
   const [grid, alerts, north, south] = await Promise.allSettled([
     getJSON(NWS_GRID), getJSON(NWS_ALERT),
@@ -977,10 +1041,12 @@ async function loadConditions(){
 
   const rn = readWater(north), rs = readWater(south);
   const n = rn ? rn.f : null, sth = rs ? rs.f : null;
+  const fetched = {};
+  if (WATER_N) fetched[WATER_N.id] = true;
+  if (WATER_S) fetched[WATER_S.id] = true;
   /* A near gauge is a preference, not a dependency. Use it when it is
      reporting; otherwise fall back to the far one rather than showing nothing,
      which is what happened for a day when Turkey Point went out. */
-  const pref = WATER_NEAR === "north" ? n : WATER_NEAR === "south" ? sth : null;
   const prefStn = WATER_NEAR === "north" ? WATER_N : WATER_NEAR === "south" ? WATER_S : null;
   const span = (WATER_N && WATER_S) ? WATER_N.mile - WATER_S.mile : 0;
   const f = span > 0
@@ -990,23 +1056,37 @@ async function loadConditions(){
      non-fallback number an estimate, which was a measurement at Watervliet. */
   if (rn) cacheWater(WATER_N, rn);
   if (rs) cacheWater(WATER_S, rs);
-  WX.water =
-      pref != null ? {f: pref, from: prefStn.name}
-    : (!prefStn && n != null && sth != null)
-        ? {f: sth + (n - sth) * f, from: "both"}
-    : n != null ? {f: n, from: WATER_N.name}
-    : sth != null ? {f: sth, from: WATER_S.name}
-    : null;
 
-  /* Live first. A current reading from the far gauge beats a day-old one from
-     the near gauge, so the cache is reached for only when nothing came back at
-     all - and then the freshest stamp wins, since a couple of river miles
-     matter less than a couple of days. */
-  if (!WX.water){
-    const kept = [[WATER_N, cachedWater(WATER_N)], [WATER_S, cachedWater(WATER_S)]]
-      .filter(p => p[0] && p[1])
-      .sort((a, b) => b[1].t - a[1].t)[0];
-    if (kept) WX.water = {f: kept[1].f, from: kept[0].name, at: kept[1].t};
+  const now = Date.now();
+  const live = [];
+  if (WATER_N && rn) live.push({st: WATER_N, f: rn.f, t: rn.t});
+  if (WATER_S && rs) live.push({st: WATER_S, f: rs.f, t: rs.t});
+
+  /* Interpolating is the intended answer only where the launch genuinely sits
+     between two reporting gauges with a gradient across it. Everywhere else
+     one gauge is close enough that averaging in a distant second adds
+     arithmetic rather than accuracy. */
+  if (!prefStn && n != null && sth != null){
+    WX.water = {f: sth + (n - sth) * f, from: "both"};
+  } else {
+    WX.water = bestWater(live, now);
+    /* Nothing usable from this launch's own two gauges. Rather than show a
+       dash, reach for the rest of the river - three extra requests, made only
+       in the case that used to leave Watervliet and Albany blank. */
+    const floor = Math.min.apply(null,
+      WATER_ALL.map(st => Math.abs(st.mile - SITE_RIVER_MILE))) + AGE_MILES_PER_DAY;
+    if (!WX.water || WX.water.cost > floor){
+      const rest = WATER_ALL.filter(st => !fetched[st.id]);
+      const more = await Promise.allSettled(rest.map(st => getJSON(waterURL(st))));
+      more.forEach((res, i) => {
+        const r = readWater(res);
+        if (r){ cacheWater(rest[i], r); live.push({st: rest[i], f: r.f, t: r.t}); }
+      });
+      WX.water = bestWater(live, now) || WX.water;
+    }
+    /* Last resort: every gauge on the river is quiet and nothing kept is still
+       inside the week. An old reading with its age on it beats a dash. */
+    if (!WX.water) WX.water = bestWater([], now, true);
   }
 
   WX.status = WX.grid ? "ok" : "failed";
@@ -1908,14 +1988,13 @@ function drawWeather(t, cv){
   set("wxAir", w.airF);
   sub("wxAirSub", w.feelsF == null ? "" : "feels like " + w.feelsF + "&deg;");
   set("wxWater", w.waterF == null ? "—" : w.waterF);
-  /* Name the gauge, and date it when the reading is a kept one - that matters
-     more than the future-view wording, which would call a three-day-old number
-     today's. */
+  /* Name the gauge, say how far off it is when it is not one of this launch's
+     own two - the footer explains those, and nothing explains one picked up
+     off the rest of the river - and date it when it is not current, so a kept
+     reading is never passed off as a live one. */
   sub("wxWaterSub", w.waterF == null || !WX.water ? ""
-    : WX.water.at ? "from " + WX.water.from + ", " + ago(WX.water.at)
-    : future ? "today&rsquo;s reading"
-    : WX.water.from === "both" ? "estimated"
-    : "from " + WX.water.from);
+    : (future && !WX.water.kept && WX.water.bracket !== false) ? "today&rsquo;s reading"
+    : waterSub(WX.water, Date.now()));
 
   $("wxAnswer").className = "answer";
   $("wxAnswerText").innerHTML = "";
