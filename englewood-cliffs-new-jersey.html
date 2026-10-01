@@ -131,7 +131,16 @@ body{
 .alllocs .menu a{color:var(--ink)}
 .alllocs .menu a:hover{background:var(--surface-2); color:var(--river)}
 .alllocs .menu .here{color:var(--muted); font-weight:600}
-@media (max-width:520px){ .alllocs .menu{left:auto; right:0} }
+/* The menu is wider than the control that opens it, so hanging it off that
+   control drops it off the left edge of a phone the moment the control has
+   wrapped to the start of a line - which it does on any launch whose two
+   neighbours are long names. Anchor it to the nav and give it the width of the
+   page instead, so where it lands no longer depends on how the nav wrapped. */
+@media (max-width:520px){
+  .locnav{position:relative}
+  .alllocs{position:static}
+  .alllocs .menu{left:0; right:0; min-width:0}
+}
 
 .hero h1{
   position:absolute; z-index:1; left:clamp(16px,3.4vw,26px); right:clamp(16px,3.4vw,26px);

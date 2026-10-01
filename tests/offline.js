@@ -663,6 +663,29 @@ group("URL structure");
      !/hours/.test(ago(now - 2 * DAY, now)), ago(now - 2 * DAY, now));
 }
 
+/* On a phone the locations menu is wider than the control that opens it, so
+   anchoring it to that control put it off the left edge of the screen whenever
+   the control had wrapped to the start of a line - which it does on any launch
+   whose two neighbours are long names. Schodack Landing lost 79px of every
+   name: you could read "ewood Cliffs" and "ings-on-Hudson". The menu belongs
+   to the nav on narrow screens, not to the summary. */
+{
+  const css = fs.readFileSync(pageFor(ALL[0]), "utf8");
+  const mq = /@media \(max-width:520px\)\{([\s\S]*?)\n\}/.exec(css);
+  ok("there is a narrow-screen rule for the menu", !!mq);
+  const body = mq ? mq[1] : "";
+  ok("the nav is the thing the menu is positioned against",
+     /\.locnav\{[^}]*position:relative/.test(body), body.slice(0, 160));
+  ok("the control is taken out of the positioning chain",
+     /\.alllocs\{[^}]*position:static/.test(body), body.slice(0, 160));
+  ok("the menu spans the nav rather than hanging off the control",
+     /\.alllocs \.menu\{[^}]*left:0[^}]*right:0/.test(body), body.slice(0, 200));
+  /* 210px of min-width is what made it wider than the control in the first
+     place; left and right alone would not shrink it. */
+  ok("the menu's desktop minimum width is cleared",
+     /\.alllocs \.menu\{[^}]*min-width:0/.test(body), body.slice(0, 200));
+}
+
 /* The nav separator lives inside the second link, so the link's underline
    painted through the pipe - a stray underscore floating in front of the next
    name. An atomic inline-level box is not underlined by its parent. */
