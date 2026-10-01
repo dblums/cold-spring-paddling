@@ -663,6 +663,41 @@ group("URL structure");
      !/hours/.test(ago(now - 2 * DAY, now)), ago(now - 2 * DAY, now));
 }
 
+/* The menu's leading column is river miles, which a bare number does not say.
+   The heading has to name the unit and the thing it is measured from, and it
+   has to stay put while the list scrolls - otherwise it explains the column
+   only until you look for Kingston. */
+{
+  const html = fs.readFileSync(pageFor(ALL[0]), "utf8");
+  const menu = /<div class="menu">([\s\S]*?)<\/div>/.exec(html);
+  ok("the menu exists", !!menu);
+  const head = /<span class="label menuhead">([^<]*)<\/span>/.exec(menu ? menu[1] : "");
+  ok("the menu heading says what the numbers are", !!head, (menu && menu[1] || "").slice(0, 90));
+  if (head){
+    ok("it names the unit", /\bmiles\b/i.test(head[1]), head[1]);
+    ok("it names what they are measured from", /harbor|harbour|battery/i.test(head[1]), head[1]);
+    /* "river mile" is only meaningful to someone who already knows the term,
+       which is the reader this heading is not for. */
+    ok("it does not lean on the jargon it is there to replace",
+       !/river mile/i.test(head[1]), head[1]);
+  }
+  const css = /<style>([\s\S]*?)<\/style>/.exec(html)[1];
+  const rule = /\.alllocs \.menu \.menuhead\{([^}]*)\}/.exec(css);
+  ok("the heading is styled", !!rule);
+  ok("the heading stays put while the list scrolls",
+     rule && /position:sticky/.test(rule[1]), rule && rule[1].slice(0, 90));
+  ok("the heading is opaque, so the list does not show through it",
+     rule && /background:/.test(rule[1]), rule && rule[1].slice(0, 90));
+
+  // the numbers it labels are the river miles, in river order
+  const miles = [...(menu ? menu[1].matchAll(/<i>(\d+)<\/i>/g) : [])].map(m => +m[1]);
+  const want = ALL.map(s => s.riverMile).sort((a, b) => a - b);
+  eq("the menu lists every launch", miles.length, ALL.length);
+  ok("the menu runs downriver to up", miles.every((m, i) => !i || m >= miles[i-1]), miles.join(","));
+  ok("the numbers are the launches' river miles",
+     miles.join(",") === want.join(","), miles.join(","));
+}
+
 /* On a phone the locations menu is wider than the control that opens it, so
    anchoring it to that control put it off the left edge of the screen whenever
    the control had wrapped to the start of a line - which it does on any launch

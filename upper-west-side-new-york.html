@@ -114,7 +114,7 @@ body{
 .alllocs[open] > summary::after{content:"\25B4"}
 .alllocs .menu{
   position:absolute; z-index:40; top:calc(100% + 8px); left:0;
-  min-width:210px; max-height:min(62vh, 430px); overflow-y:auto;
+  min-width:238px; max-height:min(62vh, 430px); overflow-y:auto;
   padding:6px; background:var(--surface); border:1px solid var(--line);
   border-radius:10px; box-shadow:var(--shadow);
   display:flex; flex-direction:column;
@@ -123,6 +123,16 @@ body{
   display:flex; align-items:baseline; gap:9px;
   padding:6px 10px; border-radius:6px; font-size:14px; white-space:nowrap;
   text-decoration:none;
+}
+/* The numbers are river miles, which a bare column does not say. The heading
+   sticks to the top of the list so it is still there once you have scrolled
+   past Yonkers, and says the thing in plain distance rather than calling it a
+   river mile, which only helps someone who already knows the term. */
+.alllocs .menu .menuhead{
+  position:sticky; top:-6px; z-index:1; flex:0 0 auto;
+  margin:-6px -6px 4px; padding:9px 10px 7px;
+  background:var(--surface); border-bottom:1px solid var(--line);
+  border-radius:10px 10px 0 0; font-size:11px;
 }
 .alllocs .menu i{
   font-style:normal; flex:0 0 2.1em; text-align:right;
@@ -480,6 +490,7 @@ img{max-width:100%}
     <details class="alllocs" id="allLocs">
       <summary>All 39 locations</summary>
       <div class="menu">
+        <span class="label menuhead">Miles from New York Harbor</span>
       <a href="lower-manhattan-new-york.html"><i>2</i>Lower Manhattan</a>
       <a href="midtown-manhattan-new-york.html"><i>4</i>Midtown Manhattan</a>
       <span class="here"><i>5</i>Upper West Side</span>

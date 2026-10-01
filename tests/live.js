@@ -171,19 +171,29 @@ const get = async u => (await fetch(u, {headers:{"User-Agent":"cold-spring-paddl
     for (const [id,name] of stations){
       // the same queries the page makes. Albany's gauge is USGS, in Celsius,
       // with -999999 for no reading; everything else is CO-OPS in Fahrenheit.
+      /* A gauge that is down answers with an HTML error page, not JSON - USGS
+         rate-limits and serves a 503 from Tomcat. Parsing that threw and took
+         the whole suite with it, which is the opposite of what the paragraph
+         above says this check is for: an outage is news to report, not a
+         crash. The page itself already treats a failed fetch as a dark gauge
+         and reaches elsewhere. */
       let v = NaN;
-      if (/^\d{8}$/.test(id)){
-        const w = await get("https://waterservices.usgs.gov/nwis/iv/?format=json&sites="
-          + id + "&parameterCd=00010&period=P1D");
-        const ts = w.value && w.value.timeSeries && w.value.timeSeries[0];
-        const vs = (ts && ts.values && ts.values[0] && ts.values[0].value) || [];
-        const good = vs.filter(r => parseFloat(r.value) > -100);
-        if (good.length) v = parseFloat(good[good.length - 1].value) * 9 / 5 + 32;
-      } else {
-        const w = await get("https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=water_temperature"
-          + "&application=tests&range=24&interval=h&station=" + id + "&time_zone=lst_ldt&units=english&format=json");
-        const rows = (w.data || []).filter(r => isFinite(parseFloat(r.v)));
-        if (rows.length) v = parseFloat(rows[rows.length - 1].v);
+      try {
+        if (/^\d{8}$/.test(id)){
+          const w = await get("https://waterservices.usgs.gov/nwis/iv/?format=json&sites="
+            + id + "&parameterCd=00010&period=P1D");
+          const ts = w.value && w.value.timeSeries && w.value.timeSeries[0];
+          const vs = (ts && ts.values && ts.values[0] && ts.values[0].value) || [];
+          const good = vs.filter(r => parseFloat(r.value) > -100);
+          if (good.length) v = parseFloat(good[good.length - 1].value) * 9 / 5 + 32;
+        } else {
+          const w = await get("https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=water_temperature"
+            + "&application=tests&range=24&interval=h&station=" + id + "&time_zone=lst_ldt&units=english&format=json");
+          const rows = (w.data || []).filter(r => isFinite(parseFloat(r.v)));
+          if (rows.length) v = parseFloat(rows[rows.length - 1].v);
+        }
+      } catch (e) {
+        console.log(`  note  ${name} did not answer with usable data (${e.message.slice(0, 60)})`);
       }
       if (isFinite(v) && v > 20 && v < 95) ok(`${name} water temp is reporting`, true);
       else { dark.push(name); console.log(`  note  ${name} is not reporting right now (${v}F)`); }

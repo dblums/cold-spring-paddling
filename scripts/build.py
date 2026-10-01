@@ -177,6 +177,7 @@ def locnav(site, sites):
             '    <details class="alllocs" id="allLocs">\n'
             f'      <summary>All {len(ordered)} locations</summary>\n'
             '      <div class="menu">\n'
+            '        <span class="label menuhead">Miles from New York Harbor</span>\n'
             f'{items}'
             '      </div>\n'
             '    </details>\n'
