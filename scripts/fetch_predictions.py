@@ -89,6 +89,12 @@ def fetch_site(site):
                 f"&time_zone=lst_ldt&units=english&interval=hilo&format=json")
         if first_type is None:
             first_type = t["predictions"][0]["type"]
+            # The one string from NOAA that gets baked into the page, and the
+            # page embeds this file verbatim inside a <script>. Nobody reviews
+            # the diff now that a workflow commits it, so anything but the two
+            # letters it is supposed to be stops the build rather than shipping.
+            if first_type not in ("H", "L"):
+                raise SystemExit(f"{site['slug']}: unexpected tide type {first_type!r}")
         tides += [(p["t"], float(p["v"])) for p in t["predictions"]]
 
         c = get(f"{API}?product=currents_predictions&application=hudsonpaddling"

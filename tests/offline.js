@@ -697,6 +697,45 @@ group("URL structure");
      !/hours/.test(ago(now - 2 * DAY, now)), ago(now - 2 * DAY, now));
 }
 
+/* Everything the page shows that it did not write itself comes from NOAA or the
+   Weather Service, and it goes into innerHTML. Neither is the threat model; a
+   compromised or simply confused upstream is, and the cost of not trusting them
+   is one escape call. An alert's event text reaches the page in three places
+   and I had escaped two of them - this is here so the third cannot come back. */
+{
+  const {T} = load(ALL[0]);
+  const NOON = T.fromNY(2026, 6, 15, 12, 0);
+  const PAYLOAD = '<img src=x onerror="alert(1)">Flood Warning';
+
+  ok("esc() neutralises a tag", !/[<>]/.test(T.esc(PAYLOAD)), T.esc(PAYLOAD));
+  ok("esc() neutralises a quote", !/"/.test(T.esc('a"b')), T.esc('a"b'));
+  ok("safeHref refuses a javascript: url",
+     T.safeHref("javascript:alert(1)", "https://alerts.weather.gov/")
+       === "https://alerts.weather.gov/");
+  ok("safeHref refuses a data: url",
+     T.safeHref("data:text/html,<script>", "FALLBACK") === "FALLBACK");
+  ok("safeHref keeps a real one",
+     T.safeHref("https://api.weather.gov/x", "FALLBACK") === "https://api.weather.gov/x");
+
+  // and the whole way through, for each severity, since they are different branches
+  for (const severity of ["Severe", "Minor"]){
+    T.WX.alerts = [{properties: {event: PAYLOAD, severity,
+      uri: "javascript:alert(2)", ends: new Date(NOON + 6 * 3600e3).toISOString()}}];
+    const w = {windMph: 6, windGustMph: 6, windFromDeg: 180, airF: 74, waterF: 70, stormPct: 0};
+    w.wx = T.precipWord([{weather: "rain</script><script>alert(3)</script>", coverage: "likely"}]);
+    const b = T.buildBrief(NOON, 0.3, w, T.skyFor(NOON), NOON + 864e5);
+    ok(`a ${severity} alert's text cannot open a tag in the summary`,
+       !/<[a-z/!]/i.test(b.body), b.body.slice(0, 120));
+    ok(`a ${severity} alert's text cannot open a tag in the headline`,
+       !/<[a-z/!]/i.test(b.head), b.head);
+  }
+  // an unrecognised weather word is passed through, so it is held to a shape
+  const odd = T.precipWord([{weather: "rain</script><script>", coverage: "likely"}]);
+  ok("an unknown weather word cannot close the script tag it sits in",
+     !/[<>/]/.test(odd.text + odd.noun + odd.adj), JSON.stringify(odd.text));
+  T.WX.alerts = [];
+}
+
 /* The menu's leading column is river miles, which a bare number does not say.
    The heading has to name the unit and the thing it is measured from, and it
    has to stay put while the list scrolls - otherwise it explains the column

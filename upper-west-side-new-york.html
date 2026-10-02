@@ -869,7 +869,8 @@ function precipWord(series){
   if (!first) return null;
   const happening = ["definite","likely","occasional","frequent","numerous","widespread"]
     .includes(first.coverage);
-  const raw = first.weather.replace(/_/g, " ").replace("rain showers", "rain");
+  const raw = String(first.weather).replace(/_/g, " ").replace("rain showers", "rain")
+    .replace(/[^a-z ]/gi, "").trim().slice(0, 40);
   const heavy = first.intensity === "heavy";
   const DOING = {rain:"raining", drizzle:"drizzling", snow:"snowing", sleet:"sleeting",
                  fog:"foggy", haze:"hazy", thunderstorms:"thunderstorms about"};
@@ -1054,6 +1055,11 @@ async function loadConditions(){
   WX.status = WX.grid ? "ok" : "failed";
   render();
 }
+
+const esc = v => String(v == null ? "" : v).replace(/[&<>"']/g,
+  c => ({"&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"}[c]));
+const safeHref = (u, fallback) =>
+  /^https?:\/\//i.test(String(u || "")) ? esc(u) : fallback;
 
 const COMPASS = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
 const compass = deg => COMPASS[Math.round(((deg % 360) + 360) % 360 / 22.5) % 16];
@@ -1486,10 +1492,10 @@ function briefConcerns(t, cv, w, sky, now){
   const severe = alerts.filter(a => ["Extreme","Severe"].includes(a.properties.severity));
   if (severe.length) out.push({level:"stop", key:"alert", rank:0,
     say: severe.length > 1 ? "The Weather Service has " + severe.length + " warnings out for this stretch."
-       : "The Weather Service has a " + severe[0].properties.event + " out for this stretch."});
+       : "The Weather Service has a " + esc(severe[0].properties.event) + " out for this stretch."});
   else if (alerts.length) out.push({level:"warn", key:"advisory", rank:8,
     say: alerts.length > 1 ? "There are " + alerts.length + " advisories out for this stretch, too."
-       : "There is a " + alerts[0].properties.event + " out for this stretch, too."});
+       : "There is a " + esc(alerts[0].properties.event) + " out for this stretch, too."});
 
   if (wind != null){
     const hard = Math.max(sp.up, sp.down) < 1.2;
@@ -1743,9 +1749,10 @@ function drawAlerts(t){
     const sev = (p.severity === "Extreme" || p.severity === "Severe") ? "severe" : "moderate";
     const ends = p.ends || p.expires;
     const when = ends ? "In effect until " + fmtTD.format(Date.parse(ends)) : "In effect now";
-    return '<div class="alert ' + sev + '"><div class="hd">' + p.event + "</div>"
-      + '<div class="meta">' + when
-      + ' <a href="' + (p.uri || "https://alerts.weather.gov/") + '" target="_blank" rel="noopener">Read the full alert &#8599;</a></div></div>';
+    return '<div class="alert ' + sev + '"><div class="hd">' + esc(p.event) + "</div>"
+      + '<div class="meta">' + esc(when)
+      + ' <a href="' + safeHref(p.uri, "https://alerts.weather.gov/")
+      + '" target="_blank" rel="noopener">Read the full alert &#8599;</a></div></div>';
   }).join("");
 }
 
