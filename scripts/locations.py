@@ -37,7 +37,7 @@ SEARCH_CONSOLE_TOKEN = ""
 # consent banner, and cannot identify anyone. Empty means no beacon is emitted
 # at all - the page stays exactly as private as it is today until there is a
 # token here. Get one at dash.cloudflare.com -> Web Analytics -> Add a site.
-ANALYTICS_TOKEN = ""
+ANALYTICS_TOKEN = "e67cb4e1aa79410bba128d75c3497637"
 
 # A Stripe Payment Link in "customers choose what to pay" mode. Empty means the
 # nudge is not rendered at all, so the page never shows a dead button.

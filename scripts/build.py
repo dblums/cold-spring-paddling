@@ -239,7 +239,9 @@ def analytics():
     absent entirely when no token is set - which is how it ships today."""
     if not L.ANALYTICS_TOKEN:
         return ""
-    return ('<script defer src="https://static.cloudflareinsights.com/beacon.min.js" '
+    # type="module" is what Cloudflare's own snippet uses now, and module
+    # scripts defer by default - so this is their form, not an approximation
+    return ('<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" '
             f'data-cf-beacon=\'{{"token": "{L.ANALYTICS_TOKEN}"}}\'></script>\n')
 
 
@@ -494,9 +496,10 @@ p{margin:0 0 14px; color:var(--ink-2); font-size:16px}
     <p class="sig">~ Dan</p>
     <p class="back"><a href="/">Back to home</a></p>
   </div>
-</body>
+__ANALYTICS__</body>
 </html>
 """.replace("__FAVICON__", FAVICON)
+        .replace("__ANALYTICS__", analytics())
         .replace("__THEME__", theme_css(template))
         .replace("__PHOTO__", photo))
     with open(path, "w") as f:

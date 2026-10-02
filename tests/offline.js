@@ -953,6 +953,27 @@ group("URL structure");
   ok("stripping removes a worthwhile amount", removed > 8000, `${removed} bytes per page`);
 }
 
+/* Nothing shipped may still contain a placeholder. The build fills launch
+   pages by {{TOKEN}} and the thank-you page by __TOKEN__, and putting an
+   f-string placeholder into the one built with .replace() printed a literal
+   "{analytics()}" into the page. Every file the build writes, every shape. */
+{
+  const path = require("path");
+  const built = ALL.map(s => pageSlug(s) + ".html")
+    .concat(["index.html", "thanks.html", "robots.txt", "sitemap.xml"]);
+  for (const f of built){
+    const p = path.join(__dirname, "..", f);
+    if (!fs.existsSync(p)){ ok(`${f} exists`, false); continue; }
+    const txt = fs.readFileSync(p, "utf8");
+    ok(`${f} has no unfilled {{token}}`, !/\{\{[A-Z_]+\}\}/.test(txt),
+       (/\{\{[A-Z_]+\}\}/.exec(txt) || [""])[0]);
+    ok(`${f} has no unfilled __TOKEN__`, !/__[A-Z][A-Z_]+__/.test(txt),
+       (/__[A-Z][A-Z_]+__/.exec(txt) || [""])[0]);
+    ok(`${f} has no leaked python expression`, !/\{[a-z_]+\(\)\}/.test(txt),
+       (/\{[a-z_]+\(\)\}/.exec(txt) || [""])[0]);
+  }
+}
+
 /* A sitemap and a robots.txt. Thirty-nine pages with one link between each and
    its two neighbours are a chain a crawler has to walk; a sitemap is the list.
    Both are build output, so both are checked against the registry rather than
