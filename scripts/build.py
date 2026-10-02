@@ -226,6 +226,14 @@ OG_ALT = ("Looking south down the Hudson from Cold Spring at first light, "
           "the Highlands either side and a kayak bow in the foreground")
 
 
+def verification():
+    """Search Console's meta tag, when there is a token to emit."""
+    if not L.SEARCH_CONSOLE_TOKEN:
+        return ""
+    return ('\n<meta name="google-site-verification" '
+            f'content="{L.SEARCH_CONSOLE_TOKEN}">')
+
+
 def analytics():
     """The beacon, if there is a token. Last thing before </body>, deferred, and
     absent entirely when no token is set - which is how it ships today."""
@@ -392,7 +400,7 @@ def render(site, sites):
 <meta name="theme-color" content="#0c1518" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="{site['name']} Tides">
-<link rel="icon" href="{FAVICON}">
+<link rel="icon" href="{FAVICON}">{verification()}
 {head}
 <style>
 html{{-webkit-text-size-adjust:100%}}

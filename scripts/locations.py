@@ -22,6 +22,17 @@ FEEDBACK_LINE = ("Feedback? Something you wish this site had? Want to paddle? Em
 # Dynadot -> Email Settings; ten of them come free with the domain.
 FEEDBACK_USER = "hello"
 
+# Google Search Console's HTML-tag verification, for when editing DNS is more
+# trouble than it is worth. Paste only the token - the part after
+# content=" in the tag Google shows - not the whole <meta> element. Empty
+# means no tag is emitted.
+#
+# A DNS TXT record is the better verification when it is easy: it proves the
+# whole domain at once, http and https, apex and www, and it cannot be lost by
+# a rebuild. This is the fallback, and it verifies https://hudsonconditions.com
+# as a URL-prefix property rather than the domain.
+SEARCH_CONSOLE_TOKEN = ""
+
 # Cloudflare Web Analytics, which is free, needs no cookie and so needs no
 # consent banner, and cannot identify anyone. Empty means no beacon is emitted
 # at all - the page stays exactly as private as it is today until there is a
