@@ -313,8 +313,17 @@ for (const site of ALL){
   {
     const d = (/<meta name="description" content="([^"]*)"/.exec(html) || [])[1] || "";
     ok(`${site.name}: the description names this launch`, d.includes(site.name), d);
-    ok(`${site.name}: the description says more than the launch name`,
-       d.length > 90, `${d.length} chars`);
+    /* A search result has to answer "what will this page tell me", not explain
+       where the launch is - the reader has usually already picked the place. */
+    for (const word of ["Tide", "current", "wind", "weather", "what they mean"])
+      ok(`${site.name}: the description says it covers ${word}`, d.includes(word), d);
+    // people search for the boat, not the activity
+    for (const craft of ["kayak", "canoe", "paddleboard"])
+      ok(`${site.name}: the description reaches people searching ${craft}`,
+         d.toLowerCase().includes(craft), d);
+    ok(`${site.name}: the description uses the two-letter state`,
+       / N[YJ],/.test(d), d);
+    ok(`${site.name}: the description is never cut mid-word`, !d.endsWith("\u2026"), d);
     // Google truncates past about 160, and a cut mid-word looks broken
     ok(`${site.name}: the description fits what Google shows`, d.length <= 160,
        `${d.length} chars`);

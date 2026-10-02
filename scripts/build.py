@@ -297,6 +297,14 @@ def data_through(site):
     return f"{stamp.day}&nbsp;{stamp:%b}&nbsp;{stamp.year}"
 
 
+def state_abbr(site):
+    """NY, not New York - a description has 160 characters to spend. The title
+    already ends in the abbreviation, so read it from there rather than keep a
+    second list of states in step with the first."""
+    m = re.search(r",\s*([A-Z]{2})\s*$", site["title"])
+    return m.group(1) if m else site["state"]
+
+
 def name_phrase(site):
     """The launch's name as the title writes it, keeping any leading article."""
     m = re.search(r"Near (.+), [A-Z]{2}\b", site["title"])
@@ -384,16 +392,20 @@ def render(site, sites):
         html = re.sub(r'src="data:image/jpeg;base64,[A-Za-z0-9+/=]+"',
                       f'src="{banner}"', html, count=1)
 
-    # The description Google shows when it does not quote the page. It used to
-    # be one generic sentence with the town swapped in, which gave a search
-    # engine no reason to prefer it over the live conditions it found in the
-    # page. The blurb is specific to the launch and true next year.
-    blurb = site.get("blurb") or ""
-    desc = (f"Hudson River tides, current and paddling conditions for "
-            f"{site['name']}, {site['state']}."
-            + (" " + blurb if blurb else ""))
-    # Google truncates past about 160; cut on a word so it does not end mid-one
-    if len(desc) > 160:
+    # What a search result should say. This was the launch's blurb for a while,
+    # which explained the geography of a place the reader has usually already
+    # chosen - the question in front of them is what this page will tell them,
+    # not where the Highlands are. "What they mean" is the part no other tide
+    # site does, so it is the part worth the characters.
+    #
+    # The craft are named because people search for the boat rather than the
+    # activity. "Paddleboarders" rather than "SUP": SUP is insider shorthand,
+    # and the reader most likely to need a conditions page is the one who would
+    # not use it. Google stems "paddleboard" out of it; it gets nothing from SUP.
+    where = f"{site['name']}, {state_abbr(site)}"
+    desc = (f"Tide, current, wind and weather on the Hudson River at {where}, "
+            f"and what they mean for kayakers, canoeists and paddleboarders.")
+    if len(desc) > 160:   # Google truncates past about 160; never cut mid-word
         desc = desc[:157].rsplit(" ", 1)[0] + "\u2026"
     split = html.index('<div class="wrap">')
     head, body = html[:split].rstrip(), html[split:].rstrip()
