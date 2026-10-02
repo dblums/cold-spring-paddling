@@ -490,6 +490,12 @@ for (const s of SCENARIOS){
       || (!heads.length && b.head === T.waterHead(inp.cv, inp.w)),
     `"${b.head}" vs [${heads.join(" | ")}] or "${T.HEADLINE[b.level]}"`);
 
+  /* What the sky might do is its own sentence. Hung on the end of the river
+     sentence with an "and", a chance of rain read as one more thing the current
+     was doing: "...building to max flood at 1:06 PM and a 20% chance of ..." */
+  check(s.name, "a chance of rain or thunder is not tacked onto the river",
+    !/(?:AM|PM|slack water|north|south) and a \d+% chance/i.test(b.body), b.body);
+
   /* "Likely" is the Weather Service's own word for the 60-and-over band, not a
      synonym for "probably". It used to be banned outright, which was the right
      instinct about an unearned word and the wrong tool: the page says the

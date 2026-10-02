@@ -1484,20 +1484,23 @@ function riverLine(t, cv, w, future, headSaid, stormSaid){
           ? " from the " + compass(w.windFromDeg) : ""));
   const turn = curNext(t, cv);
   parts.push(curWord(cv, /current/.test(headSaid || "")) + (turn ? ", " + turn : ""));
+  const outlook = [];
   if (!(w.wx && w.wx.happening) && (w.stormPct || 0) < 30
       && w.precipPct != null && w.precipPct >= 30)
-    parts.push("a " + w.precipPct + "% chance of rain");
+    outlook.push("a " + w.precipPct + "% chance of rain");
   if (!stormSaid){
     const late = stormOutlook(t, 6);
     if (late && late.pct >= 20 && late.at - t > STORM_SOON_H * 3600e3)
-      parts.push("a " + late.pct + "% chance of thunderstorms from about " + fmtT.format(late.at));
+      outlook.push("a " + late.pct + "% chance of thunderstorms from about " + fmtT.format(late.at));
   }
 
-  let out = parts.length > 1
-    ? parts.slice(0, -1).join(", ") + " and " + parts[parts.length - 1]
-    : parts[0];
-  return future ? "The forecast calls for " + out.charAt(0).toLowerCase() + out.slice(1) + "."
-      : out.charAt(0).toUpperCase() + out.slice(1) + ".";
+  const join = a => a.length > 1
+    ? a.slice(0, -1).join(", ") + " and " + a[a.length - 1] : a[0];
+  const cap = x => x.charAt(0).toUpperCase() + x.slice(1) + ".";
+  let out = join(parts);
+  out = future ? "The forecast calls for " + out.charAt(0).toLowerCase() + out.slice(1) + "."
+      : cap(out);
+  return outlook.length ? out + " " + cap(join(outlook)) : out;
 }
 
 function quietDay(t, cv, w, future, headWater){
