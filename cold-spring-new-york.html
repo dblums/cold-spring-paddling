@@ -1368,9 +1368,9 @@ function waterWord(cv, w){
   const mph = w && w.windMph != null ? w.windMph : null;
   if (mph == null) return kt < 0.15 ? "slack water" : "a current running";
   const vs = w.windFromDeg != null ? windVsCurrent(w.windFromDeg, cv) : "slack";
-  if (vs === "opposed" && mph >= 7) return mph >= 12 ? "a real chop" : "a light chop";
-  if (vs === "across" && mph >= 10) return "a light chop";
-  if (vs === "slack" && mph >= 12) return "a light chop";
+  if (vs === "opposed" && mph >= 8) return mph >= 15 ? "a real chop" : "a light chop";
+  if (vs === "across" && mph >= 12) return "a light chop";
+  if (vs === "slack" && mph >= 14) return "a light chop";
   if (kt < 0.15) return mph < 5 ? "glassy water" : "slack water";
   if (mph < 5 && kt < 0.4) return "glassy water";
   if (kt >= 1.2) return "a strong current";
@@ -1550,8 +1550,9 @@ function briefConcerns(t, cv, w, sky, now){
       + "Worth checking the radar before you set out, and knowing where you could land "
       + "if one comes over."});
 
-  if (wind != null && wind >= 12 && windVsCurrent(w.windFromDeg, cv) === "opposed"
-      && Math.abs(cv) >= 0.5) out.push({level:"caution", key:"chop", rank:3,
+  if (wind != null && windVsCurrent(w.windFromDeg, cv) === "opposed"
+      && ((wind >= 15 && Math.abs(cv) >= 0.8) || (wind >= 12 && Math.abs(cv) >= 1.5)))
+    out.push({level:"caution", key:"chop", rank:3,
     head: future ? "Likely choppy." : "Choppy out there.",
     say:"The wind is " + (future ? "forecast to run" : "running")
       + " straight into the current, which can make the water choppy.",

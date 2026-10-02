@@ -207,9 +207,24 @@ const SCENARIOS = [
     must: [/advisor/i, /chop/i],
     mustNot: [/not dangerous/i, /bumpy/i] },
 
-  { name: "wind against a strong flood",
+  /* Wind against tide needs a real breeze or a real current before it is worth
+     flagging. A moderate wind over most of a knot is a texture on the water;
+     the headline says so and the page stays out of the way. */
+  { name: "moderate wind against a moderate flood is not a warning",
     wind: 14, from: 0, cur: 0.9, air: 72, water: 70,
+    level: "fine",
+    must: [/chop/i],
+    mustNot: [/smooth/i, /choppy out there/i] },
+
+  { name: "the same wind over a hard flood is",
+    wind: 14, from: 0, cur: 1.6, air: 72, water: 70,
     level: "caution",
+    must: [/chop/i],
+    mustNot: [/smooth/i] },
+
+  { name: "wind against a strong flood, really blowing",
+    wind: 18, from: 0, cur: 1.0, air: 72, water: 70,
+    level: "warn",
     must: [/chop/i],
     mustNot: [/smooth/i] },
 
@@ -306,8 +321,8 @@ const SCENARIOS = [
 
   { name: "planning ahead, wind against current",
     // a southerly runs into an ebb; 13 mph stays under the wind concern's
-    // threshold so the chop line is the one that leads
-    wind: 13, from: 180, cur: -1.2, air: 70, water: 68, skyPct: 30,
+    // threshold, so with a hard enough current the chop line is the one that leads
+    wind: 13, from: 180, cur: -1.7, air: 70, water: 68, skyPct: 30,
     at: NOON, now: NOON - 2 * DAY,
     level: "caution",
     must: [/forecast to run straight into the current/i],

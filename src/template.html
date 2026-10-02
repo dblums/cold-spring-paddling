@@ -1501,9 +1501,9 @@ function waterWord(cv, w){
   /* Chop is what wind does when it fights the water. Against the current it
      stands up; running with the current it lies down, and calling a following
      breeze "chop" is the mistake the direction cards already avoid. */
-  if (vs === "opposed" && mph >= 7) return mph >= 12 ? "a real chop" : "a light chop";
-  if (vs === "across" && mph >= 10) return "a light chop";
-  if (vs === "slack" && mph >= 12) return "a light chop";
+  if (vs === "opposed" && mph >= 8) return mph >= 15 ? "a real chop" : "a light chop";
+  if (vs === "across" && mph >= 12) return "a light chop";
+  if (vs === "slack" && mph >= 14) return "a light chop";
   // glassy is a claim about the river being quiet, not about the day being nice:
   // very light air over water that is barely moving, and nothing else qualifies
   if (kt < 0.15) return mph < 5 ? "glassy water" : "slack water";
@@ -1744,8 +1744,14 @@ function briefConcerns(t, cv, w, sky, now){
       + "Worth checking the radar before you set out, and knowing where you could land "
       + "if one comes over."});
 
-  if (wind != null && wind >= 12 && windVsCurrent(w.windFromDeg, cv) === "opposed"
-      && Math.abs(cv) >= 0.5) out.push({level:"caution", key:"chop", rank:3,
+  /* Wind against tide at 12 mph over half a knot is a texture on the water, not
+     a thing to warn anybody about, and it used to turn the whole page amber.
+     It takes either a real breeze or a real current to be worth flagging: 15
+     mph over most of a knot, or a hard 1.5 kt run under a lesser wind. Below
+     that the headline still says "a light chop" and leaves it there. */
+  if (wind != null && windVsCurrent(w.windFromDeg, cv) === "opposed"
+      && ((wind >= 15 && Math.abs(cv) >= 0.8) || (wind >= 12 && Math.abs(cv) >= 1.5)))
+    out.push({level:"caution", key:"chop", rank:3,
     head: future ? "Likely choppy." : "Choppy out there.",
     // "It" only has an antecedent when the sentence before named the wind
     say:"The wind is " + (future ? "forecast to run" : "running")
