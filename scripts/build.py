@@ -218,6 +218,67 @@ def strip_comments(html):
     return re.sub(r"(<script>)(.*?)(</script>)", clean, html, flags=re.S)
 
 
+# The share card. Only Cold Spring has a photo of its own, so every other page
+# borrows it: a link with a picture of the river gets opened and a bare grey one
+# does not, and this site will travel by someone pasting it into a group thread.
+OG_IMAGE = "cold-spring-new-york.jpg"
+OG_ALT = ("Looking south down the Hudson from Cold Spring at first light, "
+          "the Highlands either side and a kayak bow in the foreground")
+
+
+def analytics():
+    """The beacon, if there is a token. Last thing before </body>, deferred, and
+    absent entirely when no token is set - which is how it ships today."""
+    if not L.ANALYTICS_TOKEN:
+        return ""
+    return ('<script defer src="https://static.cloudflareinsights.com/beacon.min.js" '
+            f'data-cf-beacon=\'{{"token": "{L.ANALYTICS_TOKEN}"}}\'></script>\n')
+
+
+def social(site, desc):
+    """Open Graph, Twitter and schema.org, which is three audiences for one fact.
+
+    Open Graph is what Facebook, iMessage, Slack and WhatsApp read when someone
+    pastes the link. Without it the preview is a grey box - which is most of
+    what paddlers sharing a conditions page with each other would have seen.
+
+    The JSON-LD says the page is about a place with coordinates, which is how a
+    search engine learns that thirty-nine pages differing by a town name are
+    thirty-nine different places rather than one page duplicated."""
+    url = L.page_url(site)
+    img = L.SITE_URL + "/" + OG_IMAGE
+    ld = {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": site["title"],
+        "description": desc,
+        "url": url,
+        "isPartOf": {"@type": "WebSite", "name": "Hudson Conditions",
+                     "url": L.SITE_URL},
+        "about": {
+            "@type": "Place",
+            "name": f"{site['name']}, {site['state']}",
+            "geo": {"@type": "GeoCoordinates",
+                    "latitude": site["lat"], "longitude": site["lon"]},
+        },
+        "isAccessibleForFree": True,
+        "publisher": {"@type": "Organization", "name": L.OWNER},
+    }
+    # "</" cannot appear inside a script element, whatever it is escaped as
+    ld_json = json.dumps(ld, separators=(",", ":")).replace("</", "<\\/")
+    return (
+        f'<meta property="og:type" content="website">\n'
+        f'<meta property="og:site_name" content="Hudson Conditions">\n'
+        f'<meta property="og:title" content="{site["title"]}">\n'
+        f'<meta property="og:description" content="{desc}">\n'
+        f'<meta property="og:url" content="{url}">\n'
+        f'<meta property="og:image" content="{img}">\n'
+        f'<meta property="og:image:alt" content="{OG_ALT}">\n'
+        f'<meta name="twitter:card" content="summary_large_image">\n'
+        f'<script type="application/ld+json">{ld_json}</script>'
+    )
+
+
 def data_through(site):
     """The last moment both the tide and the current tables cover, as prose."""
     d = json.load(open(os.path.join(L.ROOT, "data", site["slug"] + ".json")))
@@ -312,6 +373,8 @@ def render(site, sites):
         html = re.sub(r'src="data:image/jpeg;base64,[A-Za-z0-9+/=]+"',
                       f'src="{banner}"', html, count=1)
 
+    desc = (f"Hudson River tides, current and paddling conditions for "
+            f"{site['name']}, {site['state']}.")
     split = html.index('<div class="wrap">')
     head, body = html[:split].rstrip(), html[split:].rstrip()
     page = f"""<!doctype html>
@@ -322,8 +385,9 @@ def render(site, sites):
 <link rel="preconnect" href="https://api.weather.gov" crossorigin>
 <link rel="preconnect" href="https://api.tidesandcurrents.noaa.gov" crossorigin>
 <link rel="preconnect" href="https://waterservices.usgs.gov" crossorigin>
-<meta name="description" content="Hudson River tides, current and paddling conditions for {site['name']}, {site['state']}.">
+<meta name="description" content="{desc}">
 <link rel="canonical" href="{L.page_url(site)}">
+{social(site, desc)}
 <meta name="theme-color" content="#eaeeee" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0c1518" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -338,7 +402,7 @@ img{{max-width:100%}}
 </head>
 <body>
 {body}
-</body>
+{analytics()}</body>
 </html>
 """
     dest = os.path.join(L.ROOT, L.page_file(site))
@@ -447,6 +511,40 @@ def write_cname():
     print(f"  {'CNAME':14} -> {'/CNAME':28} {L.DOMAIN}")
 
 
+def write_sitemap(sites):
+    """A sitemap and a robots.txt, so the thirty-nine pages are found rather
+    than stumbled on.
+
+    Only the per-launch URLs go in. The bare domain serves Cold Spring and
+    carries a canonical pointing at cold-spring-new-york.html, so listing both
+    would be asking a crawler to choose between two addresses for one page -
+    and the canonical has already answered that.
+
+    lastmod is the build date, which is honest: a rebuild is when the page
+    actually changed, and the monthly prediction refresh rebuilds every one."""
+    today = datetime.date.today().isoformat()
+    urls = "".join(
+        f"  <url><loc>{L.page_url(s)}</loc><lastmod>{today}</lastmod>"
+        f"<changefreq>monthly</changefreq></url>\n"
+        for s in sorted(sites, key=lambda s: s["riverMile"]))
+    sitemap = ('<?xml version="1.0" encoding="UTF-8"?>\n'
+               '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+               + urls + "</urlset>\n")
+    with open(os.path.join(L.ROOT, "sitemap.xml"), "w") as f:
+        f.write(sitemap)
+    print(f"  {'sitemap':14} -> {'/sitemap.xml':28} {len(sites)} launches")
+
+    # thanks.html is already noindex; saying so twice costs nothing and means a
+    # crawler that ignores the meta tag still has no reason to go there
+    robots = ("User-agent: *\n"
+              "Allow: /\n"
+              "Disallow: /thanks.html\n"
+              f"\nSitemap: {L.SITE_URL}/sitemap.xml\n")
+    with open(os.path.join(L.ROOT, "robots.txt"), "w") as f:
+        f.write(robots)
+    print(f"  {'robots':14} -> {'/robots.txt':28} sitemap declared")
+
+
 def main():
     wanted = set(sys.argv[1:])
     sites = L.load()
@@ -457,6 +555,7 @@ def main():
         render(site, sites)
     if not wanted:
         write_thanks()
+        write_sitemap(sites)
         write_cname()
 
 

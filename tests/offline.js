@@ -2,6 +2,8 @@
 const {load, sites, pageFor, pageSlug} = require("./harness.js");
 // the prediction window rolls forward, so the tests ask about now, not about 2028
 const THIS_YEAR = new Date().getUTCFullYear();
+const SITE_URL = "https://" + /^DOMAIN = "([^"]+)"/m.exec(require("fs")
+  .readFileSync(require("path").join(__dirname, "..", "scripts", "locations.py"), "utf8"))[1];
 const fs = require("fs");
 const ALL = sites();
 const ALL_WATER = ["The Battery", "Turkey Point", "Coxsackie", "Albany"];
@@ -293,6 +295,48 @@ for (const site of ALL){
     ok(`${site.name}: headline does not say ${other.name}`, named(heading) !== other.name, heading);
     ok(`${site.name}: title does not say ${other.name}`, named(title) !== other.name);
   }
+  /* A link to this site travels by somebody pasting it into a group thread, and
+     without these it arrives as a grey box. The image is the one photo there
+     is, borrowed by every page that has none of its own. */
+  for (const [what, tag] of [
+      ["type", 'property="og:type" content="website"'],
+      ["title", `property="og:title" content="${site.title}"`],
+      ["url", `property="og:url" content="${SITE_URL}/${pageSlug(site)}.html"`],
+      ["image", 'property="og:image" content="https://'],
+      ["image alt", 'property="og:image:alt"'],
+      ["twitter card", 'name="twitter:card" content="summary_large_image"']])
+    ok(`${site.name}: share card has its ${what}`, html.includes(tag), tag.slice(0, 60));
+  ok(`${site.name}: the share image is an absolute url`,
+     /property="og:image" content="https:\/\/[^"]+\.jpg"/.test(html));
+
+  /* Thirty-nine pages that differ by a town name look like one page duplicated
+     unless something says otherwise. The coordinates are what says otherwise. */
+  {
+    const m = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(html);
+    ok(`${site.name}: carries structured data`, !!m);
+    if (m){
+      let d = null;
+      try { d = JSON.parse(m[1].replace(/<\\\//g, "</")); } catch (e) {}
+      ok(`${site.name}: its structured data is valid JSON`, !!d, m[1].slice(0, 80));
+      if (d){
+        eq(`${site.name}: structured data names this launch`,
+           d.about && d.about.name, `${site.name}, ${site.state}`);
+        eq(`${site.name}: structured data carries this launch's latitude`,
+           d.about.geo.latitude, site.lat);
+        eq(`${site.name}: structured data carries this launch's longitude`,
+           d.about.geo.longitude, site.lon);
+        eq(`${site.name}: structured data points at this page`,
+           d.url, `${SITE_URL}/${pageSlug(site)}.html`);
+        ok(`${site.name}: structured data says the site is free`,
+           d.isAccessibleForFree === true);
+      }
+      /* "</" inside a script element ends it, however it is escaped as JSON -
+         so the one place a stray one could appear is checked directly. */
+      ok(`${site.name}: structured data cannot close its own script tag`,
+         !/<\/(?!script>)/.test(m[1]) && !m[1].includes("</script"), "raw </ found");
+    }
+  }
+
   /* The page states how far its predictions reach, in two places, and both used
      to be a date somebody typed. The window rolls now, so a hand-written date
      would start lying the first month it moved. */
@@ -907,6 +951,52 @@ group("URL structure");
     .concat(srcScript.match(/^[ \t]*\/\/[^\n]*\n/gm) || [])
     .reduce((n, c) => n + c.length, 0);
   ok("stripping removes a worthwhile amount", removed > 8000, `${removed} bytes per page`);
+}
+
+/* A sitemap and a robots.txt. Thirty-nine pages with one link between each and
+   its two neighbours are a chain a crawler has to walk; a sitemap is the list.
+   Both are build output, so both are checked against the registry rather than
+   against a copy of it that someone remembered to update. */
+{
+  const path = require("path");
+  const root = f => path.join(__dirname, "..", f);
+
+  ok("the build writes a sitemap", fs.existsSync(root("sitemap.xml")));
+  ok("the build writes a robots.txt", fs.existsSync(root("robots.txt")));
+
+  if (fs.existsSync(root("sitemap.xml"))){
+    const xml = fs.readFileSync(root("sitemap.xml"), "utf8");
+    const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]);
+    const want = ALL.map(s => `${SITE_URL}/${pageSlug(s)}.html`).sort();
+
+    ok("the sitemap declares its namespace",
+       xml.includes("http://www.sitemaps.org/schemas/sitemap/0.9"));
+    eq("the sitemap lists every launch", locs.length, ALL.length);
+    ok("the sitemap lists exactly the launches that exist",
+       locs.slice().sort().join("\n") === want.join("\n"),
+       locs.filter(u => !want.includes(u)).join(", ") || "ordering");
+    ok("no launch is listed twice", new Set(locs).size === locs.length);
+    /* The bare domain serves Cold Spring under a canonical pointing at its own
+       page. Listing both would ask a crawler to choose between two addresses
+       for one page, which the canonical has already answered. */
+    ok("the sitemap does not also list the bare domain",
+       !locs.includes(SITE_URL + "/") && !locs.includes(SITE_URL + "/index.html"));
+    ok("every url is absolute and https", locs.every(u => u.startsWith("https://")));
+    ok("the sitemap carries a lastmod", /<lastmod>\d{4}-\d{2}-\d{2}<\/lastmod>/.test(xml));
+  }
+
+  if (fs.existsSync(root("robots.txt"))){
+    const txt = fs.readFileSync(root("robots.txt"), "utf8");
+    ok("robots.txt points at the sitemap",
+       txt.includes(`Sitemap: ${SITE_URL}/sitemap.xml`), txt);
+    ok("robots.txt lets the launches be crawled", /^Allow: \/$/m.test(txt), txt);
+    // the thank-you page is already noindex; a crawler that ignores that still
+    // has no reason to go there
+    ok("robots.txt keeps crawlers off the thank-you page",
+       /^Disallow: \/thanks\.html$/m.test(txt), txt);
+    ok("robots.txt blocks nothing else",
+       (txt.match(/^Disallow:/gm) || []).length === 1, txt);
+  }
 }
 
 ok("exactly one site is primary", ALL.filter(s => s.primary).length === 1);

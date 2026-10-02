@@ -22,6 +22,12 @@ FEEDBACK_LINE = ("Feedback? Something you wish this site had? Want to paddle? Em
 # Dynadot -> Email Settings; ten of them come free with the domain.
 FEEDBACK_USER = "hello"
 
+# Cloudflare Web Analytics, which is free, needs no cookie and so needs no
+# consent banner, and cannot identify anyone. Empty means no beacon is emitted
+# at all - the page stays exactly as private as it is today until there is a
+# token here. Get one at dash.cloudflare.com -> Web Analytics -> Add a site.
+ANALYTICS_TOKEN = ""
+
 # A Stripe Payment Link in "customers choose what to pay" mode. Empty means the
 # nudge is not rendered at all, so the page never shows a dead button.
 TIP_URL = "https://buy.stripe.com/cNicN68Q15RF97rbVU1wY00"
