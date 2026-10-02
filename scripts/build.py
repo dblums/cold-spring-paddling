@@ -391,11 +391,10 @@ def render(site, sites):
         html = re.sub(r'src="data:image/jpeg;base64,[A-Za-z0-9+/=]+"',
                       f'src="{banner}"', html, count=1)
 
-    # What a search result should say. This was the launch's blurb for a while,
-    # which explained the geography of a place the reader has usually already
-    # chosen - the question in front of them is what this page will tell them,
-    # not where the Highlands are. "What they mean" is the part no other tide
-    # site does, so it is the part worth the characters.
+    # What a search result should say: what this page will tell you. It briefly
+    # described the launch instead, which is the one thing a reader searching for
+    # a place already knows. "What they mean" is the part no other tide site
+    # does, so it is the part worth the characters.
     #
     # The craft are named because people search for the boat rather than the
     # activity. "Paddleboarders" rather than "SUP": SUP is insider shorthand,
