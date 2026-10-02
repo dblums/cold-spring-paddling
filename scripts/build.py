@@ -332,6 +332,7 @@ def render(site, sites):
         # than written down: the window rolls forward every month and a hand-
         # typed date would start lying the first time it moved.
         "DATA_THROUGH": data_through(site),
+        "BLURB": site.get("blurb") or "",
         "TIDE_LABEL": tide["label"], "CURRENT_LABEL": cur["label"],
         "COORD_LABEL": f'computed for {site["lat"]:.2f}°N {abs(site["lon"]):.2f}°W',
         "UPRIVER": cur["upriverTo"], "DOWNRIVER": cur["downriverTo"],
@@ -383,8 +384,17 @@ def render(site, sites):
         html = re.sub(r'src="data:image/jpeg;base64,[A-Za-z0-9+/=]+"',
                       f'src="{banner}"', html, count=1)
 
+    # The description Google shows when it does not quote the page. It used to
+    # be one generic sentence with the town swapped in, which gave a search
+    # engine no reason to prefer it over the live conditions it found in the
+    # page. The blurb is specific to the launch and true next year.
+    blurb = site.get("blurb") or ""
     desc = (f"Hudson River tides, current and paddling conditions for "
-            f"{site['name']}, {site['state']}.")
+            f"{site['name']}, {site['state']}."
+            + (" " + blurb if blurb else ""))
+    # Google truncates past about 160; cut on a word so it does not end mid-one
+    if len(desc) > 160:
+        desc = desc[:157].rsplit(" ", 1)[0] + "\u2026"
     split = html.index('<div class="wrap">')
     head, body = html[:split].rstrip(), html[split:].rstrip()
     page = f"""<!doctype html>

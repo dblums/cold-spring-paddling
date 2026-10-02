@@ -295,6 +295,33 @@ for (const site of ALL){
     ok(`${site.name}: headline does not say ${other.name}`, named(heading) !== other.name, heading);
     ok(`${site.name}: title does not say ${other.name}`, named(title) !== other.name);
   }
+  /* What Google quotes. Searching "hudson river paddling conditions" returned
+     the Beacon page described as "It is dark out. A white light is required
+     after dark" - the live hero, three days stale, because it was the only
+     prose on the page. The time-specific blocks are now excluded from snippets
+     and the launch has a standing description instead. */
+  for (const id of ['id="brief"', 'id="stamp"', 'id="wxCard"'])
+    ok(`${site.name}: ${id} is excluded from search snippets`,
+       new RegExp(id.replace(/"/g, '"') + '[^>]*data-nosnippet').test(html), id);
+
+  ok(`${site.name}: has a standing description on the page`,
+     html.includes(`<p class="blurb">`) && (site.blurb || "").length > 40,
+     (site.blurb || "").slice(0, 50));
+  ok(`${site.name}: the blurb is rendered, not just stored`,
+     html.includes(site.blurb.replace(/&/g, "&amp;")), site.blurb.slice(0, 50));
+
+  {
+    const d = (/<meta name="description" content="([^"]*)"/.exec(html) || [])[1] || "";
+    ok(`${site.name}: the description names this launch`, d.includes(site.name), d);
+    ok(`${site.name}: the description says more than the launch name`,
+       d.length > 90, `${d.length} chars`);
+    // Google truncates past about 160, and a cut mid-word looks broken
+    ok(`${site.name}: the description fits what Google shows`, d.length <= 160,
+       `${d.length} chars`);
+    ok(`${site.name}: the description is not time-specific`,
+       !/\b(right now|today|this afternoon|\d{1,2}:\d{2})\b/i.test(d), d);
+  }
+
   /* A link to this site travels by somebody pasting it into a group thread, and
      without these it arrives as a grey box. The image is the one photo there
      is, borrowed by every page that has none of its own. */

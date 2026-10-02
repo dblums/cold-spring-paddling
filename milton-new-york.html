@@ -6,17 +6,17 @@
 <link rel="preconnect" href="https://api.weather.gov" crossorigin>
 <link rel="preconnect" href="https://api.tidesandcurrents.noaa.gov" crossorigin>
 <link rel="preconnect" href="https://waterservices.usgs.gov" crossorigin>
-<meta name="description" content="Hudson River tides, current and paddling conditions for Milton, New York.">
+<meta name="description" content="Hudson River tides, current and paddling conditions for Milton, New York. Milton Landing, on the west bank between New Hamburg and Poughkeepsie, on a…">
 <link rel="canonical" href="https://hudsonconditions.com/milton-new-york.html">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Hudson Conditions">
 <meta property="og:title" content="Hudson River Paddling Conditions Near Milton, NY">
-<meta property="og:description" content="Hudson River tides, current and paddling conditions for Milton, New York.">
+<meta property="og:description" content="Hudson River tides, current and paddling conditions for Milton, New York. Milton Landing, on the west bank between New Hamburg and Poughkeepsie, on a…">
 <meta property="og:url" content="https://hudsonconditions.com/milton-new-york.html">
 <meta property="og:image" content="https://hudsonconditions.com/cold-spring-new-york.jpg">
 <meta property="og:image:alt" content="Looking south down the Hudson from Cold Spring at first light, the Highlands either side and a kayak bow in the foreground">
 <meta name="twitter:card" content="summary_large_image">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Hudson River Paddling Conditions Near Milton, NY","description":"Hudson River tides, current and paddling conditions for Milton, New York.","url":"https://hudsonconditions.com/milton-new-york.html","isPartOf":{"@type":"WebSite","name":"Hudson Conditions","url":"https://hudsonconditions.com"},"about":{"@type":"Place","name":"Milton, New York","geo":{"@type":"GeoCoordinates","latitude":41.6572,"longitude":-73.9497}},"isAccessibleForFree":true,"publisher":{"@type":"Organization","name":"Modern Product Minds LLC"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Hudson River Paddling Conditions Near Milton, NY","description":"Hudson River tides, current and paddling conditions for Milton, New York. Milton Landing, on the west bank between New Hamburg and Poughkeepsie, on a\u2026","url":"https://hudsonconditions.com/milton-new-york.html","isPartOf":{"@type":"WebSite","name":"Hudson Conditions","url":"https://hudsonconditions.com"},"about":{"@type":"Place","name":"Milton, New York","geo":{"@type":"GeoCoordinates","latitude":41.6572,"longitude":-73.9497}},"isAccessibleForFree":true,"publisher":{"@type":"Organization","name":"Modern Product Minds LLC"}}</script>
 <meta name="theme-color" content="#eaeeee" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0c1518" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -161,9 +161,30 @@ body{
   .alllocs .menu{left:0; right:0; min-width:0}
 }
 
-.hero h1{
+/* The title and the line under it sit in one positioned box. Positioning them
+   separately put them both at the bottom of the hero, on top of each other. */
+.hero .herotext{
   position:absolute; z-index:1; left:clamp(16px,3.4vw,26px); right:clamp(16px,3.4vw,26px);
-  bottom:clamp(13px,2.4vw,20px); margin:0; color:#f4f9fa;
+  bottom:clamp(13px,2.4vw,20px);
+}
+.hero .blurb{
+  margin:7px 0 0; max-width:60ch; color:rgba(244,249,250,.78);
+  font-size:clamp(12.5px,1.7vw,14.5px); line-height:1.45;
+  text-shadow:0 1px 10px rgba(8,20,26,.75);
+}
+/* Not display:none on a phone. Google indexes the mobile rendering, and this
+   line is here to be the thing a search result quotes - hiding it exactly where
+   the crawler looks would defeat the point. Trimmed to two lines instead, so
+   the conditions still start near the top of the screen. */
+@media (max-width:560px){
+  .hero .blurb{
+    font-size:12.5px; margin-top:5px;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+    overflow:hidden;
+  }
+}
+.hero h1{
+  margin:0; color:#f4f9fa;
   font-family:"Barlow Semi Condensed",sans-serif; font-weight:700;
   font-size:clamp(27px,5.6vw,40px); line-height:1.04; letter-spacing:-.01em;
   text-wrap:balance; text-shadow:0 1px 14px rgba(8,20,26,.6);
@@ -177,7 +198,12 @@ body{
   border:1px solid var(--line);
 }
 .hero-plain::after{display:none}
-.hero-plain h1{position:static; padding:clamp(22px,4vw,34px) clamp(16px,3.4vw,26px)}
+/* No photo, so nothing gives this box height but its own text: the text block
+   goes back in the flow and carries the padding. */
+.hero-plain .herotext{
+  position:static; padding:clamp(22px,4vw,34px) clamp(16px,3.4vw,26px);
+}
+.hero-plain .blurb{text-shadow:none; color:var(--muted)}
 @media (max-width:560px){ .hero-plain{aspect-ratio:auto} }
 .coords{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:baseline}
 .coords .num{font-size:12px; color:var(--muted); letter-spacing:.02em}
@@ -491,7 +517,10 @@ img{max-width:100%}
 <body>
 <div class="wrap">
   <header class="hero hero-plain">
-    <h1>Hudson River Paddling Conditions Near Milton, NY</h1>
+    <div class="herotext">
+      <h1>Hudson River Paddling Conditions Near Milton, NY</h1>
+      <p class="blurb">Milton Landing, on the west bank between New Hamburg and Poughkeepsie, on a straight and comparatively narrow reach of river.</p>
+    </div>
   </header>
   <nav class="locnav">
     <span class="label">Nearby locations</span>
@@ -549,11 +578,14 @@ img{max-width:100%}
     <input type="datetime-local" id="when" step="300" aria-label="Date and time, Eastern">
     <button id="nowbtn" class="on">Now</button>
   </div>
-  <div class="stamp" id="stamp"></div>
+  <div class="stamp" id="stamp" data-nosnippet></div>
 
   <div class="warn" id="outofrange"></div>
 
-  <section class="brief" id="brief">
+  <!-- data-nosnippet: this block says what the river is doing in this minute.
+       Quoted in a search result three days later it is worse than meaningless,
+       and the date in it is where "3 days ago" came from. -->
+  <section class="brief" id="brief" data-nosnippet>
     <h2 id="briefHead">&mdash;</h2>
     <p id="briefBody"></p>
     <p class="safety" id="briefSafety"></p>
@@ -574,7 +606,7 @@ img{max-width:100%}
     </div>
   </section>
 
-  <section class="card" id="wxCard">
+  <section class="card" id="wxCard" data-nosnippet>
     <div class="card-head">
       <h2>Weather &amp; Water</h2>
       <span class="station"><span id="wxWhen"></span><a href="https://forecast.weather.gov/MapClick.php?lat=41.6572&amp;lon=-73.9497" target="_blank" rel="noopener">NWS ALY &#8599;</a> &middot; NOAA water temp</span>
