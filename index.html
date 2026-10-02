@@ -1471,7 +1471,7 @@ function curNext(t, cv){
 function riverLine(t, cv, w, future, headSaid){
   if (!w) return "";
   const parts = [];
-  if (w.windMph != null && !/wind|chop|blow/i.test(headSaid || ""))
+  if (w.windMph != null && !/wind|blow/i.test(headSaid || ""))
     parts.push(w.windMph < 5 ? "Barely any wind"
       : windWord(w.windMph) + (w.windFromDeg != null
           ? " from the " + compass(w.windFromDeg) : ""));
@@ -1608,7 +1608,7 @@ function briefConcerns(t, cv, w, sky, now){
         + "is required from sunset on."});
     else if (left < 90 * MIN) out.push({level:"caution", key:"light", rank:1,
       head:"Not much daylight left.",
-      say:""});
+      say:"The sun sets at " + fmtT.format(sky.sunset) + "."});
   }
   return {concerns:out, speeds:sp};
 }
@@ -1744,7 +1744,12 @@ function buildBrief(t, cv, w, sky, now){
 
   const sunsetSoon = sky && sky.sunset != null && sky.sunset > t && sky.sunset - t < 90 * MIN
     && !shown.some(c => c.key === "light" || c.key === "dusk" || c.key === "dark");
-  const tail = lastNamedWater ? "" : sceneTail(w, false, sunsetSoon, future);
+  const tail = lastNamedWater
+    ? (w && w.wx && w.wx.happening
+        ? (future ? "The forecast calls for " + w.wx.noun + "."
+                  : "It is " + (w.wx.fitsIs ? w.wx.text : "") + ".")
+        : "")
+    : sceneTail(w, false, sunsetSoon, future);
   const river = riverLine(t, cv, w, future, head);
 
   return {level, head,

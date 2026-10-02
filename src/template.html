@@ -1668,7 +1668,7 @@ function curNext(t, cv){
 function riverLine(t, cv, w, future, headSaid){
   if (!w) return "";
   const parts = [];
-  if (w.windMph != null && !/wind|chop|blow/i.test(headSaid || ""))
+  if (w.windMph != null && !/wind|blow/i.test(headSaid || ""))
     parts.push(w.windMph < 5 ? "Barely any wind"
       : windWord(w.windMph) + (w.windFromDeg != null
           ? " from the " + compass(w.windFromDeg) : ""));
@@ -1834,8 +1834,10 @@ function briefConcerns(t, cv, w, sky, now){
         + "is required from sunset on."});
     else if (left < 90 * MIN) out.push({level:"caution", key:"light", rank:1,
       head:"Not much daylight left.",
-      // the headline has said it; grown adults can work out what that means
-      say:""});
+      /* The time, not a lecture about how long it takes to land in the dark.
+         When this is not the concern leading the headline it is the only place
+         the short light gets mentioned at all. */
+      say:"The sun sets at " + fmtT.format(sky.sunset) + "."});
   }
   return {concerns:out, speeds:sp};
 }
@@ -2004,9 +2006,17 @@ function buildBrief(t, cv, w, sky, now){
   // sentence twice, so only say it when the headline has not
   const sunsetSoon = sky && sky.sunset != null && sky.sunset > t && sky.sunset - t < 90 * MIN
     && !shown.some(c => c.key === "light" || c.key === "dusk" || c.key === "dark");
-  // After "Dress for the water.", an "It is warm and clear." reads as the water
-  // being warm - the exact opposite of what was just said. Stop instead.
-  const tail = lastNamedWater ? "" : sceneTail(w, false, sunsetSoon, future);
+  /* After "Dress for the water.", an "It is warm and clear." reads as the water
+     being warm - the exact opposite of what was just said. The temperature has
+     to go, but rain still has to be said: a drizzly October afternoon was
+     losing the drizzle entirely, because the cold-water sentence ate the tail
+     that would have carried it. */
+  const tail = lastNamedWater
+    ? (w && w.wx && w.wx.happening
+        ? (future ? "The forecast calls for " + w.wx.noun + "."
+                  : "It is " + (w.wx.fitsIs ? w.wx.text : "") + ".")
+        : "")
+    : sceneTail(w, false, sunsetSoon, future);
   // and the river, which every summary now carries
   const river = riverLine(t, cv, w, future, head);
 
