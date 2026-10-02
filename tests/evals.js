@@ -48,6 +48,12 @@ function run(s){
   if (w && s.skyPct != null){ w.skyPct = s.skyPct; w.skyText = T.skyWord(s.skyPct); }
   if (w && s.wx) w.wx = T.precipWord([{weather:s.wx, coverage:s.wxCoverage || "likely"}]);
   if (w && s.precipPct != null) w.precipPct = s.precipPct;
+  /* A thunder probability that arrives some hours out, which is what the
+     outlook reads - distinct from s.storm, which is the chance right now. */
+  T.WX.grid = s.stormLater ? {probabilityOfThunder: {values: [
+    {validTime: new Date((s.at || NOON)).toISOString() + "/PT1H", value: s.storm || 0},
+    {validTime: new Date((s.at || NOON) + s.stormLater.hoursOut * 3600e3).toISOString()
+       + "/PT3H", value: s.stormLater.pct}]}} : null;
   const t = s.at || NOON;
   // a fixed present, so "is it a forecast?" does not depend on the wall clock
   const now = s.now != null ? s.now : t + DAY;
@@ -327,6 +333,23 @@ const SCENARIOS = [
     level: "caution",
     must: [/forecast to run straight into the current/i],
     mustNot: [/\bis running straight into/i] },
+
+  /* Thunder six hours out was raising a caution on a page whose own tiles said
+     a 1% chance of rain, because the outlook looked six hours ahead and the
+     copy never said so. What you would paddle into is a flag; what comes later
+     is an outlook, and both name the hour. */
+  { name: "thunder later today is an outlook, not a warning",
+    wind: 7, from: 180, cur: 0.4, air: 70, water: 68, precipPct: 1,
+    storm: 0, stormLater: {pct: 20, hoursOut: 5},
+    level: "good",
+    must: [/chance of thunder from about/i],
+    mustNot: [/possible thunderstorms/i, /worth a look at the radar/i] },
+
+  { name: "thunder within the next few hours is a warning",
+    wind: 7, from: 180, cur: 0.4, air: 70, water: 68, precipPct: 1,
+    storm: 0, stormLater: {pct: 20, hoursOut: 2},
+    level: "caution",
+    must: [/possible thunderstorms/i, /thunder in the forecast from about/i] },
 
   { name: "planning ahead, thunderstorms",
     wind: 7, from: 200, cur: 0.2, air: 80, water: 74, storm: 60, skyPct: 60,

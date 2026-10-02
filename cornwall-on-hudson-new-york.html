@@ -1434,7 +1434,7 @@ function curNext(t, cv){
     + " at " + fmtT.format(nxt.t);
 }
 
-function riverLine(t, cv, w, future, headSaid){
+function riverLine(t, cv, w, future, headSaid, stormSaid){
   if (!w) return "";
   const parts = [];
   if (w.windMph != null && !/wind|blow/i.test(headSaid || ""))
@@ -1446,6 +1446,11 @@ function riverLine(t, cv, w, future, headSaid){
   if (!(w.wx && w.wx.happening) && (w.stormPct || 0) < 30
       && w.precipPct != null && w.precipPct >= 30)
     parts.push("a " + w.precipPct + "% chance of rain");
+  if (!stormSaid){
+    const late = stormOutlook(t, 6);
+    if (late && late.pct >= 20 && late.at - t > STORM_SOON_H * 3600e3)
+      parts.push("a " + late.pct + "% chance of thunder from about " + fmtT.format(late.at));
+  }
 
   let out = parts.length > 1
     ? parts.slice(0, -1).join(", ") + " and " + parts[parts.length - 1]
@@ -1462,6 +1467,8 @@ function quietDay(t, cv, w, future, headWater){
   return lovely ? "About as easy as this river gets. " + out : out;
 }
 
+const STORM_SOON_H = 3;
+
 function stormOutlook(t, hours){
   if (!WX.grid) return null;
   let pct = 0, at = null;
@@ -1469,7 +1476,8 @@ function stormOutlook(t, hours){
     const v = valueAt(WX.grid.probabilityOfThunder, t + h * 3600e3);
     if (v != null && v > pct){ pct = v; at = t + h * 3600e3; }
   }
-  return pct > 0 ? {pct, at, soon: at - t <= 2 * 3600e3} : null;
+  const onHour = at == null ? at : new Date(at).setMinutes(0, 0, 0);
+  return pct > 0 ? {pct, at: onHour, soon: at - t <= 2 * 3600e3} : null;
 }
 
 const isFuture = (t, now) => t > (now == null ? Date.now() : now) + 30 * MIN;
@@ -1539,12 +1547,15 @@ function briefConcerns(t, cv, w, sky, now){
     }
   }
 
-  const ahead = stormOutlook(t, 6);
+  const ahead = stormOutlook(t, STORM_SOON_H);
+  const later = stormOutlook(t, 6);
   const stormPct = Math.max((w && w.stormPct) || 0, ahead ? ahead.pct : 0);
   if (stormPct >= 20) out.push({level: stormPct >= 50 ? "warn" : "caution", key:"storm", rank:1,
     head:"Possible thunderstorms.",
     say:(future ? "There is thunder in the forecast around then. "
-                : "There is thunder in the forecast for the next few hours. ")
+         : ahead && ahead.at - t > 45 * MIN
+             ? "There is thunder in the forecast from about " + fmtT.format(ahead.at) + ". "
+             : "There is thunder in the forecast for the next few hours. ")
       + "Worth a look at the radar before you set out."});
 
   if (wind != null && windVsCurrent(w.windFromDeg, cv) === "opposed"
@@ -1716,7 +1727,8 @@ function buildBrief(t, cv, w, sky, now){
                   : "It is " + (w.wx.fitsIs ? w.wx.text : "") + ".")
         : "")
     : sceneTail(w, false, sunsetSoon, future);
-  const river = riverLine(t, cv, w, future, head);
+  const river = riverLine(t, cv, w, future, head,
+    shown.some(c => c.key === "storm"));
 
   return {level, head,
     body:[...said, river, tail].filter(Boolean).join(" "),

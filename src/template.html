@@ -1681,7 +1681,7 @@ function curNext(t, cv){
 /* The wind and the river, in one sentence. Every summary gets this now, not
    just the quiet ones - a wind warning that never says what the current is
    doing has left out half of what the reader came for. */
-function riverLine(t, cv, w, future, headSaid){
+function riverLine(t, cv, w, future, headSaid, stormSaid){
   if (!w) return "";
   const parts = [];
   if (w.windMph != null && !/wind|blow/i.test(headSaid || ""))
@@ -1695,6 +1695,13 @@ function riverLine(t, cv, w, future, headSaid){
   if (!(w.wx && w.wx.happening) && (w.stormPct || 0) < 30
       && w.precipPct != null && w.precipPct >= 30)
     parts.push("a " + w.precipPct + "% chance of rain");
+  /* Thunder later in the day: said, with its hour, but not flagged. Only when
+     the concern above has not already spoken for it. */
+  if (!stormSaid){
+    const late = stormOutlook(t, 6);
+    if (late && late.pct >= 20 && late.at - t > STORM_SOON_H * 3600e3)
+      parts.push("a " + late.pct + "% chance of thunder from about " + fmtT.format(late.at));
+  }
 
   let out = parts.length > 1
     ? parts.slice(0, -1).join(", ") + " and " + parts[parts.length - 1]
@@ -1712,6 +1719,10 @@ function quietDay(t, cv, w, future, headWater){
   return lovely ? "About as easy as this river gets. " + out : out;
 }
 
+/* How far ahead counts as weather you would be out in. Past this it is still
+   worth knowing and not worth a warning. */
+const STORM_SOON_H = 3;
+
 function stormOutlook(t, hours){
   if (!WX.grid) return null;
   let pct = 0, at = null;
@@ -1719,7 +1730,11 @@ function stormOutlook(t, hours){
     const v = valueAt(WX.grid.probabilityOfThunder, t + h * 3600e3);
     if (v != null && v > pct){ pct = v; at = t + h * 3600e3; }
   }
-  return pct > 0 ? {pct, at, soon: at - t <= 2 * 3600e3} : null;
+  /* The sampling walks forward from the current minute, so a band that starts
+     at 5 would be reported as 5:37. The page says "about", so round to the hour
+     it actually belongs to rather than quote a precision that is not there. */
+  const onHour = at == null ? at : new Date(at).setMinutes(0, 0, 0);
+  return pct > 0 ? {pct, at: onHour, soon: at - t <= 2 * 3600e3} : null;
 }
 
 /* Anything much past now is a forecast, and prose about a forecast should not
@@ -1803,12 +1818,21 @@ function briefConcerns(t, cv, w, sky, now){
     }
   }
 
-  const ahead = stormOutlook(t, 6);
+  /* Thunder six hours out is not a thing to put in the headline of a page whose
+     own tiles say a 1% chance of rain - which is exactly what the Upper West
+     Side showed, because the worst of the day was 20% at five in the afternoon
+     and this looked six hours ahead without ever saying so. Two windows now:
+     what you would paddle into raises a flag, what comes later is an outlook,
+     and either way the hour is named. */
+  const ahead = stormOutlook(t, STORM_SOON_H);
+  const later = stormOutlook(t, 6);
   const stormPct = Math.max((w && w.stormPct) || 0, ahead ? ahead.pct : 0);
   if (stormPct >= 20) out.push({level: stormPct >= 50 ? "warn" : "caution", key:"storm", rank:1,
     head:"Possible thunderstorms.",
     say:(future ? "There is thunder in the forecast around then. "
-                : "There is thunder in the forecast for the next few hours. ")
+         : ahead && ahead.at - t > 45 * MIN
+             ? "There is thunder in the forecast from about " + fmtT.format(ahead.at) + ". "
+             : "There is thunder in the forecast for the next few hours. ")
       // the radar is a fact worth pointing at; what to do about it is not ours
       + "Worth a look at the radar before you set out."});
 
@@ -2034,7 +2058,8 @@ function buildBrief(t, cv, w, sky, now){
         : "")
     : sceneTail(w, false, sunsetSoon, future);
   // and the river, which every summary now carries
-  const river = riverLine(t, cv, w, future, head);
+  const river = riverLine(t, cv, w, future, head,
+    shown.some(c => c.key === "storm"));
 
   return {level, head,
     body:[...said, river, tail].filter(Boolean).join(" "),
