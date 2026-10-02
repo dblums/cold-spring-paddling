@@ -1323,11 +1323,33 @@ const HEADLINE = {
   good:    "Calm and glassy."
 };
 
-function goodHead(cv, w){
+function waterWord(cv, w){
+  const kt = Math.abs(cv);
+  const mph = w && w.windMph != null ? w.windMph : null;
+  if (mph == null) return kt < 0.15 ? "slack water" : "a current running";
+  const vs = w.windFromDeg != null ? windVsCurrent(w.windFromDeg, cv) : "slack";
+  if (vs === "opposed" && mph >= 7) return mph >= 12 ? "a real chop" : "a light chop";
+  if (vs === "across" && mph >= 10) return "a light chop";
+  if (vs === "slack" && mph >= 12) return "a light chop";
+  if (kt < 0.15) return mph < 5 ? "glassy water" : "slack water";
+  if (mph < 5 && kt < 0.5) return "glassy water";
+  if (kt >= 1.2) return "a strong current";
+  if (kt >= 0.6) return "a steady current";
+  return "calm water";
+}
+
+function waterHead(cv, w){
   const temp = tempWord(feelsLike(w));
+  const water = waterWord(cv, w);
+  const wet = w && w.wx && w.wx.happening ? w.wx.noun : null;
+  if (!temp) return water ? water.charAt(0).toUpperCase() + water.slice(1) + "." : HEADLINE.fine;
+  const air = temp + " air";
+  return wet ? air + ", " + wet + ", " + water + "." : air + ", " + water + ".";
+}
+
+function goodHead(cv, w){
   if (w.windMph != null && w.windMph < 5 && Math.abs(cv) < 0.4) return HEADLINE.good;
-  if (w.skyText) return temp + " and " + w.skyText.toLowerCase() + ".";
-  return temp + " out there.";
+  return waterHead(cv, w);
 }
 
 function pleasantEnough(w){
@@ -1341,14 +1363,9 @@ function pleasantEnough(w){
   return true;
 }
 
-function plainHead(w){
+function plainHead(cv, w){
   if (!w) return HEADLINE.fine;
-  const temp = tempWord(feelsLike(w));
-  if (w.wx && w.wx.happening) return temp + " and " + w.wx.adj + ".";
-  if (w.precipPct != null && w.precipPct >= 30) return temp + ", rain possible.";
-  if (w.windMph != null && w.windMph >= 10) return temp + " and breezy.";
-  if (w.skyText) return temp + " and " + w.skyText.toLowerCase() + ".";
-  return temp + " out there.";
+  return waterHead(cv, w);
 }
 
 const tempWord = f => f == null ? null
@@ -1382,20 +1399,38 @@ function sceneTail(w, includeWind, sunsetSoon, future){
   return s ? s + "." : "";
 }
 
-function quietDay(cv, w, future, skipScene){
+function curWord(cv, strengthSaid){
+  const kt = Math.abs(cv);
+  if (kt < 0.15) return "the river nearly slack";
+  const how = strengthSaid ? "the current"
+    : kt < 0.6 ? "a weak current" : kt < 1.2 ? "a steady current" : "a strong current";
+  return how + " running " + dirWord(cv > 0 ? FLOOD_TOWARD : EBB_TOWARD);
+}
+
+function slackSoon(t, cv, future){
+  const slack = nextAfter(CUR, t, p => p.type === "slack");
+  if (!slack || Math.abs(cv) < 0.15) return "";
+  const mins = Math.round((slack.t - t) / MIN);
+  if (mins > 60) return "";
+  return (future ? "slack water about " : "slack water in about ")
+    + mins + (mins === 1 ? " minute" : " minutes");
+}
+
+function quietDay(t, cv, w, future, skipScene, headWater){
   if (!w) return "";
-  const bits = [];
-  const temp = tempWord(feelsLike(w));
-  if (temp) bits.push(future ? temp.toLowerCase() + " air" : temp);
-  if (w.wx && w.wx.happening) bits.push(future ? w.wx.noun : w.wx.text);
-  else if (w.skyText) bits.push(w.skyText.toLowerCase() + (future ? " skies" : ""));
-  const extras = [];
-  if (w.windMph != null) extras.push(windWord(w.windMph).toLowerCase());
-  extras.push(Math.abs(cv) < 0.15 ? "the river nearly slack"
-    : "the current running " + dirWord(cv > 0 ? FLOOD_TOWARD : EBB_TOWARD));
-  let out = skipScene ? "" : bits.join(" and ");
-  out += (out ? ", with " : "") + extras.join(" and ");
-  out = future ? "The forecast calls for " + out + "."
+  const parts = [];
+  if (w.windMph != null)
+    parts.push(w.windMph < 5 ? "Barely any wind"
+      : windWord(w.windMph) + (w.windFromDeg != null
+          ? " from the " + compass(w.windFromDeg) : ""));
+  parts.push(curWord(cv, /current/.test(headWater || "")));
+  const turn = slackSoon(t, cv, future);
+  if (turn) parts.push(turn);
+  if (!(w.wx && w.wx.happening) && w.precipPct != null && w.precipPct >= 30)
+    parts.push("a " + w.precipPct + "% chance of rain");
+
+  let out = parts.join(", ").replace(/, ([^,]*)$/, " and $1");
+  out = future ? "The forecast calls for " + out.charAt(0).toLowerCase() + out.slice(1) + "."
       : out.charAt(0).toUpperCase() + out.slice(1) + ".";
   const lovely = !skipScene && (w.windMph == null || w.windMph < 8) && Math.abs(cv) < 0.4
     && !(w.wx && w.wx.happening) && (w.airF == null || w.airF >= 60);
@@ -1637,8 +1672,8 @@ function buildBrief(t, cv, w, sky, now){
     down: directionOutlook(EBB_TOWARD, -cv, w, speeds.down)
   };
   if (!concerns.length){
-    const head = level === "good" ? goodHead(cv, w) : plainHead(w);
-    const body = w ? quietDay(cv, w, future, head !== HEADLINE.good)
+    const head = level === "good" ? goodHead(cv, w) : plainHead(cv, w);
+    const body = w ? quietDay(t, cv, w, future, head !== HEADLINE.good, head)
       : "There is no weather reading right now, so this is the tide and current alone.";
     return {level, head, body, ahead: riverAhead(t, cv, future),
       speeds, note, outlook, safety, facts: briefFacts(t, cv, w, sky)};

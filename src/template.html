@@ -1487,13 +1487,48 @@ const HEADLINE = {
    a claim about the river, so it needs the air still AND the water quiet; a
    3 mph morning over a 1.5 kt ebb is not glassy. Everything else says what it
    is - "Warm and clear.", "Cool and overcast." */
-function goodHead(cv, w){
+/* The state of the water, for the headline's second beat.
+
+   This is a paddling page, not a weather one. Cloud cover is the least useful
+   thing a reader can be told - it changes nothing about the paddle - so the
+   headline names the river instead, and the sky only shows up when it is
+   falling on you. Wind against the current stands the water up and wind with
+   it lays it down, which is why chop is not read off wind speed alone. */
+function waterWord(cv, w){
+  const kt = Math.abs(cv);
+  const mph = w && w.windMph != null ? w.windMph : null;
+  if (mph == null) return kt < 0.15 ? "slack water" : "a current running";
+  const vs = w.windFromDeg != null ? windVsCurrent(w.windFromDeg, cv) : "slack";
+  /* Chop is what wind does when it fights the water. Against the current it
+     stands up; running with the current it lies down, and calling a following
+     breeze "chop" is the mistake the direction cards already avoid. */
+  if (vs === "opposed" && mph >= 7) return mph >= 12 ? "a real chop" : "a light chop";
+  if (vs === "across" && mph >= 10) return "a light chop";
+  if (vs === "slack" && mph >= 12) return "a light chop";
+  if (kt < 0.15) return mph < 5 ? "glassy water" : "slack water";
+  if (mph < 5 && kt < 0.5) return "glassy water";
+  if (kt >= 1.2) return "a strong current";
+  if (kt >= 0.6) return "a steady current";
+  return "calm water";
+}
+
+/* Headline for a day with nothing to flag: what the air is doing and what the
+   water is doing. Rain earns the middle beat because it changes the paddle;
+   cloud does not, and used to lead here. */
+function waterHead(cv, w){
   const temp = tempWord(feelsLike(w));
+  const water = waterWord(cv, w);
+  const wet = w && w.wx && w.wx.happening ? w.wx.noun : null;
+  if (!temp) return water ? water.charAt(0).toUpperCase() + water.slice(1) + "." : HEADLINE.fine;
+  const air = temp + " air";
+  return wet ? air + ", " + wet + ", " + water + "." : air + ", " + water + ".";
+}
+
+function goodHead(cv, w){
+  // "Calm and glassy" is a claim about the river, so it needs the air still
+  // AND the water quiet; a 3 mph morning over a 1.5 kt ebb is not glassy
   if (w.windMph != null && w.windMph < 5 && Math.abs(cv) < 0.4) return HEADLINE.good;
-  // no "and still": light air is not stillness when a knot of current is
-  // running under you, and off Manhattan nothing is ever still
-  if (w.skyText) return temp + " and " + w.skyText.toLowerCase() + ".";
-  return temp + " out there.";
+  return waterHead(cv, w);
 }
 
 /* "Pleasant" is a promise, and the page may only make it when every part of the
@@ -1516,16 +1551,11 @@ function pleasantEnough(w){
 /* When nothing is wrong but nothing is lovely either, describe the day rather
    than grade it. Adjective fragments, so they read the same about Thursday as
    about this afternoon. */
-function plainHead(w){
+function plainHead(cv, w){
   if (!w) return HEADLINE.fine;
-  const temp = tempWord(feelsLike(w));
-  if (w.wx && w.wx.happening) return temp + " and " + w.wx.adj + ".";
-  if (w.precipPct != null && w.precipPct >= 30) return temp + ", rain possible.";
   // no cool-water branch here: water under COLD_WATER_F always raises a concern,
   // and plainHead only speaks when nothing did
-  if (w.windMph != null && w.windMph >= 10) return temp + " and breezy.";
-  if (w.skyText) return temp + " and " + w.skyText.toLowerCase() + ".";
-  return temp + " out there.";
+  return waterHead(cv, w);
 }
 
 const tempWord = f => f == null ? null
@@ -1572,20 +1602,51 @@ function sceneTail(w, includeWind, sunsetSoon, future){
 
 /* When there is nothing to flag, the prose is just what the day is like. Still
    no figures - those are in the module - but enough to be worth reading. */
-function quietDay(cv, w, future, skipScene){
+/* How strong the current is, named rather than numbered - the figure is in the
+   module below. The breakpoints are the ones the direction cards already use. */
+function curWord(cv, strengthSaid){
+  const kt = Math.abs(cv);
+  if (kt < 0.15) return "the river nearly slack";
+  // the headline may already have graded the current; saying "a steady current"
+  // twice in two sentences is a stutter, so the body just points it
+  const how = strengthSaid ? "the current"
+    : kt < 0.6 ? "a weak current" : kt < 1.2 ? "a steady current" : "a strong current";
+  return how + " running " + dirWord(cv > 0 ? FLOOD_TOWARD : EBB_TOWARD);
+}
+
+/* The turn, but only when it is close enough to change what you would do. Past
+   an hour it is planning rather than conditions, and the current module has the
+   exact time either way. */
+function slackSoon(t, cv, future){
+  const slack = nextAfter(CUR, t, p => p.type === "slack");
+  if (!slack || Math.abs(cv) < 0.15) return "";
+  const mins = Math.round((slack.t - t) / MIN);
+  if (mins > 60) return "";
+  return (future ? "slack water about " : "slack water in about ")
+    + mins + (mins === 1 ? " minute" : " minutes");
+}
+
+/* When there is nothing to flag, the prose is the wind and the river - the two
+   things that decide the paddle. It used to lead with the temperature and the
+   cloud, which the headline has already covered and which nobody is deciding
+   on. Still no figures; those are in the module. */
+function quietDay(t, cv, w, future, skipScene, headWater){
   if (!w) return "";
-  const bits = [];
-  const temp = tempWord(feelsLike(w));
-  if (temp) bits.push(future ? temp.toLowerCase() + " air" : temp);
-  if (w.wx && w.wx.happening) bits.push(future ? w.wx.noun : w.wx.text);
-  else if (w.skyText) bits.push(w.skyText.toLowerCase() + (future ? " skies" : ""));
-  const extras = [];
-  if (w.windMph != null) extras.push(windWord(w.windMph).toLowerCase());
-  extras.push(Math.abs(cv) < 0.15 ? "the river nearly slack"
-    : "the current running " + dirWord(cv > 0 ? FLOOD_TOWARD : EBB_TOWARD));
-  let out = skipScene ? "" : bits.join(" and ");
-  out += (out ? ", with " : "") + extras.join(" and ");
-  out = future ? "The forecast calls for " + out + "."
+  const parts = [];
+  if (w.windMph != null)
+    parts.push(w.windMph < 5 ? "Barely any wind"
+      : windWord(w.windMph) + (w.windFromDeg != null
+          ? " from the " + compass(w.windFromDeg) : ""));
+  parts.push(curWord(cv, /current/.test(headWater || "")));
+  const turn = slackSoon(t, cv, future);
+  if (turn) parts.push(turn);
+  /* Rain that is falling is in the headline already. Rain that is only a
+     chance is not, and is worth saying - cloud is not. */
+  if (!(w.wx && w.wx.happening) && w.precipPct != null && w.precipPct >= 30)
+    parts.push("a " + w.precipPct + "% chance of rain");
+
+  let out = parts.join(", ").replace(/, ([^,]*)$/, " and $1");
+  out = future ? "The forecast calls for " + out.charAt(0).toLowerCase() + out.slice(1) + "."
       : out.charAt(0).toUpperCase() + out.slice(1) + ".";
   // a genuinely lovely day is worth saying out loud, without telling anyone to go
   const lovely = !skipScene && (w.windMph == null || w.windMph < 8) && Math.abs(cv) < 0.4
@@ -1871,10 +1932,10 @@ function buildBrief(t, cv, w, sky, now){
   };
   if (!concerns.length){
     // described either way; "good" just gets to sound like a nice day
-    const head = level === "good" ? goodHead(cv, w) : plainHead(w);
+    const head = level === "good" ? goodHead(cv, w) : plainHead(cv, w);
     // every headline but "Calm and glassy." already names the temperature, and
     // "Warm and clear. Warm and clear, with light wind..." is a stutter
-    const body = w ? quietDay(cv, w, future, head !== HEADLINE.good)
+    const body = w ? quietDay(t, cv, w, future, head !== HEADLINE.good, head)
       : "There is no weather reading right now, so this is the tide and current alone.";
     return {level, head, body, ahead: riverAhead(t, cv, future),
       speeds, note, outlook, safety, facts: briefFacts(t, cv, w, sky)};

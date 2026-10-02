@@ -78,7 +78,8 @@ const SCENARIOS = [
   { name: "pleasant but for the rain",
     wind: 6, from: 180, cur: -0.5, air: 74, water: 71, wx: "rain",
     level: "fine",
-    must: [/mild and wet/i],
+    // the headline names the air and the rain; the sky is nobody's decision
+    must: [/mild air/i, /rain/i],
     mustNot: [/pleasant|beautiful|glassy/i] },
 
   { name: "pleasant but for the cool air",
@@ -106,7 +107,7 @@ const SCENARIOS = [
   { name: "pleasant but for the chance of rain",
     wind: 6, from: 180, cur: -0.5, air: 74, water: 71, precipPct: 50, skyPct: 70,
     level: "fine",
-    must: [/rain possible/i],
+    must: [/chance of rain/i],
     mustNot: [/pleasant|beautiful|glassy/i] },
 
   { name: "genuinely glassy",
@@ -117,13 +118,14 @@ const SCENARIOS = [
   { name: "still air over a running river is not glassy",
     wind: 3, from: 180, cur: -1.5, air: 76, water: 70, skyPct: 5,
     level: "good",
-    must: [/warm and clear/i],
+    // a current that strong is the headline, not the cloudless sky
+    must: [/warm air/i, /strong current/i],
     mustNot: [/glassy/i, /still/i] },
 
   { name: "hot, light air, current running",
     wind: 5, from: 190, cur: 0.3, air: 89, water: 78, skyPct: 10,
     level: "good",
-    must: [/hot and clear/i],
+    must: [/hot air/i],
     // "still" is a lie with a knot under you, and off Manhattan it never is
     mustNot: [/glassy|beautiful|still/i] },
 
@@ -438,7 +440,7 @@ for (const s of SCENARIOS){
   check(s.name, `headline must speak for a ${b.level} verdict`,
     heads.includes(b.head) || b.head === T.HEADLINE[b.level]
       || (!heads.length && b.head === (b.level === "good"
-            ? T.goodHead(inp.cv, inp.w) : T.plainHead(inp.w))),
+            ? T.goodHead(inp.cv, inp.w) : T.plainHead(inp.cv, inp.w))),
     `"${b.head}" vs [${heads.join(" | ")}] or "${T.HEADLINE[b.level]}"`);
 
   // The one that matters: "pleasant" is a promise, and an absence of hazards is

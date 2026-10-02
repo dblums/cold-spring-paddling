@@ -6,7 +6,7 @@ const vm = require("vm");
 
 const EXPORTS = ["SITE","WX","sunTimes","moonTimes","moonIllumination","moonAltitude","skyFor",
   "tideAt","curAt","TIDE","CUR","HIGHS","LOWS","RANGE","fromNY","nyParts","dayStartNY",
-  "dur","compass","windVsCurrent","immersionLede","groundSpeedMph","headwindMph","speedsFor","buildBrief","speedNote","directionOutlook","windWord","briefConcerns","LEVELS","HEADLINE","scene","quietDay","riverAhead","pleasantEnough","plainHead","goodHead","COLD_WATER_F","briefFacts","feelsLike","tempWord","precipWord","PADDLE_POWER",
+  "dur","compass","windVsCurrent","immersionLede","groundSpeedMph","headwindMph","speedsFor","buildBrief","speedNote","directionOutlook","windWord","briefConcerns","LEVELS","HEADLINE","scene","quietDay","riverAhead","pleasantEnough","plainHead","goodHead","waterWord","waterHead","curWord","slackSoon","quietDay","COLD_WATER_F","briefFacts","feelsLike","tempWord","precipWord","PADDLE_POWER",
   "blockedAt","muddyAt","nearestIn","conditionsAt","valueAt","isoDurMs","skyWord",
   "PADDLE_MPH","TRESTLE_MIN","MUD_MIN","TIDE_SHIFT_MIN","CUR_SHIFT_MIN","MIN",
   "readWater","cacheWater","cachedWater","ago","WATER_KEEP_MS","WATER_KEY",
