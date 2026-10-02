@@ -287,7 +287,7 @@ const SCENARIOS = [
     wind: 6, from: 180, cur: 0.2, air: 64, water: 66, skyPct: 95, wx: "rain",
     at: EVENING, now: T.fromNY(2026, 6, 13, 9, 0),
     level: "caution",
-    must: [/the forecast calls for/i, /sun will be going down/i],
+    must: [/the forecast calls for/i, /not much daylight left/i],
     mustNot: [/\bit is (mild|cool|warm|cold|hot|raining|overcast)/i,
               /sun is going down/i] },
 
@@ -301,8 +301,8 @@ const SCENARIOS = [
     wind: 5, from: 180, cur: 0.2, air: 70, water: 68, skyPct: 95,
     at: T.fromNY(2026, 6, 15, 22, 30), now: T.fromNY(2026, 6, 13, 9, 0),
     level: "warn",
-    must: [/it will be dark out/i, /white light/i],
-    mustNot: [/it is dark out/i] },
+    must: [/dark by then/i, /white light/i],
+    mustNot: [/\bdark out\b/i] },
 
   // ---- tense: weather is a forecast, the river is a prediction ----
   { name: "planning ahead, strong wind",
@@ -369,8 +369,9 @@ const SCENARIOS = [
     wind: 6, from: 180, cur: 0.2, air: 64, water: 66, skyPct: 95, wx: "rain",
     at: EVENING, now: EVENING,
     level: "caution",
-    must: [/it is mild and raining/i, /sun is going down/i],
-    mustNot: [/the forecast calls for/i, /sun will be going down/i] },
+    // the headline carries the light now, so the sentence does not repeat it
+    must: [/it is mild and raining/i, /not much daylight left/i],
+    mustNot: [/the forecast calls for/i, /sun will be going down/i, /sun is going down/i] },
 
   { name: "before sunrise",
     wind: 5, from: 180, cur: 0.2, air: 66, water: 68, at: T.fromNY(2026, 6, 15, 4, 0),
@@ -452,8 +453,14 @@ for (const s of SCENARIOS){
     .concerns.filter(c => c.level === b.level).map(c => c.head);
   // either a concern at the verdict's own level speaks for it, or the verdict
   // speaks for itself - never a lesser worry
+  /* A headline is the concern that speaks for the verdict, optionally followed
+     by a second beat naming what that concern left out - the river under a wind
+     warning, the air under a cold-water one. The first beat still has to be the
+     verdict's own concern; a lesser worry may not lead. */
+  const leads = h => b.head === h
+    || (h && b.head.startsWith(h.replace(/\.$/, "") + ", ") && b.head.endsWith("."));
   check(s.name, `headline must speak for a ${b.level} verdict`,
-    heads.includes(b.head) || b.head === T.HEADLINE[b.level]
+    heads.some(leads) || leads(T.HEADLINE[b.level])
       // nothing flagged: one shape for every quiet day, whatever its verdict
       || (!heads.length && b.head === T.waterHead(inp.cv, inp.w)),
     `"${b.head}" vs [${heads.join(" | ")}] or "${T.HEADLINE[b.level]}"`);

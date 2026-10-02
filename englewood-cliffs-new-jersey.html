@@ -1318,8 +1318,8 @@ const worst = (a, b) => LEVELS.indexOf(a) < LEVELS.indexOf(b) ? a : b;
 
 const HEADLINE = {
   stop:    "Severe conditions.",
-  warn:    "Very challenging conditions.",
-  caution: "A few things to be aware of.",
+  warn:    "Hard going.",
+  caution: "Worth a look before you go.",
   fine:    "Conditions below."
 };
 
@@ -1336,6 +1336,19 @@ function waterWord(cv, w){
   if (kt >= 1.2) return "a strong current";
   if (kt >= 0.6) return "a steady current";
   return "calm water";
+}
+
+function headComplement(key, cv, w, alsoShown){
+  const kt = Math.abs(cv);
+  if (key !== "cold" && alsoShown && alsoShown.some(c => c.key === "cold"))
+    return "cold water";
+  if (key === "wind" || key === "noprogress" || key === "chop")
+    return kt < 0.15 ? "slack water"
+      : (kt < 0.6 ? "a weak" : kt < 1.2 ? "a steady" : "a strong") + " current";
+  if (key === "cold")
+    return w && w.windMph != null
+      ? (w.windMph < 5 ? "still air" : windWord(w.windMph).toLowerCase()) : null;
+  return waterWord(cv, w);
 }
 
 function waterHead(cv, w){
@@ -1395,37 +1408,48 @@ function sceneTail(w, includeWind, sunsetSoon, future){
 
 function curWord(cv, strengthSaid){
   const kt = Math.abs(cv);
-  if (kt < 0.15) return "the river nearly slack";
-  const how = strengthSaid ? "the current"
-    : kt < 0.6 ? "a weak current" : kt < 1.2 ? "a steady current" : "a strong current";
-  return how + " running " + dirWord(cv > 0 ? FLOOD_TOWARD : EBB_TOWARD);
+  if (kt < 0.15) return "the river is nearly slack";
+  const way = dirWord(cv > 0 ? FLOOD_TOWARD : EBB_TOWARD);
+  if (strengthSaid) return "the current is running " + way;
+  return (kt < 0.6 ? "a weak" : kt < 1.2 ? "a steady" : "a strong")
+    + " current running " + way;
 }
 
-function slackSoon(t, cv, future){
-  const slack = nextAfter(CUR, t, p => p.type === "slack");
-  if (!slack || Math.abs(cv) < 0.15) return "";
-  const mins = Math.round((slack.t - t) / MIN);
-  if (mins > 60) return "";
-  return (future ? "slack water about " : "slack water in about ")
-    + mins + (mins === 1 ? " minute" : " minutes");
+function curNext(t, cv){
+  let nxt = nextAfter(CUR, t);
+  if (nxt && nxt.type === "slack" && Math.abs(cv) < 0.15)
+    nxt = nextAfter(CUR, nxt.t, p => p.type !== "slack");
+  if (!nxt) return "";
+  if (nxt.type === "slack") return "slowing to slack water at " + fmtT.format(nxt.t);
+  const way = dirWord(nxt.v > 0 ? FLOOD_TOWARD : EBB_TOWARD);
+  const gloss = Math.abs(cv) < 0.15 ? ", running " + way + "," : "";
+  return "building to max " + (nxt.v > 0 ? "flood" : "ebb") + gloss
+    + " at " + fmtT.format(nxt.t);
+}
+
+function riverLine(t, cv, w, future, headSaid){
+  if (!w) return "";
+  const parts = [];
+  if (w.windMph != null && !/wind|chop|blow/i.test(headSaid || ""))
+    parts.push(w.windMph < 5 ? "Barely any wind"
+      : windWord(w.windMph) + (w.windFromDeg != null
+          ? " from the " + compass(w.windFromDeg) : ""));
+  const turn = curNext(t, cv);
+  parts.push(curWord(cv, /current/.test(headSaid || "")) + (turn ? ", " + turn : ""));
+  if (!(w.wx && w.wx.happening) && (w.stormPct || 0) < 30
+      && w.precipPct != null && w.precipPct >= 30)
+    parts.push("a " + w.precipPct + "% chance of rain");
+
+  let out = parts.length > 1
+    ? parts.slice(0, -1).join(", ") + " and " + parts[parts.length - 1]
+    : parts[0];
+  return future ? "The forecast calls for " + out.charAt(0).toLowerCase() + out.slice(1) + "."
+      : out.charAt(0).toUpperCase() + out.slice(1) + ".";
 }
 
 function quietDay(t, cv, w, future, headWater){
   if (!w) return "";
-  const parts = [];
-  if (w.windMph != null)
-    parts.push(w.windMph < 5 ? "Barely any wind"
-      : windWord(w.windMph) + (w.windFromDeg != null
-          ? " from the " + compass(w.windFromDeg) : ""));
-  parts.push(curWord(cv, /current/.test(headWater || "")));
-  const turn = slackSoon(t, cv, future);
-  if (turn) parts.push(turn);
-  if (!(w.wx && w.wx.happening) && w.precipPct != null && w.precipPct >= 30)
-    parts.push("a " + w.precipPct + "% chance of rain");
-
-  let out = parts.join(", ").replace(/, ([^,]*)$/, " and $1");
-  out = future ? "The forecast calls for " + out.charAt(0).toLowerCase() + out.slice(1) + "."
-      : out.charAt(0).toUpperCase() + out.slice(1) + ".";
+  const out = riverLine(t, cv, w, future, headWater);
   const lovely = (w.windMph == null || w.windMph < 8) && Math.abs(cv) < 0.4
     && !(w.wx && w.wx.happening) && (w.airF == null || w.airF >= 60);
   return lovely ? "About as easy as this river gets. " + out : out;
@@ -1469,9 +1493,11 @@ function briefConcerns(t, cv, w, sky, now){
   if (wind != null){
     const hard = Math.max(sp.up, sp.down) < 1.2;
     if (wind >= 25 || (gust != null && gust >= 35)) out.push({level:"stop", key:"wind", rank:1,
+      head:"Very strong wind.",
       say: future ? "The forecast has it really blowing."
                   : "It is really blowing out there today."});
     else if (wind >= 15 || (gust != null && gust >= 25)) out.push({level:"warn", key:"wind", rank:1,
+      head:"Strong wind.",
       say: future ? "The forecast has it blowing pretty good."
                   : "It is blowing pretty good out there today."});
     if (hard && wind >= 12) out.push({level:"warn", key:"noprogress", rank:2,
@@ -1512,8 +1538,7 @@ function briefConcerns(t, cv, w, sky, now){
     head:"Possible thunderstorms.",
     say:(future ? "There is thunder in the forecast around then. "
                 : "There is thunder in the forecast for the next few hours. ")
-      + "Worth checking the radar before you set out, and knowing where you could land "
-      + "if one comes over."});
+      + "Worth a look at the radar before you set out."});
 
   if (wind != null && windVsCurrent(w.windFromDeg, cv) === "opposed"
       && ((wind >= 15 && Math.abs(cv) >= 0.8) || (wind >= 12 && Math.abs(cv) >= 1.5)))
@@ -1532,17 +1557,17 @@ function briefConcerns(t, cv, w, sky, now){
     const moonVisible = moonUp && sky.lit >= 80
       && w && w.skyPct != null && w.skyPct <= 40;
     if (dark) out.push({level:"warn", key:"dark", rank:1,
-      head: future ? "It will be dark out." : "It is dark out.",
+      head: future ? "Dark by then." : "Dark out.",
       say:"A white light is required after dark \u2014 at minimum one you can hold up "
         + "in time for another boat to see you."
         + (moonVisible ? " There is a bright moon up for company." : "")});
     else if (left <= 0) out.push({level:"caution", key:"dusk", rank:1,
-      head: future ? "The sun will be down." : "The sun is down.",
+      head: future ? "Sun down by then." : "Sun is down.",
       say:"There is a little usable light left, but it is going fast. A white light "
         + "is required from sunset on."});
     else if (left < 90 * MIN) out.push({level:"caution", key:"light", rank:1,
       head:"Not much daylight left.",
-      say:"Getting back, landing and carrying out all take longer than you think in the dark."});
+      say:""});
   }
   return {concerns:out, speeds:sp};
 }
@@ -1672,11 +1697,17 @@ function buildBrief(t, cv, w, sky, now){
     lastNamedWater = c.key === "cold";
     windNamed = windNamed || lastNamedWind;
   }
-  const sunsetSoon = sky && sky.sunset != null && sky.sunset > t && sky.sunset - t < 90 * MIN;
-  const tail = lastNamedWater ? "" : sceneTail(w, false, sunsetSoon, future);
+  const base = lead.head || HEADLINE[level];
+  const comp = headComplement(lead.key, cv, w, shown);
+  const head = comp ? base.replace(/\.$/, "") + ", " + comp + "." : base;
 
-  return {level, head: lead.head || HEADLINE[level],
-    body:[...said, tail].filter(Boolean).join(" "),
+  const sunsetSoon = sky && sky.sunset != null && sky.sunset > t && sky.sunset - t < 90 * MIN
+    && !shown.some(c => c.key === "light" || c.key === "dusk" || c.key === "dark");
+  const tail = lastNamedWater ? "" : sceneTail(w, false, sunsetSoon, future);
+  const river = riverLine(t, cv, w, future, head);
+
+  return {level, head,
+    body:[...said, river, tail].filter(Boolean).join(" "),
     ahead: riverAhead(t, cv, future),
     speeds, note, outlook, safety, facts: briefFacts(t, cv, w, sky)};
 }

@@ -1477,8 +1477,8 @@ const worst = (a, b) => LEVELS.indexOf(a) < LEVELS.indexOf(b) ? a : b;
    direction, since "a glorious day for a paddle" is a verdict too. */
 const HEADLINE = {
   stop:    "Severe conditions.",
-  warn:    "Very challenging conditions.",
-  caution: "A few things to be aware of.",
+  warn:    "Hard going.",
+  caution: "Worth a look before you go.",
   // "fine" only means nothing fired, which is not a compliment - waterHead()
   // describes the day instead. This is a backstop for having no weather at all.
   fine:    "Conditions below."
@@ -1520,6 +1520,27 @@ function waterWord(cv, w){
 /* Headline for a day with nothing to flag: what the air is doing and what the
    water is doing. Rain earns the middle beat because it changes the paddle;
    cloud does not, and used to lead here. */
+/* A concern names one thing; the headline names the other. A wind warning that
+   says nothing about the river, or a cold-water warning that says nothing about
+   the air, is half a headline - and the river is what the reader came for. */
+function headComplement(key, cv, w, alsoShown){
+  const kt = Math.abs(cv);
+  // when the water is cold, that is the fact worth the second beat, whatever
+  // else is leading: "Dark out, cold water."
+  if (key !== "cold" && alsoShown && alsoShown.some(c => c.key === "cold"))
+    return "cold water";
+  // the wind is already in the headline, so answer with the river
+  if (key === "wind" || key === "noprogress" || key === "chop")
+    return kt < 0.15 ? "slack water"
+      : (kt < 0.6 ? "a weak" : kt < 1.2 ? "a steady" : "a strong") + " current";
+  // the water temperature is already there, so answer with the air
+  if (key === "cold")
+    return w && w.windMph != null
+      ? (w.windMph < 5 ? "still air" : windWord(w.windMph).toLowerCase()) : null;
+  // everything else: whatever the surface is doing
+  return waterWord(cv, w);
+}
+
 function waterHead(cv, w){
   const temp = tempWord(feelsLike(w));
   const water = waterWord(cv, w);
@@ -1607,48 +1628,68 @@ function sceneTail(w, includeWind, sunsetSoon, future){
    module below. The breakpoints are the ones the direction cards already use. */
 function curWord(cv, strengthSaid){
   const kt = Math.abs(cv);
-  if (kt < 0.15) return "the river nearly slack";
+  // needs its verb: this phrase has to stand at the head of a sentence now
+  if (kt < 0.15) return "the river is nearly slack";
   // the headline may already have graded the current; saying "a steady current"
   // twice in two sentences is a stutter, so the body just points it
-  const how = strengthSaid ? "the current"
-    : kt < 0.6 ? "a weak current" : kt < 1.2 ? "a steady current" : "a strong current";
-  return how + " running " + dirWord(cv > 0 ? FLOOD_TOWARD : EBB_TOWARD);
+  const way = dirWord(cv > 0 ? FLOOD_TOWARD : EBB_TOWARD);
+  if (strengthSaid) return "the current is running " + way;
+  return (kt < 0.6 ? "a weak" : kt < 1.2 ? "a steady" : "a strong")
+    + " current running " + way;
 }
 
-/* The turn, but only when it is close enough to change what you would do. Past
-   an hour it is planning rather than conditions, and the current module has the
-   exact time either way. */
-function slackSoon(t, cv, future){
-  const slack = nextAfter(CUR, t, p => p.type === "slack");
-  if (!slack || Math.abs(cv) < 0.15) return "";
-  const mins = Math.round((slack.t - t) / MIN);
-  if (mins > 60) return "";
-  return (future ? "slack water about " : "slack water in about ")
-    + mins + (mins === 1 ? " minute" : " minutes");
+/* What the river does next. Saying the current runs south is half a fact; the
+   half that decides when you leave is whether it is still building or already
+   easing off, and when it turns. The next event in the table answers both: a
+   maximum means it is still building, a slack means it is already slowing. */
+function curNext(t, cv){
+  let nxt = nextAfter(CUR, t);
+  // already stopped: "nearly slack, slowing to slack water" is one fact twice,
+  // so look past the turn to what it fills into
+  if (nxt && nxt.type === "slack" && Math.abs(cv) < 0.15)
+    nxt = nextAfter(CUR, nxt.t, p => p.type !== "slack");
+  if (!nxt) return "";
+  if (nxt.type === "slack") return "slowing to slack water at " + fmtT.format(nxt.t);
+  const way = dirWord(nxt.v > 0 ? FLOOD_TOWARD : EBB_TOWARD);
+  // glossed when the sentence has not already named a direction, because "max
+  // ebb" on its own tells a first-time reader nothing
+  const gloss = Math.abs(cv) < 0.15 ? ", running " + way + "," : "";
+  return "building to max " + (nxt.v > 0 ? "flood" : "ebb") + gloss
+    + " at " + fmtT.format(nxt.t);
 }
 
 /* When there is nothing to flag, the prose is the wind and the river - the two
    things that decide the paddle. It used to lead with the temperature and the
    cloud, which the headline has already covered and which nobody is deciding
    on. Still no figures; those are in the module. */
-function quietDay(t, cv, w, future, headWater){
+/* The wind and the river, in one sentence. Every summary gets this now, not
+   just the quiet ones - a wind warning that never says what the current is
+   doing has left out half of what the reader came for. */
+function riverLine(t, cv, w, future, headSaid){
   if (!w) return "";
   const parts = [];
-  if (w.windMph != null)
+  if (w.windMph != null && !/wind|chop|blow/i.test(headSaid || ""))
     parts.push(w.windMph < 5 ? "Barely any wind"
       : windWord(w.windMph) + (w.windFromDeg != null
           ? " from the " + compass(w.windFromDeg) : ""));
-  parts.push(curWord(cv, /current/.test(headWater || "")));
-  const turn = slackSoon(t, cv, future);
-  if (turn) parts.push(turn);
-  /* Rain that is falling is in the headline already. Rain that is only a
-     chance is not, and is worth saying - cloud is not. */
-  if (!(w.wx && w.wx.happening) && w.precipPct != null && w.precipPct >= 30)
+  const turn = curNext(t, cv);
+  parts.push(curWord(cv, /current/.test(headSaid || "")) + (turn ? ", " + turn : ""));
+  /* Rain that is falling is in the headline already, and a chance of rain under
+     a thunderstorm warning is saying the same thing twice. Cloud is never here. */
+  if (!(w.wx && w.wx.happening) && (w.stormPct || 0) < 30
+      && w.precipPct != null && w.precipPct >= 30)
     parts.push("a " + w.precipPct + "% chance of rain");
 
-  let out = parts.join(", ").replace(/, ([^,]*)$/, " and $1");
-  out = future ? "The forecast calls for " + out.charAt(0).toLowerCase() + out.slice(1) + "."
+  let out = parts.length > 1
+    ? parts.slice(0, -1).join(", ") + " and " + parts[parts.length - 1]
+    : parts[0];
+  return future ? "The forecast calls for " + out.charAt(0).toLowerCase() + out.slice(1) + "."
       : out.charAt(0).toUpperCase() + out.slice(1) + ".";
+}
+
+function quietDay(t, cv, w, future, headWater){
+  if (!w) return "";
+  const out = riverLine(t, cv, w, future, headWater);
   // a genuinely lovely day is worth saying out loud, without telling anyone to go
   const lovely = (w.windMph == null || w.windMph < 8) && Math.abs(cv) < 0.4
     && !(w.wx && w.wx.happening) && (w.airF == null || w.airF >= 60);
@@ -1703,9 +1744,11 @@ function briefConcerns(t, cv, w, sky, now){
   if (wind != null){
     const hard = Math.max(sp.up, sp.down) < 1.2;
     if (wind >= 25 || (gust != null && gust >= 35)) out.push({level:"stop", key:"wind", rank:1,
+      head:"Very strong wind.",
       say: future ? "The forecast has it really blowing."
                   : "It is really blowing out there today."});
     else if (wind >= 15 || (gust != null && gust >= 25)) out.push({level:"warn", key:"wind", rank:1,
+      head:"Strong wind.",
       say: future ? "The forecast has it blowing pretty good."
                   : "It is blowing pretty good out there today."});
     if (hard && wind >= 12) out.push({level:"warn", key:"noprogress", rank:2,
@@ -1750,8 +1793,8 @@ function briefConcerns(t, cv, w, sky, now){
     head:"Possible thunderstorms.",
     say:(future ? "There is thunder in the forecast around then. "
                 : "There is thunder in the forecast for the next few hours. ")
-      + "Worth checking the radar before you set out, and knowing where you could land "
-      + "if one comes over."});
+      // the radar is a fact worth pointing at; what to do about it is not ours
+      + "Worth a look at the radar before you set out."});
 
   /* Wind against tide at 12 mph over half a knot is a texture on the water, not
      a thing to warn anybody about, and it used to turn the whole page amber.
@@ -1781,17 +1824,18 @@ function briefConcerns(t, cv, w, sky, now){
     // white light on a kayak from sunset, so say so where it is still useful to
     // hear it - plainly, and with the reason, which is what makes it stick.
     if (dark) out.push({level:"warn", key:"dark", rank:1,
-      head: future ? "It will be dark out." : "It is dark out.",
+      head: future ? "Dark by then." : "Dark out.",
       say:"A white light is required after dark \u2014 at minimum one you can hold up "
         + "in time for another boat to see you."
         + (moonVisible ? " There is a bright moon up for company." : "")});
     else if (left <= 0) out.push({level:"caution", key:"dusk", rank:1,
-      head: future ? "The sun will be down." : "The sun is down.",
+      head: future ? "Sun down by then." : "Sun is down.",
       say:"There is a little usable light left, but it is going fast. A white light "
         + "is required from sunset on."});
     else if (left < 90 * MIN) out.push({level:"caution", key:"light", rank:1,
       head:"Not much daylight left.",
-      say:"Getting back, landing and carrying out all take longer than you think in the dark."});
+      // the headline has said it; grown adults can work out what that means
+      say:""});
   }
   return {concerns:out, speeds:sp};
 }
@@ -1949,13 +1993,25 @@ function buildBrief(t, cv, w, sky, now){
     lastNamedWater = c.key === "cold";
     windNamed = windNamed || lastNamedWind;
   }
-  const sunsetSoon = sky && sky.sunset != null && sky.sunset > t && sky.sunset - t < 90 * MIN;
+  /* The headline names the concern and then the thing the concern left out, so
+     the river is in it either way: "Strong wind, a steady current.", "Cold
+     water, light wind.", "Not much daylight left, a light chop." */
+  const base = lead.head || HEADLINE[level];
+  const comp = headComplement(lead.key, cv, w, shown);
+  const head = comp ? base.replace(/\.$/, "") + ", " + comp + "." : base;
+
+  // "the sun is going down soon" after "Not much daylight left." is the same
+  // sentence twice, so only say it when the headline has not
+  const sunsetSoon = sky && sky.sunset != null && sky.sunset > t && sky.sunset - t < 90 * MIN
+    && !shown.some(c => c.key === "light" || c.key === "dusk" || c.key === "dark");
   // After "Dress for the water.", an "It is warm and clear." reads as the water
   // being warm - the exact opposite of what was just said. Stop instead.
   const tail = lastNamedWater ? "" : sceneTail(w, false, sunsetSoon, future);
+  // and the river, which every summary now carries
+  const river = riverLine(t, cv, w, future, head);
 
-  return {level, head: lead.head || HEADLINE[level],
-    body:[...said, tail].filter(Boolean).join(" "),
+  return {level, head,
+    body:[...said, river, tail].filter(Boolean).join(" "),
     ahead: riverAhead(t, cv, future),
     speeds, note, outlook, safety, facts: briefFacts(t, cv, w, sky)};
 }
