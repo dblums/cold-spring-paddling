@@ -868,7 +868,11 @@ function precipWord(series){
     // "It is raining" needs a verb; "The forecast calls for rain" needs a noun.
     noun: happening ? (heavy ? "heavy " + raw : raw) : "a chance of " + raw,
     // and "Cool and wet." needs an adjective, which reads the same in any tense
-    adj: ADJ[raw] || raw};
+    adj: ADJ[raw] || raw,
+    /* Whether the present-tense form fits after "It is warm and ...". Raining
+       and foggy do; "thunderstorms about" is a noun phrase and needs its own
+       clause, which is how "It is warm and thunderstorms about." got shipped. */
+    fitsIs: raw !== "thunderstorms"};
 }
 
 const SKY_WORDS = [[12,"Clear"],[37,"Mostly clear"],[62,"Partly cloudy"],[87,"Mostly cloudy"],[101,"Overcast"]];
@@ -1577,8 +1581,13 @@ function sceneTail(w, includeWind, sunsetSoon, future){
   if (temp) bits.push(temp.toLowerCase() + (future ? " air" : ""));
   // rain changes the paddle and belongs here; cloud does not, and used to sit
   // in this sentence saying nothing a paddler could act on
-  if (w.wx && w.wx.happening) bits.push(future ? w.wx.noun : w.wx.text);
+  let clause = "";
+  if (w.wx && w.wx.happening){
+    if (future || w.wx.fitsIs) bits.push(future ? w.wx.noun : w.wx.text);
+    else clause = w.wx.text;          // a noun phrase wants "with", not "and"
+  }
   let out = bits.join(", ").replace(/, ([^,]*)$/, " and $1");
+  if (clause) out += (out ? ", with " : "") + clause;
   if (includeWind && w.windMph != null)
     out += (out ? ", with " : "") + (w.windMph < 5 ? "barely any wind"
       : w.windMph + " mph from the " + compass(w.windFromDeg));

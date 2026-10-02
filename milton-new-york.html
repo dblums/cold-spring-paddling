@@ -879,7 +879,8 @@ function precipWord(series){
     ? (heavy ? "heavy " + raw : (DOING[raw] || raw))
     : "a chance of " + raw,
     noun: happening ? (heavy ? "heavy " + raw : raw) : "a chance of " + raw,
-    adj: ADJ[raw] || raw};
+    adj: ADJ[raw] || raw,
+    fitsIs: raw !== "thunderstorms"};
 }
 
 const SKY_WORDS = [[12,"Clear"],[37,"Mostly clear"],[62,"Partly cloudy"],[87,"Mostly cloudy"],[101,"Overcast"]];
@@ -1374,8 +1375,13 @@ function sceneTail(w, includeWind, sunsetSoon, future){
   const bits = [];
   const temp = tempWord(feelsLike(w));
   if (temp) bits.push(temp.toLowerCase() + (future ? " air" : ""));
-  if (w.wx && w.wx.happening) bits.push(future ? w.wx.noun : w.wx.text);
+  let clause = "";
+  if (w.wx && w.wx.happening){
+    if (future || w.wx.fitsIs) bits.push(future ? w.wx.noun : w.wx.text);
+    else clause = w.wx.text;          // a noun phrase wants "with", not "and"
+  }
   let out = bits.join(", ").replace(/, ([^,]*)$/, " and $1");
+  if (clause) out += (out ? ", with " : "") + clause;
   if (includeWind && w.windMph != null)
     out += (out ? ", with " : "") + (w.windMph < 5 ? "barely any wind"
       : w.windMph + " mph from the " + compass(w.windFromDeg));
