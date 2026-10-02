@@ -1360,8 +1360,7 @@ const HEADLINE = {
   stop:    "Severe conditions.",
   warn:    "Very challenging conditions.",
   caution: "A few things to be aware of.",
-  fine:    "Conditions below.",
-  good:    "Calm and glassy."
+  fine:    "Conditions below."
 };
 
 function waterWord(cv, w){
@@ -1373,7 +1372,7 @@ function waterWord(cv, w){
   if (vs === "across" && mph >= 10) return "a light chop";
   if (vs === "slack" && mph >= 12) return "a light chop";
   if (kt < 0.15) return mph < 5 ? "glassy water" : "slack water";
-  if (mph < 5 && kt < 0.5) return "glassy water";
+  if (mph < 5 && kt < 0.4) return "glassy water";
   if (kt >= 1.2) return "a strong current";
   if (kt >= 0.6) return "a steady current";
   return "calm water";
@@ -1388,11 +1387,6 @@ function waterHead(cv, w){
   return wet ? air + ", " + wet + ", " + water + "." : air + ", " + water + ".";
 }
 
-function goodHead(cv, w){
-  if (w.windMph != null && w.windMph < 5 && Math.abs(cv) < 0.4) return HEADLINE.good;
-  return waterHead(cv, w);
-}
-
 function pleasantEnough(w){
   if (!w) return false;
   if (w.wx && w.wx.happening) return false;                   // dry
@@ -1402,11 +1396,6 @@ function pleasantEnough(w){
   if (w.airF == null || w.airF < 65 || feelsLike(w) < 65) return false;
   if (w.waterF == null || w.waterF < 60) return false;
   return true;
-}
-
-function plainHead(cv, w){
-  if (!w) return HEADLINE.fine;
-  return waterHead(cv, w);
 }
 
 const tempWord = f => f == null ? null
@@ -1427,7 +1416,6 @@ function sceneTail(w, includeWind, sunsetSoon, future){
   const temp = tempWord(feelsLike(w));
   if (temp) bits.push(temp.toLowerCase() + (future ? " air" : ""));
   if (w.wx && w.wx.happening) bits.push(future ? w.wx.noun : w.wx.text);
-  else if (w.skyText) bits.push(w.skyText.toLowerCase() + (future ? " skies" : ""));
   let out = bits.join(", ").replace(/, ([^,]*)$/, " and $1");
   if (includeWind && w.windMph != null)
     out += (out ? ", with " : "") + (w.windMph < 5 ? "barely any wind"
@@ -1457,7 +1445,7 @@ function slackSoon(t, cv, future){
     + mins + (mins === 1 ? " minute" : " minutes");
 }
 
-function quietDay(t, cv, w, future, skipScene, headWater){
+function quietDay(t, cv, w, future, headWater){
   if (!w) return "";
   const parts = [];
   if (w.windMph != null)
@@ -1473,29 +1461,9 @@ function quietDay(t, cv, w, future, skipScene, headWater){
   let out = parts.join(", ").replace(/, ([^,]*)$/, " and $1");
   out = future ? "The forecast calls for " + out.charAt(0).toLowerCase() + out.slice(1) + "."
       : out.charAt(0).toUpperCase() + out.slice(1) + ".";
-  const lovely = !skipScene && (w.windMph == null || w.windMph < 8) && Math.abs(cv) < 0.4
+  const lovely = (w.windMph == null || w.windMph < 8) && Math.abs(cv) < 0.4
     && !(w.wx && w.wx.happening) && (w.airF == null || w.airF >= 60);
   return lovely ? "About as easy as this river gets. " + out : out;
-}
-
-function scene(cv, w){
-  if (!w) return "";
-  const bits = [];
-  const temp = tempWord(feelsLike(w));
-  const wet = w.wx && w.wx.happening;
-  if (temp && wet) bits.push(temp.toLowerCase() + " and " + w.wx.text);
-  else if (temp && w.skyText) bits.push(temp.toLowerCase() + " and " + w.skyText.toLowerCase());
-  else if (temp) bits.push(temp.toLowerCase());
-  else if (w.skyText) bits.push(w.skyText.toLowerCase());
-  if (w.wx && !w.wx.happening) bits.push("with " + w.wx.text);
-
-  let out = bits.length ? bits[0].charAt(0).toUpperCase() + bits.slice(0).join(", ").slice(1) : "";
-  if (w.windMph != null){
-    const gust = w.windGustMph && w.windGustMph > w.windMph + 4 ? " gusting to " + w.windGustMph : "";
-    out += (out ? ", with " : "") + (w.windMph < 5 ? "barely any wind"
-      : w.windMph + " mph" + gust + " from the " + compass(w.windFromDeg));
-  }
-  return out ? out + ". " : "";
 }
 
 function stormOutlook(t, hours){
@@ -1586,10 +1554,9 @@ function briefConcerns(t, cv, w, sky, now){
       && Math.abs(cv) >= 0.5) out.push({level:"caution", key:"chop", rank:3,
     head: future ? "Likely choppy." : "Choppy out there.",
     say:"The wind is " + (future ? "forecast to run" : "running")
-      + " straight into the current, which piles the water up into short steep chop.",
+      + " straight into the current, which can make the water choppy.",
     alt:"It is " + (future ? "forecast to run" : "running")
-      + " straight into the current, which piles the water up into short steep chop.",
-    soft:" The splashy kind rather than the frightening kind, if you are dressed for it."});
+      + " straight into the current, which can make the water choppy."});
 
   if (sky && sky.sunset != null && sky.sunrise != null){
     const left = sky.sunset - t;
@@ -1713,8 +1680,8 @@ function buildBrief(t, cv, w, sky, now){
     down: directionOutlook(EBB_TOWARD, -cv, w, speeds.down)
   };
   if (!concerns.length){
-    const head = level === "good" ? goodHead(cv, w) : plainHead(cv, w);
-    const body = w ? quietDay(t, cv, w, future, head !== HEADLINE.good, head)
+    const head = w ? waterHead(cv, w) : HEADLINE.fine;
+    const body = w ? quietDay(t, cv, w, future, head)
       : "There is no weather reading right now, so this is the tide and current alone.";
     return {level, head, body, ahead: riverAhead(t, cv, future),
       speeds, note, outlook, safety, facts: briefFacts(t, cv, w, sky)};

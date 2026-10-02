@@ -113,7 +113,7 @@ const SCENARIOS = [
   { name: "genuinely glassy",
     wind: 4, from: 180, cur: 0.1, air: 76, water: 70, skyPct: 5,
     level: "good",
-    must: [/calm and glassy/i] },
+    must: [/glassy water/i] },
 
   { name: "still air over a running river is not glassy",
     wind: 3, from: 180, cur: -1.5, air: 76, water: 70, skyPct: 5,
@@ -439,16 +439,24 @@ for (const s of SCENARIOS){
   // speaks for itself - never a lesser worry
   check(s.name, `headline must speak for a ${b.level} verdict`,
     heads.includes(b.head) || b.head === T.HEADLINE[b.level]
-      || (!heads.length && b.head === (b.level === "good"
-            ? T.goodHead(inp.cv, inp.w) : T.plainHead(inp.cv, inp.w))),
+      // nothing flagged: one shape for every quiet day, whatever its verdict
+      || (!heads.length && b.head === T.waterHead(inp.cv, inp.w)),
     `"${b.head}" vs [${heads.join(" | ")}] or "${T.HEADLINE[b.level]}"`);
 
   // The one that matters: "pleasant" is a promise, and an absence of hazards is
   // not a nice day. Checked on every scenario and every sweep, not just the ones
   // I thought to write.
+  /* "glassy" is out of this list deliberately. It describes the surface of the
+     river - very light air over water that is barely moving - and a cold
+     morning can be glassy. The words below are verdicts on the whole day,
+     which is a promise the page has no business making. */
   check(s.name, "only a genuinely pleasant day may be called one",
-    !/\b(pleasant|beautiful|glassy|calm and)\b/i.test(b.head)
+    !/\b(pleasant|beautiful|lovely|perfect)\b/i.test(b.head)
       || T.pleasantEnough(inp.w), `"${b.head}" / ${JSON.stringify(inp.w)}`);
+  // but glassy still has to be true of the river: light air, and barely moving
+  check(s.name, "glassy means the air is light too",
+    !/glassy/i.test(b.head) || (inp.w && inp.w.windMph != null && inp.w.windMph < 5),
+    `"${b.head}" / ${inp.w && inp.w.windMph} mph`);
   // and the page never grades the day, in either direction
   check(s.name, "the good-day headline describes rather than judges",
     b.level !== "good" || !/\b(pleasant|beautiful|lovely|perfect|great|nice)\b/i.test(b.head),
