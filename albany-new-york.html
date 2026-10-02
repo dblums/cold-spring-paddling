@@ -161,30 +161,9 @@ body{
   .alllocs .menu{left:0; right:0; min-width:0}
 }
 
-/* The title and the line under it sit in one positioned box. Positioning them
-   separately put them both at the bottom of the hero, on top of each other. */
-.hero .herotext{
-  position:absolute; z-index:1; left:clamp(16px,3.4vw,26px); right:clamp(16px,3.4vw,26px);
-  bottom:clamp(13px,2.4vw,20px);
-}
-.hero .blurb{
-  margin:7px 0 0; max-width:60ch; color:rgba(244,249,250,.78);
-  font-size:clamp(12.5px,1.7vw,14.5px); line-height:1.45;
-  text-shadow:0 1px 10px rgba(8,20,26,.75);
-}
-/* Not display:none on a phone. Google indexes the mobile rendering, and this
-   line is here to be the thing a search result quotes - hiding it exactly where
-   the crawler looks would defeat the point. Trimmed to two lines instead, so
-   the conditions still start near the top of the screen. */
-@media (max-width:560px){
-  .hero .blurb{
-    font-size:12.5px; margin-top:5px;
-    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
-    overflow:hidden;
-  }
-}
 .hero h1{
-  margin:0; color:#f4f9fa;
+  position:absolute; z-index:1; left:clamp(16px,3.4vw,26px); right:clamp(16px,3.4vw,26px);
+  bottom:clamp(13px,2.4vw,20px); margin:0; color:#f4f9fa;
   font-family:"Barlow Semi Condensed",sans-serif; font-weight:700;
   font-size:clamp(27px,5.6vw,40px); line-height:1.04; letter-spacing:-.01em;
   text-wrap:balance; text-shadow:0 1px 14px rgba(8,20,26,.6);
@@ -198,12 +177,9 @@ body{
   border:1px solid var(--line);
 }
 .hero-plain::after{display:none}
-/* No photo, so nothing gives this box height but its own text: the text block
-   goes back in the flow and carries the padding. */
-.hero-plain .herotext{
-  position:static; padding:clamp(22px,4vw,34px) clamp(16px,3.4vw,26px);
-}
-.hero-plain .blurb{text-shadow:none; color:var(--muted)}
+/* No photo, so nothing gives this box height but the title: it goes back in
+   the flow and carries the padding. */
+.hero-plain h1{position:static; padding:clamp(22px,4vw,34px) clamp(16px,3.4vw,26px)}
 @media (max-width:560px){ .hero-plain{aspect-ratio:auto} }
 .coords{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:baseline}
 .coords .num{font-size:12px; color:var(--muted); letter-spacing:.02em}
@@ -517,10 +493,7 @@ img{max-width:100%}
 <body>
 <div class="wrap">
   <header class="hero hero-plain">
-    <div class="herotext">
-      <h1>Hudson River Paddling Conditions Near Albany, NY</h1>
-      <p class="blurb">The Corning Preserve launch, seven miles below the federal dam at Troy where the tide finally stops. The river is narrow here and runoff has as much say as the tide does.</p>
-    </div>
+    <h1>Hudson River Paddling Conditions Near Albany, NY</h1>
   </header>
   <nav class="locnav">
     <span class="label">Nearby locations</span>

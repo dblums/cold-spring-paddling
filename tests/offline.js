@@ -304,12 +304,6 @@ for (const site of ALL){
     ok(`${site.name}: ${id} is excluded from search snippets`,
        new RegExp(id.replace(/"/g, '"') + '[^>]*data-nosnippet').test(html), id);
 
-  ok(`${site.name}: has a standing description on the page`,
-     html.includes(`<p class="blurb">`) && (site.blurb || "").length > 40,
-     (site.blurb || "").slice(0, 50));
-  ok(`${site.name}: the blurb is rendered, not just stored`,
-     html.includes(site.blurb.replace(/&/g, "&amp;")), site.blurb.slice(0, 50));
-
   {
     const d = (/<meta name="description" content="([^"]*)"/.exec(html) || [])[1] || "";
     ok(`${site.name}: the description names this launch`, d.includes(site.name), d);

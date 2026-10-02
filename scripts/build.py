@@ -340,7 +340,6 @@ def render(site, sites):
         # than written down: the window rolls forward every month and a hand-
         # typed date would start lying the first time it moved.
         "DATA_THROUGH": data_through(site),
-        "BLURB": site.get("blurb") or "",
         "TIDE_LABEL": tide["label"], "CURRENT_LABEL": cur["label"],
         "COORD_LABEL": f'computed for {site["lat"]:.2f}°N {abs(site["lon"]):.2f}°W',
         "UPRIVER": cur["upriverTo"], "DOWNRIVER": cur["downriverTo"],
