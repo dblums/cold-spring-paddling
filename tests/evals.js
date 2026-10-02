@@ -342,21 +342,23 @@ const SCENARIOS = [
     wind: 7, from: 180, cur: 0.4, air: 70, water: 68, precipPct: 1,
     storm: 0, stormLater: {pct: 20, hoursOut: 5},
     level: "good",
-    must: [/chance of thunder from about/i],
+    must: [/chance of thunderstorms from about/i],
     mustNot: [/possible thunderstorms/i, /worth a look at the radar/i] },
 
   { name: "thunder within the next few hours is a warning",
     wind: 7, from: 180, cur: 0.4, air: 70, water: 68, precipPct: 1,
     storm: 0, stormLater: {pct: 20, hoursOut: 2},
     level: "caution",
-    must: [/possible thunderstorms/i, /thunder in the forecast from about/i] },
+    must: [/possible thunderstorms/i, /\d+% chance of thunderstorms from about/i],
+    // the old copy leaned on "the forecast" instead of saying how likely
+    mustNot: [/in the forecast/i] },
 
   { name: "planning ahead, thunderstorms",
     wind: 7, from: 200, cur: 0.2, air: 80, water: 74, storm: 60, skyPct: 60,
     at: NOON, now: NOON - 2 * DAY,
     level: "warn",
-    must: [/forecast around then/i],
-    mustNot: [/next few hours/i] },
+    must: [/\d+% chance of thunderstorms around then/i],
+    mustNot: [/next few hours/i, /in the forecast/i] },
 
   { name: "planning ahead, cold water",
     wind: 7, from: 200, cur: 0.2, air: 66, water: 48, skyPct: 20,
@@ -410,9 +412,9 @@ const SCENARIOS = [
   { name: "thunderstorms likely, 60%",
     wind: 7, from: 200, cur: 0.2, air: 80, water: 74, storm: 60,
     level: "warn",
-    must: [/thunderstorm/i, /radar/i],
+    must: [/thunderstorm/i, /radar/i, /60% chance/],
     // the page must not claim there is nowhere to land - there are places
-    mustNot: [/nowhere to hide|no shelter/i, /likely/i] },
+    mustNot: [/nowhere to hide|no shelter/i] },
 
   { name: "no weather data at all",
     wind: null, cur: 0.6, air: null, water: null,
@@ -487,6 +489,15 @@ for (const s of SCENARIOS){
       // nothing flagged: one shape for every quiet day, whatever its verdict
       || (!heads.length && b.head === T.waterHead(inp.cv, inp.w)),
     `"${b.head}" vs [${heads.join(" | ")}] or "${T.HEADLINE[b.level]}"`);
+
+  /* "Likely" is the Weather Service's own word for the 60-and-over band, not a
+     synonym for "probably". It used to be banned outright, which was the right
+     instinct about an unearned word and the wrong tool: the page says the
+     number now, so the word only has to be true. */
+  check(s.name, "only a 60% chance or better may be called likely",
+    !/\blikely\b/i.test(b.head) || (inp.w && (inp.w.stormPct || 0) >= 60)
+      || /choppy|rain|wind/i.test(b.head),
+    `"${b.head}" / storm ${inp.w && inp.w.stormPct}%`);
 
   // The one that matters: "pleasant" is a promise, and an absence of hazards is
   // not a nice day. Checked on every scenario and every sweep, not just the ones

@@ -1700,7 +1700,7 @@ function riverLine(t, cv, w, future, headSaid, stormSaid){
   if (!stormSaid){
     const late = stormOutlook(t, 6);
     if (late && late.pct >= 20 && late.at - t > STORM_SOON_H * 3600e3)
-      parts.push("a " + late.pct + "% chance of thunder from about " + fmtT.format(late.at));
+      parts.push("a " + late.pct + "% chance of thunderstorms from about " + fmtT.format(late.at));
   }
 
   let out = parts.length > 1
@@ -1828,11 +1828,17 @@ function briefConcerns(t, cv, w, sky, now){
   const later = stormOutlook(t, 6);
   const stormPct = Math.max((w && w.stormPct) || 0, ahead ? ahead.pct : 0);
   if (stormPct >= 20) out.push({level: stormPct >= 50 ? "warn" : "caution", key:"storm", rank:1,
-    head:"Possible thunderstorms.",
-    say:(future ? "There is thunder in the forecast around then. "
+    /* "There is thunder in the forecast" is both vague and falsely precise: it
+       does not say how likely, and it leans on "the forecast" as if that were
+       an answer. The number is right there, so say it. "Likely" is the Weather
+       Service's own word for the 60-and-over band, so it means something
+       rather than being a guess at how worried to sound. */
+    head: stormPct >= 60 ? "Thunderstorms likely." : "Possible thunderstorms.",
+    say:"A " + stormPct + "% chance of thunderstorms "
+      + (future ? "around then. "
          : ahead && ahead.at - t > 45 * MIN
-             ? "There is thunder in the forecast from about " + fmtT.format(ahead.at) + ". "
-             : "There is thunder in the forecast for the next few hours. ")
+             ? "from about " + fmtT.format(ahead.at) + ". "
+             : "over the next few hours. ")
       // the radar is a fact worth pointing at; what to do about it is not ours
       + "Worth a look at the radar before you set out."});
 
