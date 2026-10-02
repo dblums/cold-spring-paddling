@@ -28,7 +28,13 @@ import os
 import re
 import sys
 
+from zoneinfo import ZoneInfo
+
 import locations as L
+
+# the predictions are stored as minutes since the epoch; reading them back as
+# dates has to happen in the river's own timezone, not the builder's
+NY = ZoneInfo("America/New_York")
 
 TEMPLATE = os.path.join(L.ROOT, "src", "template.html")
 # A canoe emoji drawn into an SVG, so the favicon needs no separate file either.
@@ -212,6 +218,14 @@ def strip_comments(html):
     return re.sub(r"(<script>)(.*?)(</script>)", clean, html, flags=re.S)
 
 
+def data_through(site):
+    """The last moment both the tide and the current tables cover, as prose."""
+    d = json.load(open(os.path.join(L.ROOT, "data", site["slug"] + ".json")))
+    end = min(d["tideStart"] + sum(d["tideDt"]), d["curStart"] + sum(d["curDt"]))
+    stamp = datetime.datetime.fromtimestamp(end * 60, NY)
+    return f"{stamp.day}&nbsp;{stamp:%b}&nbsp;{stamp.year}"
+
+
 def name_phrase(site):
     """The launch's name as the title writes it, keeping any leading article."""
     m = re.search(r"Near (.+), [A-Z]{2}\b", site["title"])
@@ -243,6 +257,10 @@ def render(site, sites):
         # already the one field that has to get this right, so read it from
         # there rather than keep a second spelling in step with the first.
         "NAME_PHRASE": name_phrase(site),
+        # What the baked predictions actually reach, read off the data rather
+        # than written down: the window rolls forward every month and a hand-
+        # typed date would start lying the first time it moved.
+        "DATA_THROUGH": data_through(site),
         "TIDE_LABEL": tide["label"], "CURRENT_LABEL": cur["label"],
         "COORD_LABEL": f'computed for {site["lat"]:.2f}°N {abs(site["lon"]):.2f}°W',
         "UPRIVER": cur["upriverTo"], "DOWNRIVER": cur["downriverTo"],

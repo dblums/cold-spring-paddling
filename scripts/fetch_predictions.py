@@ -4,8 +4,9 @@
     python3 scripts/fetch_predictions.py            # all sites
     python3 scripts/fetch_predictions.py beacon     # just one
 
-Run this when the embedded predictions are running out (they currently end
-31 Dec 2028), when you add a launch site, or if you change stations.
+Run this when you add a launch site or change stations. The data itself is kept
+current by .github/workflows/predictions.yml, which runs this monthly and
+commits anything that changed - the horizon rolls forward on its own.
 
 Why predictions and not live readings: tides and tidal currents are driven by
 the positions of the moon and sun, so NOAA can publish them years ahead. Baking
@@ -25,7 +26,17 @@ import locations as L
 
 API = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
 NY = ZoneInfo("America/New_York")
-YEARS = [2026, 2027, 2028]
+# A rolling window, not a fixed one. The page used to carry 2026-2028 because
+# that is what someone typed in 2026, and it would have gone quietly useless on
+# 1 Jan 2029 - a static site with no server to notice. Re-running this at any
+# point in year Y rewrites the window as Y..Y+2, so the horizon is never less
+# than two full years: at worst, on 31 December, exactly two. NOAA publishes
+# five years out, so there is plenty of room ahead of the window.
+#
+# The current year stays in because the date picker looks backwards as well as
+# forwards, and dropping it would not shrink the page much anyway.
+HORIZON_YEARS = 2
+YEARS = list(range(dt.date.today().year, dt.date.today().year + HORIZON_YEARS + 1))
 
 
 def get(url):

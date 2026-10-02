@@ -1,5 +1,7 @@
 /* Pure-logic tests. No network. Run: node tests/offline.js */
 const {load, sites, pageFor, pageSlug} = require("./harness.js");
+// the prediction window rolls forward, so the tests ask about now, not about 2028
+const THIS_YEAR = new Date().getUTCFullYear();
 const fs = require("fs");
 const ALL = sites();
 const ALL_WATER = ["The Battery", "Turkey Point", "Coxsackie", "Albany"];
@@ -67,8 +69,15 @@ group("Prediction data integrity");
   for (let i = 1; i < T.CUR.length; i++) if (T.CUR[i].t <= T.CUR[i-1].t) cmono = false;
   ok("current times strictly increasing", cmono);
   ok("highs + lows == all tides", T.HIGHS.length + T.LOWS.length === T.TIDE.length);
-  ok("data starts in 2026", T.nyParts(T.RANGE[0]).y === 2026, fmt(T.RANGE[0]));
-  ok("data ends in 2028", T.nyParts(T.RANGE[1]).y === 2028, fmt(T.RANGE[1]));
+  /* The window rolls, so these cannot name a year. This is the alarm: if the
+     monthly refresh ever stops, the horizon shrinks and this fails long before
+     the site runs out of data - which is the whole point, since a static page
+     has nothing to notice it for itself. */
+  const YEAR = 365.25 * 24 * 3600e3;
+  ok("data covers the current year", T.RANGE[0] <= Date.UTC(THIS_YEAR, 0, 2),
+     fmt(T.RANGE[0]));
+  ok("at least two years of data remain", T.RANGE[1] - Date.now() >= 2 * YEAR,
+     `${((T.RANGE[1] - Date.now()) / YEAR).toFixed(2)} years, to ${fmt(T.RANGE[1])}`);
   // tide heights are plausible for the Hudson at Cold Spring
   const hs = T.HIGHS.map(p=>p.v), ls = T.LOWS.map(p=>p.v);
   ok("high tides 2-5 ft", Math.min(...hs) > 1.5 && Math.max(...hs) < 5.5, `${Math.min(...hs)}..${Math.max(...hs)}`);
@@ -284,6 +293,29 @@ for (const site of ALL){
     ok(`${site.name}: headline does not say ${other.name}`, named(heading) !== other.name, heading);
     ok(`${site.name}: title does not say ${other.name}`, named(title) !== other.name);
   }
+  /* The page states how far its predictions reach, in two places, and both used
+     to be a date somebody typed. The window rolls now, so a hand-written date
+     would start lying the first month it moved. */
+  {
+    // the span itself contains &nbsp; so a bare semicolon is the wrong anchor
+    const through = /good through (.+?); values between/.exec(html);
+    ok(`${site.name}: the page says how far its predictions reach`, !!through);
+    if (through){
+      const last = S.TIDE[S.TIDE.length - 1].t;
+      const said = through[1].replace(/&nbsp;/g, " ").trim();
+      const want = new Intl.DateTimeFormat("en-US",
+        {day: "numeric", month: "short", year: "numeric", timeZone: "America/New_York"})
+        .format(last).replace(",", "");
+      // same day, whichever way the formatter orders it
+      const parts = want.split(" ");
+      ok(`${site.name}: the stated end matches the data`,
+         parts.every(x => said.includes(x)), `page says "${said}", data ends ${want}`);
+    }
+    ok(`${site.name}: the out-of-range notice reads its span off the data`,
+       !/from 1 Jan \d{4} through 31 Dec \d{4}/.test(html)
+         && html.includes("fmtDay.format(RANGE[0])"), "hardcoded span found");
+  }
+
   /* The footer names the launch inside a sentence, where a few places need an
      article. It is read off the title so the two cannot drift apart. */
   const phrase = (/grid covering ([^.]+)\./.exec(html) || [])[1] || "";
@@ -300,22 +332,24 @@ for (const site of ALL){
   ok(`${site.name}: shows its own station labels`,
      html.includes(site.tide.label) && html.includes(site.current.label));
   eq(`${site.name}: current shift`, S.CUR_SHIFT_MIN, site.current.shiftMin);
-  /* Cover 2026 through 2028. Counting points instead was calibrated on the
-     Highlands and failed upriver, where NOAA publishes more current events per
-     day - which is a fact about the river, not a fault in the data. */
-  /* Compare instants, not year labels: the last event of 2028 in New York
-     falls on 1 Jan 2029 in UTC, which is correct and not worth arguing with. */
-  const START = Date.UTC(2026, 0, 2), END = Date.UTC(2028, 11, 30);
+  /* Counting points instead of spans was calibrated on the Highlands and failed
+     upriver, where NOAA publishes more current events per day - a fact about
+     the river, not a fault in the data. Compare instants rather than year
+     labels: the last event of a year in New York falls on 1 January in UTC,
+     which is correct and not worth arguing with. */
+  const START = Date.UTC(THIS_YEAR, 0, 2);
+  const TWO_YEARS = Date.now() + 2 * 365.25 * 24 * 3600e3;
   for (const [what, arr] of [["tide", S.TIDE], ["current", S.CUR]]){
-    ok(`${site.name}: ${what} data starts by 2 Jan 2026`, arr[0].t <= START,
+    ok(`${site.name}: ${what} data covers the current year`, arr[0].t <= START,
        new Date(arr[0].t).toISOString().slice(0,10));
-    ok(`${site.name}: ${what} data runs past 30 Dec 2028`, arr[arr.length-1].t >= END,
+    ok(`${site.name}: ${what} data runs two years out`, arr[arr.length-1].t >= TWO_YEARS,
        new Date(arr[arr.length-1].t).toISOString().slice(0,10));
   }
+  const YEARS_HELD = 3;   // the rolling window: this year plus two
   ok(`${site.name}: tide events are plausibly twice-daily`,
-     S.TIDE.length > 3 * 365 * 3 && S.TIDE.length < 3 * 365 * 5, `${S.TIDE.length}`);
+     S.TIDE.length > YEARS_HELD * 365 * 3 && S.TIDE.length < YEARS_HELD * 365 * 5, `${S.TIDE.length}`);
   ok(`${site.name}: current events are plausibly a few times daily`,
-     S.CUR.length > 3 * 365 * 5 && S.CUR.length < 3 * 365 * 12, `${S.CUR.length}`);
+     S.CUR.length > YEARS_HELD * 365 * 5 && S.CUR.length < YEARS_HELD * 365 * 12, `${S.CUR.length}`);
   ok(`${site.name}: tide alternates high/low`,
      S.TIDE.every((p,i) => i===0 || p.type !== S.TIDE[i-1].type));
   ok(`${site.name}: flood and ebb headings are roughly opposite`,

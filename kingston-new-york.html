@@ -1099,6 +1099,7 @@ const fmtTD = new Intl.DateTimeFormat("en-US", {weekday:"short", hour:"numeric",
 const fmtDate = new Intl.DateTimeFormat("en-US", {weekday:"long", month:"long", day:"numeric", timeZone:TZ});
 const fmtParts = new Intl.DateTimeFormat("en-CA", {year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit", hour12:false, timeZone:TZ});
 const fmtOff = new Intl.DateTimeFormat("en-US", {timeZone:TZ, timeZoneName:"longOffset"});
+const fmtDay = new Intl.DateTimeFormat("en-US", {month:"short", day:"numeric", year:"numeric", timeZone:TZ});
 
 function offsetMin(ms){
   const s = fmtOff.formatToParts(new Date(ms)).find(p => p.type === "timeZoneName").value; // GMT-04:00
@@ -1863,7 +1864,8 @@ function render(){
   const inRange = t >= RANGE[0] && t <= RANGE[1];
   $("outofrange").style.display = inRange ? "none" : "block";
   if (!inRange){
-    $("outofrange").innerHTML = "<b>No prediction data for that time.</b> This page carries NOAA predictions from 1 Jan 2026 through 31 Dec 2028. Pick a date in that range.";
+    $("outofrange").innerHTML = "<b>No prediction data for that time.</b> This page carries NOAA predictions from "
+      + fmtDay.format(RANGE[0]) + " through " + fmtDay.format(RANGE[1]) + ". Pick a date in that range.";
     return;
   }
 

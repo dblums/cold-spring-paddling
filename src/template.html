@@ -628,7 +628,7 @@ footer .label{margin-bottom:-2px}
       <span class="label">Important note</span>
       <p>Tides and currents are predictions, not observations. Wind, waves, runoff, storm surge and other factors can affect actual conditions. Weather is sourced from the National Weather Service. Use your own judgment and paddle at your own risk.</p>
     </div>
-    <p>{{CURRENT_NOTE}} {{TIDE_NOTE}} Both are predictions, baked into this page and good through 31&nbsp;Dec&nbsp;2028; values between NOAA&rsquo;s published points are interpolated. Weather and alerts come live from the National Weather Service grid covering {{NAME_PHRASE}}. {{WATER_NOTE}} Sun and moon are computed rather than fetched, and agree with the US Naval Observatory to within a couple of minutes.{{MARSH_NOTE}}</p>
+    <p>{{CURRENT_NOTE}} {{TIDE_NOTE}} Both are predictions, baked into this page and good through {{DATA_THROUGH}}; values between NOAA&rsquo;s published points are interpolated. Weather and alerts come live from the National Weather Service grid covering {{NAME_PHRASE}}. {{WATER_NOTE}} Sun and moon are computed rather than fetched, and agree with the US Naval Observatory to within a couple of minutes.{{MARSH_NOTE}}</p>
     <p><a href="{{CURRENT_LINK}}" target="_blank" rel="noopener">NOAA currents &#8599;</a> &nbsp; <a href="{{TIDE_LINK}}" target="_blank" rel="noopener">NOAA tides &#8599;</a></p>
     <div class="colophon">
       <p>{{CREDIT}}</p>
@@ -1211,6 +1211,8 @@ const fmtTD = new Intl.DateTimeFormat("en-US", {weekday:"short", hour:"numeric",
 const fmtDate = new Intl.DateTimeFormat("en-US", {weekday:"long", month:"long", day:"numeric", timeZone:TZ});
 const fmtParts = new Intl.DateTimeFormat("en-CA", {year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit", hour12:false, timeZone:TZ});
 const fmtOff = new Intl.DateTimeFormat("en-US", {timeZone:TZ, timeZoneName:"longOffset"});
+// for stating the span of the baked predictions, which rolls forward each month
+const fmtDay = new Intl.DateTimeFormat("en-US", {month:"short", day:"numeric", year:"numeric", timeZone:TZ});
 
 function offsetMin(ms){
   const s = fmtOff.formatToParts(new Date(ms)).find(p => p.type === "timeZoneName").value; // GMT-04:00
@@ -2190,7 +2192,9 @@ function render(){
   const inRange = t >= RANGE[0] && t <= RANGE[1];
   $("outofrange").style.display = inRange ? "none" : "block";
   if (!inRange){
-    $("outofrange").innerHTML = "<b>No prediction data for that time.</b> This page carries NOAA predictions from 1 Jan 2026 through 31 Dec 2028. Pick a date in that range.";
+    // the span is whatever was baked in, not a date someone typed once
+    $("outofrange").innerHTML = "<b>No prediction data for that time.</b> This page carries NOAA predictions from "
+      + fmtDay.format(RANGE[0]) + " through " + fmtDay.format(RANGE[1]) + ". Pick a date in that range.";
     return;
   }
 

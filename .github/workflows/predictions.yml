@@ -1,0 +1,100 @@
+# Keeps the baked tide and current predictions ahead of the calendar.
+#
+# The pages carry NOAA's predictions rather than fetching them, so the site
+# works at a launch with no signal. The cost of that is an expiry date: the
+# window was written as 2026-2028 by hand, and on 1 Jan 2029 every page would
+# have started saying "no prediction data for that time" with no server
+# anywhere to notice. This runs monthly and rolls the window forward, so the
+# horizon is never less than two full years.
+#
+# It is also what keeps itself alive: GitHub disables scheduled workflows in a
+# repository with no activity for 60 days, and the monthly commit is activity.
+# If it ever fails, GitHub emails the repository owner - and the test suite
+# fails too, since "at least two years of data remain" is asserted against the
+# clock rather than against a year somebody typed.
+
+name: Refresh predictions
+
+on:
+  schedule:
+    # 07:12 UTC on the 3rd of each month. Off the hour because every cron on
+    # GitHub fires at :00 and the queue is long there.
+    - cron: "12 7 3 * *"
+  workflow_dispatch:        # and a button, for when you want it now
+
+permissions:
+  contents: write
+
+concurrency:
+  group: predictions
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch predictions
+        run: python3 scripts/fetch_predictions.py
+
+      - name: Rebuild pages
+        run: python3 scripts/build.py
+
+      - name: Test
+        # The offline suite checks the horizon against today, so a fetch that
+        # half-worked fails here rather than shipping. The live suite is left
+        # out on purpose: it talks to NOAA and NWS, and a bad afternoon at
+        # either of them is not a reason to stop the calendar moving.
+        run: |
+          node tests/offline.js
+          node tests/evals.js
+
+      - name: Record the check
+        # GitHub disables a scheduled workflow once a repository has gone 60
+        # days without activity, and this job only changes the data once a
+        # year - in January, when the window rolls. Eleven months out of twelve
+        # it would have nothing to commit, go quiet, be switched off, and not be
+        # there in January when it finally mattered. So it records every check.
+        # The file is the proof of life that keeps the schedule alive, and a log
+        # of when the predictions were last held up against NOAA.
+        run: |
+          python3 - <<'PY'
+          import datetime as dt, glob, json, os
+          from zoneinfo import ZoneInfo
+          NY = ZoneInfo("America/New_York")
+          ends = []
+          for f in glob.glob("data/*.json"):
+              d = json.load(open(f))
+              if "tideStart" not in d: continue
+              ends.append(min(d["tideStart"] + sum(d["tideDt"]),
+                              d["curStart"] + sum(d["curDt"])))
+          through = dt.datetime.fromtimestamp(min(ends) * 60, NY).date()
+          today = dt.date.today()
+          json.dump({"checked": today.isoformat(),
+                     "predictionsThrough": through.isoformat(),
+                     "yearsRemaining": round((through - today).days / 365.25, 2),
+                     "launches": len(ends)},
+                    open("data/refreshed.json", "w"), indent=2)
+          open("data/refreshed.json", "a").write("\n")
+          print(f"predictions good through {through} ({(through - today).days} days)")
+          PY
+
+      - name: Commit
+        run: |
+          if git diff --quiet; then
+            echo "Nothing changed - not even the check record, which should not happen."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Roll the prediction window forward
+
+          Monthly refresh from NOAA. Keeps at least two years of tide and
+          current predictions baked into every page."
+          git push
